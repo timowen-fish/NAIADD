@@ -1,0 +1,185 @@
+.dataset-health-page {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: clamp(20px, 3vw, 38px);
+}
+
+.dataset-health-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.dataset-health-back,
+.dataset-health-refresh {
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 15px;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dataset-health-back {
+  color: var(--ui-text);
+  background: var(--ui-subtle);
+}
+
+.dataset-health-refresh {
+  color: #111827;
+  background: linear-gradient(
+    135deg,
+    var(--vadma-accent, #ff9f43),
+    var(--vadma-accent-soft, #ffd29a)
+  );
+}
+
+.dataset-health-refresh:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.dataset-health-status-card {
+  margin-bottom: 18px;
+}
+
+.dataset-health-status-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.dataset-health-label {
+  margin: 0 0 5px;
+  color: var(--ui-muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dataset-health-status-heading h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.dataset-health-message {
+  margin: 18px 0 0;
+  color: var(--ui-muted);
+  line-height: 1.55;
+}
+
+.dataset-health-message.error {
+  color: #c2413b;
+  font-weight: 750;
+}
+
+.dataset-health-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.dataset-health-metric {
+  min-height: 170px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dataset-health-metric span {
+  color: var(--ui-muted);
+  font-weight: 750;
+}
+
+.dataset-health-metric strong {
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  line-height: 1;
+}
+
+.dataset-health-metric small {
+  color: var(--ui-muted);
+  line-height: 1.45;
+}
+
+.dataset-health-metric.featured {
+  border-color: color-mix(
+    in srgb,
+    var(--vadma-accent, #ff9f43) 50%,
+    var(--ui-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--vadma-accent, #ff9f43) 8%,
+    var(--ui-surface)
+  );
+}
+
+.dataset-health-details h2 {
+  margin: 0 0 18px;
+  font-size: 1.2rem;
+}
+
+.dataset-health-details dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.dataset-health-details dl > div {
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--ui-subtle);
+}
+
+.dataset-health-details dt {
+  margin-bottom: 6px;
+  color: var(--ui-muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.dataset-health-details dd {
+  margin: 0;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1100px) {
+  .dataset-health-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dataset-health-details dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .dataset-health-page {
+    padding: 18px 14px 28px;
+  }
+
+  .dataset-health-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .dataset-health-metrics,
+  .dataset-health-details dl {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.dataset-health-metric strong.dataset-health-duration {
+  font-size: clamp(1.55rem, 2.8vw, 2.35rem);
+}

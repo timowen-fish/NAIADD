@@ -1,0 +1,452 @@
+.reference-data-page {
+  width: 100%;
+  max-width: 1540px;
+  margin: 0 auto;
+  padding: clamp(20px, 3vw, 38px);
+}
+
+.reference-header-actions,
+.reference-editor-tools,
+.reference-row-actions,
+.reference-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reference-toast {
+  margin: -10px 0 20px;
+  border-radius: 12px;
+  padding: 12px 15px;
+  font-weight: 800;
+}
+
+.reference-toast.success {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.reference-toast.danger {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.reference-toast.info {
+  color: #1e40af;
+  background: #dbeafe;
+}
+
+.reference-summary-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(300px, 1.4fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.reference-summary-card {
+  min-height: 105px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+}
+
+.reference-summary-card > span {
+  color: var(--ui-muted);
+  font-weight: 800;
+}
+
+.reference-summary-card > strong {
+  font-size: 2rem;
+}
+
+.reference-summary-card.change-card > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.reference-workspace {
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.reference-sidebar {
+  position: sticky;
+  top: 18px;
+  max-height: calc(100vh - 36px);
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  overflow: hidden;
+}
+
+.reference-sidebar-heading {
+  padding: 9px 9px 15px;
+}
+
+.reference-sidebar-heading strong,
+.reference-sidebar-heading span {
+  display: block;
+}
+
+.reference-sidebar-heading span {
+  margin-top: 3px;
+  color: var(--ui-muted);
+  font-size: 0.78rem;
+}
+
+.reference-nav-label {
+  padding: 16px 10px 7px;
+  color: var(--ui-muted);
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.reference-nav-scroll {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.reference-nav-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  border: 0;
+  border-radius: 11px;
+  padding: 10px;
+  color: var(--ui-text);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.reference-nav-item:hover {
+  background: var(--ui-subtle);
+}
+
+.reference-nav-item.active {
+  background: color-mix(
+    in srgb,
+    var(--vadma-accent, #ff9f43) 17%,
+    transparent
+  );
+}
+
+.reference-nav-item strong,
+.reference-nav-item small {
+  display: block;
+}
+
+.reference-nav-item strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.86rem;
+}
+
+.reference-nav-item small {
+  margin-top: 2px;
+  color: var(--ui-muted);
+  font-size: 0.7rem;
+}
+
+.reference-file-actions {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--ui-border);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+
+.reference-editor-card {
+  min-width: 0;
+}
+
+.reference-editor-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  border-bottom: 1px solid var(--ui-border);
+  margin: -2px -2px 20px;
+  padding: 0 2px 18px;
+}
+
+.reference-editor-header h2 {
+  margin: 2px 0 0;
+  font-size: 1.45rem;
+}
+
+.reference-editor-eyebrow {
+  margin: 0;
+  color: var(--vadma-accent, #d97706);
+  font-size: 0.68rem;
+  font-weight: 950;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.reference-editor-tools {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.reference-editor-tools input,
+.reference-add-row input,
+.reference-list-row input,
+.reference-modal input {
+  min-height: 42px;
+  border: 1px solid var(--ui-border);
+  border-radius: 11px;
+  padding: 10px 12px;
+  color: var(--ui-text);
+  background: var(--ui-card);
+  font: inherit;
+}
+
+.reference-editor-tools input {
+  width: min(360px, 42vw);
+}
+
+.reference-add-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.reference-list {
+  display: grid;
+  gap: 8px;
+}
+
+.reference-list-row {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--ui-border);
+  border-radius: 13px;
+  padding: 9px 12px 9px 15px;
+  background: color-mix(in srgb, var(--ui-card) 92%, var(--ui-subtle));
+}
+
+.reference-list-row > span,
+.reference-list-row > input {
+  min-width: 0;
+  flex: 1;
+}
+
+.reference-row-actions {
+  justify-content: flex-end;
+}
+
+.reference-row-actions button {
+  border: 0;
+  border-radius: 8px;
+  padding: 7px 9px;
+  color: var(--ui-text);
+  background: var(--ui-subtle);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.reference-row-actions button.danger {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.reference-table-wrap {
+  overflow-x: auto;
+}
+
+.reference-species-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reference-species-table th,
+.reference-species-table td {
+  border-bottom: 1px solid var(--ui-border);
+  padding: 13px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.reference-species-table th {
+  position: sticky;
+  top: 0;
+  color: var(--ui-muted);
+  background: var(--ui-card);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.reference-species-table td:first-child {
+  width: 100px;
+  font-variant-numeric: tabular-nums;
+}
+
+.reference-species-table td:last-child {
+  width: 145px;
+}
+
+.reference-empty,
+.reference-loading-card {
+  min-height: 190px;
+  display: grid;
+  place-items: center;
+  color: var(--ui-muted);
+  text-align: center;
+}
+
+.reference-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(4px);
+}
+
+.reference-modal {
+  width: min(520px, 100%);
+  display: grid;
+  gap: 16px;
+  border: 1px solid var(--ui-border);
+  border-radius: 20px;
+  padding: 22px;
+  color: var(--ui-text);
+  background: var(--ui-card);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, 0.28);
+}
+
+.reference-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.reference-modal-header p,
+.reference-modal-header h2 {
+  margin: 0;
+}
+
+.reference-modal-header p {
+  color: var(--vadma-accent, #d97706);
+  font-size: 0.7rem;
+  font-weight: 950;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.reference-modal-header h2 {
+  margin-top: 3px;
+}
+
+.reference-modal-header > button {
+  border: 0;
+  padding: 0;
+  color: var(--ui-muted);
+  background: transparent;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.reference-modal label {
+  display: grid;
+  gap: 7px;
+  color: var(--ui-muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.reference-modal-actions {
+  justify-content: flex-end;
+  margin-top: 5px;
+}
+
+@media (max-width: 1050px) {
+  .reference-summary-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .reference-workspace {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .reference-editor-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reference-editor-tools {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .reference-data-page {
+    padding: 18px 14px 28px;
+  }
+
+  .reference-header-actions,
+  .reference-editor-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reference-header-actions .ui-button,
+  .reference-editor-tools .ui-button,
+  .reference-editor-tools input {
+    width: 100%;
+  }
+
+  .reference-summary-row,
+  .reference-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .reference-sidebar {
+    position: static;
+    max-height: none;
+  }
+
+  .reference-nav-scroll {
+    max-height: 260px;
+  }
+
+  .reference-summary-card {
+    min-height: 86px;
+  }
+
+  .reference-add-row {
+    grid-template-columns: 1fr;
+  }
+
+  .reference-list-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .reference-row-actions {
+    justify-content: flex-start;
+  }
+}

@@ -1,0 +1,610 @@
+.submitStep,
+.submitStep * {
+  box-sizing: border-box;
+}
+
+.submitStep {
+
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 56px;
+  color: var(--vadma-text, #f8fafc);
+}
+
+.submitBackButton {
+  border: 0;
+  background: transparent;
+  color: var(--vadma-accent-soft, #ffd29a);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 14px;
+}
+
+.submitHero,
+.submitSummaryCard,
+.submitChoiceCard,
+.submitSafetyNote,
+.submitProgressCard,
+.submitResultCard {
+  background: var(--vadma-card-bg, linear-gradient(180deg, rgba(42, 46, 54, 0.96), rgba(18, 21, 27, 0.94)));
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.14));
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.submitHero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 30px 34px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 92% 12%, color-mix(in srgb, var(--vadma-accent, #ff9f43) 16%, transparent), transparent 240px),
+    var(--vadma-card-bg, linear-gradient(180deg, rgba(42, 46, 54, 0.96), rgba(18, 21, 27, 0.94)));
+}
+
+.submitKicker {
+  margin: 0 0 7px;
+  color: var(--vadma-accent-soft, #ffd29a);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.submitHero h2,
+.submitProgressCard h2,
+.submitResultCard h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 3vw, 2.55rem);
+  line-height: 1.08;
+}
+
+.submitHero p:not(.submitKicker),
+.submitProgressCard > p:not(.submitKicker),
+.submitResultCard > p:not(.submitKicker) {
+  max-width: 720px;
+  margin: 12px 0 0;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.72));
+  line-height: 1.65;
+}
+
+.submitReadyBadge {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 145px;
+  padding: 13px 16px;
+  border-radius: 16px;
+  color: var(--vadma-text, #f8fafc);
+  background: color-mix(in srgb, var(--vadma-accent, #ff9f43) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--vadma-accent, #ff9f43) 28%, var(--vadma-border, rgba(255,255,255,0.14)));
+}
+
+.submitReadyBadge > span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--vadma-accent-contrast, #111827);
+  background: linear-gradient(135deg, var(--vadma-accent, #ff9f43), var(--vadma-accent-soft, #ffd29a));
+  font-weight: 900;
+}
+
+.submitReadyBadge strong,
+.submitReadyBadge small {
+  display: block;
+}
+
+.submitReadyBadge small {
+  margin-top: 2px;
+  opacity: 0.7;
+}
+
+.submitSummaryCard {
+  margin-top: 20px;
+  padding: 26px;
+  border-radius: 22px;
+}
+
+.submitSummaryHeading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 21px;
+  border-bottom: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+}
+
+.submitSummaryHeading h3 {
+  margin: 0;
+  font-size: 1.48rem;
+}
+
+.submitSummaryHeading > div > span {
+  display: block;
+  margin-top: 5px;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.72));
+}
+
+.submitMethodBadge {
+  padding: 9px 13px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--vadma-accent, #ff9f43) 14%, transparent);
+  color: var(--vadma-accent-soft, #ffd29a);
+  font-size: 0.82rem;
+  font-weight: 850;
+  text-align: center;
+}
+
+.submitSummaryGrid {
+  display: grid;
+  grid-template-columns: 2fr 1.3fr 0.65fr 0.65fr 1.2fr;
+  gap: 13px;
+  padding-top: 20px;
+}
+
+.submitSummaryItem {
+  min-width: 0;
+  padding: 14px 15px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.submitSummaryItem span,
+.submitResultSummary span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.64));
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.submitSummaryItem strong {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 0.98rem;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: -0.02em;
+}
+
+.submitChoiceGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.submitChoiceCard {
+  display: flex;
+  flex-direction: column;
+  padding: 28px;
+  border-radius: 22px;
+}
+
+.submitChoiceCard.primary {
+  border-color: color-mix(in srgb, var(--vadma-accent, #ff9f43) 38%, var(--vadma-border, rgba(255,255,255,0.14)));
+  background:
+    radial-gradient(circle at 95% 0%, color-mix(in srgb, var(--vadma-accent, #ff9f43) 18%, transparent), transparent 230px),
+    var(--vadma-card-bg, linear-gradient(180deg, rgba(42, 46, 54, 0.96), rgba(18, 21, 27, 0.94)));
+}
+
+.submitChoiceIcon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--vadma-accent-soft, #ffd29a);
+  font-size: 1.45rem;
+  font-weight: 900;
+}
+
+.submitChoiceCard.primary .submitChoiceIcon {
+  background: color-mix(in srgb, var(--vadma-accent, #ff9f43) 16%, transparent);
+  color: var(--vadma-accent-soft, #ffd29a);
+}
+
+.submitChoiceCard h3 {
+  margin: 0;
+  font-size: 1.55rem;
+}
+
+.submitChoiceCard > p:not(.submitKicker) {
+  margin: 11px 0 0;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.72));
+  line-height: 1.55;
+}
+
+.submitChoiceCard ul {
+  display: grid;
+  gap: 9px;
+  padding: 0;
+  margin: 22px 0 26px;
+  list-style: none;
+  color: var(--vadma-text, #f8fafc);
+}
+
+.submitChoiceCard li::before {
+  content: "✓";
+  margin-right: 9px;
+  color: var(--vadma-accent-soft, #ffd29a);
+  font-weight: 900;
+}
+
+.submitPrimaryAction,
+.submitSecondaryAction,
+.submitPrimaryButton,
+.submitSecondaryButton {
+  min-height: 50px;
+  border-radius: 14px;
+  padding: 13px 18px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease,
+    opacity 140ms ease;
+}
+
+.submitPrimaryAction,
+.submitPrimaryButton {
+  border: 1px solid color-mix(in srgb, var(--vadma-accent, #ff9f43) 44%, var(--vadma-border, rgba(255,255,255,0.14)));
+  background: linear-gradient(135deg, var(--vadma-accent, #ff9f43), var(--vadma-accent-soft, #ffd29a));
+  color: var(--vadma-accent-contrast, #111827);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--vadma-accent, #ff9f43) 24%, transparent);
+}
+
+.submitSecondaryAction,
+.submitSecondaryButton {
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.14));
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--vadma-accent-soft, #ffd29a);
+}
+
+.submitChoiceCard button {
+  width: 100%;
+  margin-top: auto;
+}
+
+.submitPrimaryAction:hover,
+.submitSecondaryAction:hover,
+.submitPrimaryButton:hover,
+.submitSecondaryButton:hover {
+  transform: translateY(-1px);
+}
+
+.submitPrimaryAction:disabled,
+.submitSecondaryAction:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.submitSafetyNote {
+  display: flex;
+  gap: 14px;
+  margin-top: 20px;
+  padding: 18px 21px;
+  border-radius: 18px;
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.submitSafetyNote > span {
+  color: var(--vadma-accent-soft, #ffd29a);
+  font-size: 1.3rem;
+}
+
+.submitSafetyNote strong {
+  display: block;
+}
+
+.submitSafetyNote p {
+  margin: 4px 0 0;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.72));
+}
+
+.submitInlineMessage {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 18px;
+  padding: 13px 15px;
+  border-radius: 14px;
+  font-weight: 750;
+}
+
+.submitInlineMessage.success {
+  color: var(--vadma-accent-soft, #ffd29a);
+  background: color-mix(in srgb, var(--vadma-accent, #ff9f43) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--vadma-accent, #ff9f43) 26%, var(--vadma-border, rgba(255,255,255,0.14)));
+}
+
+.submitInlineMessage.danger {
+  color: #8b2e2e;
+  background: #fff0f0;
+  border: 1px solid #f2c8c8;
+}
+
+.submitCenteredState {
+  display: grid;
+  place-items: center;
+  min-height: 65vh;
+}
+
+.submitProgressCard,
+.submitResultCard {
+  width: min(680px, 100%);
+  padding: 38px;
+  border-radius: 25px;
+  text-align: center;
+}
+
+.submitStateIcon {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  color: var(--vadma-accent-contrast, #111827);
+  background: linear-gradient(135deg, var(--vadma-accent, #ff9f43), var(--vadma-accent-soft, #ffd29a));
+  font-size: 2rem;
+  font-weight: 900;
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--vadma-accent, #ff9f43) 24%, transparent);
+}
+
+.submitStateIcon.uploading {
+  animation: submitPulse 1.15s ease-in-out infinite;
+}
+
+.submitResultCard.warning .submitStateIcon {
+  background: #b47b1d;
+}
+
+.submitResultCard.danger .submitStateIcon {
+  background: #b13c3c;
+}
+
+@keyframes submitPulse {
+  50% {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 34px color-mix(in srgb, var(--vadma-accent, #ff9f43) 30%, transparent);
+  }
+}
+
+.submitProgressTrack {
+  height: 11px;
+  overflow: hidden;
+  margin: 28px 0 20px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.submitProgressTrack span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--vadma-accent, #ff9f43), var(--vadma-accent-soft, #ffd29a));
+  transition: width 400ms ease;
+}
+
+.submitStageList {
+  display: grid;
+  gap: 10px;
+  text-align: left;
+}
+
+.submitStageList > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 13px;
+  border-radius: 13px;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.62));
+  background: #f6f8f7;
+}
+
+.submitStageList > div.active {
+  color: var(--vadma-text, #f8fafc);
+  background: color-mix(in srgb, var(--vadma-accent, #ff9f43) 12%, transparent);
+}
+
+.submitStageList > div.complete {
+  color: var(--vadma-accent-soft, #ffd29a);
+}
+
+.submitStageList span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  font-weight: 900;
+}
+
+.submitResultSummary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 11px;
+  margin: 26px 0;
+  text-align: left;
+}
+
+.submitResultSummary > div {
+  min-width: 0;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.submitResultSummary strong {
+  overflow-wrap: anywhere;
+}
+
+.submitResultActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.submitAuditNote {
+  margin: 20px 0 0 !important;
+  padding-top: 17px;
+  border-top: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+  font-size: 0.82rem;
+}
+
+@media (max-width: 900px) {
+  .submitSummaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .submitSummaryItem:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .submitStep,
+.submitStep * {
+  box-sizing: border-box;
+}
+
+.submitStep {
+
+    width: min(100% - 20px, 1180px);
+    padding-top: 12px;
+  }
+
+  .submitHero {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 23px 20px;
+    border-radius: 19px;
+  }
+
+  .submitReadyBadge {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .submitSummaryCard {
+    padding: 20px 17px;
+    border-radius: 18px;
+  }
+
+  .submitSummaryHeading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .submitSummaryGrid,
+  .submitChoiceGrid,
+  .submitResultSummary,
+  .submitResultActions {
+    grid-template-columns: 1fr;
+  }
+
+  .submitSummaryItem:first-child {
+    grid-column: auto;
+  }
+
+  .submitChoiceCard {
+    padding: 23px 20px;
+    border-radius: 18px;
+  }
+
+  .submitProgressCard,
+  .submitResultCard {
+    padding: 28px 20px;
+    border-radius: 20px;
+  }
+
+  .submitCenteredState {
+    min-height: 58vh;
+  }
+}
+
+/* Theme integration: all submit-page surfaces follow the active VADMA palette. */
+.submitHero h2,
+.submitSummaryHeading h3,
+.submitChoiceCard h3,
+.submitProgressCard h2,
+.submitResultCard h2,
+.submitSummaryItem strong,
+.submitResultSummary strong,
+.submitSafetyNote strong,
+.submitStageList strong {
+  color: var(--vadma-text, #f8fafc);
+}
+
+.submitChoiceCard,
+.submitSummaryCard,
+.submitHero,
+.submitSafetyNote,
+.submitProgressCard,
+.submitResultCard {
+  backdrop-filter: blur(16px) saturate(135%);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+}
+
+.submitChoiceCard ul,
+.submitChoiceCard > p:not(.submitKicker),
+.submitSafetyNote p,
+.submitAuditNote,
+.submitResultSummary {
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.72));
+}
+
+.submitSecondaryAction,
+.submitSecondaryButton,
+.submitBackButton {
+  color: var(--vadma-text, #f8fafc);
+}
+
+.submitSecondaryAction:hover,
+.submitSecondaryButton:hover,
+.submitBackButton:hover {
+  border-color: color-mix(in srgb, var(--vadma-accent, #ff9f43) 35%, var(--vadma-border, rgba(255,255,255,0.14)));
+  background: color-mix(in srgb, var(--vadma-accent, #ff9f43) 10%, transparent);
+}
+
+.submitResultCard.warning .submitStateIcon {
+  color: #111827;
+  background: linear-gradient(135deg, #f59e0b, #fde68a);
+}
+
+.submitResultCard.danger .submitStateIcon {
+  color: #ffffff;
+  background: linear-gradient(135deg, #b91c1c, #ef4444);
+}
+
+.submitInlineMessage.danger {
+  color: #fecaca;
+  background: rgba(185, 28, 28, 0.14);
+  border-color: rgba(248, 113, 113, 0.28);
+}
+
+[data-vadma-theme="bureaucrat"] .submitChoiceCard,
+[data-vadma-theme="bureaucrat"] .submitSummaryCard,
+[data-vadma-theme="bureaucrat"] .submitHero,
+[data-vadma-theme="bureaucrat"] .submitSafetyNote,
+[data-vadma-theme="bureaucrat"] .submitProgressCard,
+[data-vadma-theme="bureaucrat"] .submitResultCard {
+  box-shadow: 0 14px 32px rgba(31, 31, 31, 0.10);
+}

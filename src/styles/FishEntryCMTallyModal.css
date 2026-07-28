@@ -1,0 +1,831 @@
+.cmTallyOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  padding: clamp(10px, 2vw, 24px);
+  background: rgba(2, 6, 23, 0.68);
+  backdrop-filter: blur(10px) saturate(120%);
+  -webkit-backdrop-filter: blur(10px) saturate(120%);
+}
+
+.cmTallyModal {
+  width: min(1180px, calc(100vw - 2 * clamp(10px, 2vw, 24px)));
+  max-height: min(920px, calc(100dvh - 2 * clamp(10px, 2vw, 24px)));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border-radius: 28px;
+  color: var(--vadma-text, #f8fafc);
+  background:
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--vadma-accent, #ff9f43) 14%, transparent), transparent 22rem),
+    linear-gradient(180deg, rgba(31, 35, 42, 0.98), rgba(12, 15, 21, 0.98));
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.14));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.54), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.cmTallyHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: clamp(16px, 2vw, 24px) clamp(16px, 2.4vw, 28px);
+  border-bottom: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+}
+
+.cmTallyKicker {
+  margin: 0 0 4px;
+  color: var(--vadma-accent-soft, #ffd166);
+  font-size: 0.76rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cmTallyHeader h2 {
+  margin: 0;
+  color: var(--vadma-text, #f8fafc);
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem);
+  line-height: 1.05;
+  font-weight: 950;
+  letter-spacing: -0.025em;
+}
+
+.cmTallyHeader p:not(.cmTallyKicker) {
+  max-width: 780px;
+  margin: 8px 0 0;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.72));
+  font-size: 0.92rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.cmTallyClose {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.16));
+  border-radius: 16px;
+  color: var(--vadma-text, #f8fafc);
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 1.55rem;
+  font-weight: 950;
+  cursor: pointer;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.2);
+}
+
+.cmTallyTools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px clamp(12px, 2.4vw, 20px);
+  background: rgba(10, 13, 18, 0.34);
+  border-bottom: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+}
+
+.cmTallyTool {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.13));
+  color: var(--vadma-text-muted, rgba(248, 250, 252, 0.84));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.035));
+  font-size: 0.84rem;
+  font-weight: 950;
+}
+
+.cmTallyInputRow {
+  display: flex;
+  gap: 8px;
+}
+
+.cmTallyInputRow input,
+.cmTallyInputRow select,
+.cmTallyTool input,
+.cmTallyTool select {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.14)) !important;
+  border-radius: 14px;
+  padding: 9px 11px;
+  color: var(--vadma-text, #f8fafc) !important;
+  background: rgba(2, 6, 23, 0.44) !important;
+  font: inherit;
+  font-weight: 800;
+  outline: none;
+}
+
+.cmTallyTableShell {
+  min-height: 0;
+  overflow: auto;
+  background: rgba(2, 6, 23, 0.32);
+  -webkit-overflow-scrolling: touch;
+}
+
+.cmTallyTable {
+  width: max-content;
+  min-width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+
+.cmTallyTable th,
+.cmTallyTable td {
+  border-right: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+  border-bottom: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+  background: rgba(12, 15, 21, 0.82);
+}
+
+.cmTallyTable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 10px 12px;
+  color: #bfdbfe;
+  background: rgba(17, 24, 39, 0.96);
+  font-size: 0.82rem;
+  font-weight: 950;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.cmTallyBinCol,
+.cmBinHeader,
+.cmBinCell {
+  width: 100px;
+  min-width: 100px;
+}
+
+.cmTallySpeciesCol {
+  width: 145px;
+  min-width: 145px;
+}
+
+.cmBinCell {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  text-align: center;
+  color: var(--vadma-accent-soft, #ffd166);
+  font-weight: 950;
+}
+
+.cmBinHeader {
+  left: 0;
+  z-index: 7 !important;
+}
+
+.speciesHeaderCell {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  min-width: 0;
+}
+
+.speciesHeaderCell strong,
+.speciesHeaderCell span {
+  max-width: 125px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmTallyQuantityBox {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 36px minmax(48px, 1fr) 36px;
+  align-items: center;
+  gap: 4px;
+  padding: 5px;
+}
+
+.cmTallyQuantityBox input {
+  width: 100%;
+  height: 38px;
+  box-sizing: border-box;
+  border: 0 !important;
+  border-radius: 12px;
+  text-align: center;
+  color: var(--vadma-text, #f8fafc) !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+  font: inherit;
+  font-weight: 950;
+  outline: none;
+}
+
+.cmTallyMinus,
+.cmTallyPlus {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--vadma-border, rgba(255,255,255,0.12));
+  border-radius: 12px;
+  color: var(--vadma-text, #f8fafc);
+  background: rgba(255, 255, 255, 0.1);
+  font: inherit;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.cmTallyPlus {
+  color: #111827;
+  background: linear-gradient(135deg, var(--vadma-accent, #ff9f43), var(--vadma-accent-soft, #ffd29a));
+}
+
+.cmTallyEmpty {
+  padding: 22px;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.72));
+  font-weight: 850;
+  text-align: center;
+}
+
+.cmTallyActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(22, 27, 36, 0.98);
+  border-top: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+}
+
+.cmTallySortControls,
+.cmTallyActionButtons {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.cmTallySecondary,
+.cmTallySave {
+  min-height: 38px;
+  border-radius: 14px;
+  padding: 9px 13px;
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.12));
+  color: var(--vadma-text, #f8fafc);
+  background: rgba(255, 255, 255, 0.11);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 950;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.cmTallySave {
+  color: #111827;
+  border-color: color-mix(in srgb, var(--vadma-accent, #ff9f43) 38%, transparent);
+  background: linear-gradient(135deg, var(--vadma-accent, #ff9f43), var(--vadma-accent-soft, #ffd29a));
+}
+
+@media (max-width: 920px) {
+  .cmTallyModal {
+    width: calc(100vw - 20px);
+    max-height: calc(100dvh - 20px);
+    border-radius: 22px;
+  }
+
+  .cmTallyTools {
+    grid-template-columns: 1fr;
+  }
+
+  .cmTallyActions {
+    display: grid;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .cmTallySortControls,
+  .cmTallyActionButtons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cmTallySecondary,
+  .cmTallySave {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .cmTallyOverlay {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .cmTallyModal {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .cmTallyHeader {
+    padding: 14px;
+  }
+
+  .cmTallyHeader p:not(.cmTallyKicker) {
+    display: none;
+  }
+
+  .cmTallyTools {
+    padding: 10px;
+  }
+
+  .cmTallyBinCol,
+  .cmBinHeader,
+  .cmBinCell {
+    width: 86px;
+    min-width: 86px;
+  }
+
+  .cmTallySpeciesCol {
+    width: 132px;
+    min-width: 132px;
+  }
+
+  .cmTallyActions {
+    padding: 10px;
+  }
+}
+
+
+/* VADMA centimeter tally clean-up and controlled species pick-list. */
+.cmTallyOverlay {
+  z-index: 2147483000 !important;
+  padding: clamp(8px, 1.4vw, 18px) !important;
+}
+
+.cmTallyModal {
+  width: min(1120px, calc(100vw - 2 * clamp(8px, 1.4vw, 18px))) !important;
+  max-height: min(860px, calc(100dvh - 2 * clamp(8px, 1.4vw, 18px))) !important;
+  border-radius: 24px !important;
+}
+
+.cmTallyHeader {
+  padding: 16px 20px !important;
+}
+
+.cmTallyTools {
+  padding: 10px 18px !important;
+}
+
+.cmTallyInputRow {
+  align-items: stretch;
+}
+
+.cmTallyInputRow > button {
+  min-width: 76px;
+  border: 1px solid color-mix(in srgb, var(--vadma-accent, #ff9f43) 38%, transparent);
+  border-radius: 14px;
+  color: #111827;
+  background: linear-gradient(135deg, var(--vadma-accent, #ff9f43), var(--vadma-accent-soft, #ffd29a));
+  font: inherit;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.cmTallySpeciesPickList {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.cmTallySpeciesPickList input {
+  padding-right: 32px !important;
+}
+
+.cmTallySpeciesPickList::after {
+  content: "⌕";
+  position: absolute;
+  right: 11px;
+  top: 21px;
+  transform: translateY(-50%);
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.62));
+  font-size: 0.88rem;
+  font-weight: 950;
+  pointer-events: none;
+}
+
+.cmTallySpeciesPickListDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 2147483001;
+  max-height: 250px;
+  overflow-y: auto;
+  border-radius: 16px;
+  padding: 7px;
+  border: 1px solid color-mix(in srgb, var(--vadma-accent, #ff9f43) 30%, rgba(255,255,255,0.14));
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--vadma-accent, #ff9f43) 14%, transparent), transparent 12rem),
+    linear-gradient(180deg, rgba(22, 26, 34, 0.99), rgba(8, 11, 17, 0.99));
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+}
+
+.cmTallySpeciesPickListHeader {
+  padding: 7px 9px 6px;
+  color: var(--vadma-accent-soft, #ffd166);
+  font-size: 0.68rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.cmTallySpeciesPickListOption {
+  width: 100%;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 0;
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--vadma-text, #f8fafc);
+  background: transparent;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+
+.cmTallySpeciesPickListOption span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmTallySpeciesPickListOption small {
+  opacity: 0;
+  color: inherit;
+  font-size: 0.62rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cmTallySpeciesPickListOption:hover,
+.cmTallySpeciesPickListOption.active {
+  color: #111827;
+  background: linear-gradient(135deg, var(--vadma-accent, #ff9f43), var(--vadma-accent-soft, #ffd29a));
+}
+
+.cmTallySpeciesPickListOption:hover small,
+.cmTallySpeciesPickListOption.active small {
+  opacity: 0.74;
+}
+
+.cmTallySpeciesPickListEmpty {
+  padding: 12px 10px;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.74));
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.cmTallyActions {
+  padding: 10px 14px !important;
+}
+
+@media (max-width: 640px) {
+  .cmTallyOverlay {
+    padding: 0 !important;
+  }
+
+  .cmTallyModal {
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+  }
+
+  .cmTallyInputRow {
+    display: grid;
+    grid-template-columns: 1fr 76px;
+  }
+}
+
+/* Fix centimeter tally species pick-list visibility inside compact modal. */
+.cmTallyModal {
+  grid-template-rows: auto auto minmax(270px, 1fr) auto !important;
+  overflow: visible !important;
+}
+
+.cmTallyTableShell {
+  min-height: 270px !important;
+  max-height: min(420px, 48dvh) !important;
+  overflow: auto !important;
+  position: relative !important;
+  z-index: 5 !important;
+  isolation: isolate !important;
+}
+
+.cmTallyActions {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.cmTallySpeciesPickList {
+  position: relative !important;
+  z-index: 2147483002 !important;
+}
+
+.cmTallySpeciesPickListDropdown {
+  z-index: 2147483003 !important;
+  max-height: min(260px, 38dvh) !important;
+}
+
+@media (max-width: 640px) {
+  .cmTallyModal {
+    grid-template-rows: auto auto minmax(300px, 1fr) auto !important;
+    overflow: hidden !important;
+  }
+
+  .cmTallyTableShell {
+    min-height: 300px !important;
+    max-height: none !important;
+  }
+}
+
+
+/* VADMA theme bridge for portal-rendered centimeter tally modal. */
+.cmTallyOverlay[data-vadma-theme] {
+  color: var(--vadma-text, #f8fafc) !important;
+  background:
+    color-mix(in srgb, var(--vadma-page-bg, #020617) 18%, rgba(2, 6, 23, 0.72)) !important;
+}
+
+.cmTallyOverlay[data-vadma-theme] .cmTallyModal {
+  color: var(--vadma-text, #f8fafc) !important;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--vadma-accent, #ff9f43) 14%, transparent), transparent 20rem),
+    var(--vadma-card-bg, linear-gradient(180deg, rgba(42, 46, 54, 0.98), rgba(18, 21, 27, 0.98))) !important;
+  border-color: var(--vadma-border, rgba(255,255,255,0.14)) !important;
+}
+
+.cmTallyOverlay[data-vadma-theme] .cmTallyHeader,
+.cmTallyOverlay[data-vadma-theme] .cmTallyTools,
+.cmTallyOverlay[data-vadma-theme] .cmTallyActions {
+  background: color-mix(in srgb, var(--vadma-card-bg, #1f232a) 88%, transparent) !important;
+  border-color: var(--vadma-border, rgba(255,255,255,0.14)) !important;
+}
+
+.cmTallyOverlay[data-vadma-theme] .cmTallyTool,
+.cmTallyOverlay[data-vadma-theme] .cmTallyClose,
+.cmTallyOverlay[data-vadma-theme] .cmTallySecondary,
+.cmTallyOverlay[data-vadma-theme] .cmTallySortControls button {
+  color: var(--vadma-text, #f8fafc) !important;
+  background: color-mix(in srgb, var(--vadma-card-bg, #1f232a) 78%, rgba(255,255,255,0.08)) !important;
+  border-color: var(--vadma-border, rgba(255,255,255,0.14)) !important;
+}
+
+.cmTallyOverlay[data-vadma-theme] .cmTallySave,
+.cmTallyOverlay[data-vadma-theme] .cmTallyInputRow > button,
+.cmTallyOverlay[data-vadma-theme] .cmTallyPlus,
+.cmTallyOverlay[data-vadma-theme] .cmTallySortControls button.active {
+  color: var(--vadma-accent-contrast, #111827) !important;
+  background: linear-gradient(135deg, var(--vadma-accent, #ff9f43), var(--vadma-accent-soft, #ffd29a)) !important;
+  border-color: color-mix(in srgb, var(--vadma-accent, #ff9f43) 44%, var(--vadma-border, rgba(255,255,255,0.14))) !important;
+}
+
+.cmTallyOverlay[data-vadma-theme] .cmTallyTableShell {
+  background: color-mix(in srgb, var(--vadma-card-bg, #111827) 65%, #020617) !important;
+}
+
+.cmTallyOverlay[data-vadma-theme] .cmTallyTable th,
+.cmTallyOverlay[data-vadma-theme] .cmTallyTable td {
+  color: var(--vadma-text, #f8fafc) !important;
+  background: color-mix(in srgb, var(--vadma-card-bg, #111827) 84%, transparent) !important;
+  border-color: var(--vadma-border, rgba(255,255,255,0.1)) !important;
+}
+
+.cmTallyOverlay[data-vadma-theme] .cmTallyTable thead th {
+  color: var(--vadma-accent-soft, #ffd29a) !important;
+  background: color-mix(in srgb, var(--vadma-card-bg, #111827) 72%, #020617) !important;
+}
+
+.cmTallyOverlay[data-vadma-theme] .cmBinCell {
+  color: var(--vadma-accent-soft, #ffd29a) !important;
+}
+
+.cmTallyOverlay[data-vadma-theme] input,
+.cmTallyOverlay[data-vadma-theme] select {
+  color: var(--vadma-text, #f8fafc) !important;
+  background: color-mix(in srgb, var(--vadma-card-bg, #111827) 68%, #020617) !important;
+  border-color: var(--vadma-border, rgba(255,255,255,0.14)) !important;
+}
+
+.cmTallyOverlay[data-vadma-theme] input:focus,
+.cmTallyOverlay[data-vadma-theme] select:focus {
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--vadma-accent, #ff9f43) 62%, transparent) !important;
+}
+
+.cmTallyOverlay[data-vadma-theme] .cmTallySpeciesPickListDropdown {
+  border-color: color-mix(in srgb, var(--vadma-accent, #ff9f43) 36%, var(--vadma-border, rgba(255,255,255,0.14))) !important;
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--vadma-accent, #ff9f43) 14%, transparent), transparent 12rem),
+    var(--vadma-card-bg, linear-gradient(180deg, rgba(42, 46, 54, 0.98), rgba(18, 21, 27, 0.98))) !important;
+}
+
+.cmTallyOverlay[data-vadma-theme] .cmTallySpeciesPickListOption:hover,
+.cmTallyOverlay[data-vadma-theme] .cmTallySpeciesPickListOption.active {
+  color: var(--vadma-accent-contrast, #111827) !important;
+  background: linear-gradient(135deg, var(--vadma-accent, #ff9f43), var(--vadma-accent-soft, #ffd29a)) !important;
+}
+
+/* ============================================================
+   MOBILE FIELD-ENTRY LAYOUT
+   Keeps Save Tally and Cancel visible while only the tally grid scrolls.
+   ============================================================ */
+@media (max-width: 640px) {
+  .cmTallyOverlay {
+    overflow: hidden !important;
+    overscroll-behavior: none;
+  }
+
+  .cmTallyModal {
+    grid-template-rows: auto auto minmax(0, 1fr) auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .cmTallyHeader {
+    min-height: 0;
+    flex: 0 0 auto;
+  }
+
+  .cmTallyTools {
+    grid-template-columns: repeat(2, minmax(250px, 1fr)) !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cmTallyTool {
+    min-height: 92px;
+    scroll-snap-align: start;
+  }
+
+  .cmTallyTableShell {
+    min-height: 0 !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: auto !important;
+    overscroll-behavior: contain;
+    touch-action: pan-x pan-y;
+  }
+
+  .cmTallyActions {
+    position: relative !important;
+    z-index: 500 !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding:
+      9px
+      max(9px, env(safe-area-inset-right))
+      max(9px, env(safe-area-inset-bottom))
+      max(9px, env(safe-area-inset-left)) !important;
+    flex: 0 0 auto;
+    background: color-mix(
+      in srgb,
+      var(--vadma-card-bg, #1f232a) 94%,
+      rgba(0, 0, 0, 0.28)
+    ) !important;
+    border-top: 1px solid var(--vadma-border, rgba(255,255,255,0.14)) !important;
+    box-shadow: 0 -12px 28px rgba(0, 0, 0, 0.34) !important;
+  }
+
+  .cmTallyActionButtons {
+    order: -1;
+    display: grid !important;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) !important;
+    gap: 8px !important;
+  }
+
+  .cmTallySortControls {
+    display: grid !important;
+    grid-template-columns: auto repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .cmTallySortControls > span {
+    align-self: center;
+    font-size: 0.76rem;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .cmTallySecondary,
+  .cmTallySave,
+  .cmTallySortControls button {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 48px !important;
+    padding: 9px 8px !important;
+    border-radius: 13px !important;
+    font-size: 0.82rem !important;
+  }
+
+  .cmTallySave {
+    font-size: 0.92rem !important;
+    box-shadow: 0 10px 22px color-mix(
+      in srgb,
+      var(--vadma-accent, #ff9f43) 28%,
+      transparent
+    ) !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .cmTallyTools {
+    grid-template-columns: repeat(2, minmax(225px, 1fr)) !important;
+  }
+
+  .cmTallyActionButtons {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cmTallySave {
+    order: -1;
+  }
+
+  .cmTallySecondary,
+  .cmTallySave,
+  .cmTallySortControls button {
+    min-height: 46px !important;
+  }
+}
+
+/* ============================================================
+   MOBILE KEYBOARD / ENTER STABILITY
+   Prevents the modal from being recalculated against 100dvh when
+   the mobile keyboard opens, closes, or advances to the next field.
+   ============================================================ */
+@media (max-width: 640px) {
+  .cmTallyOverlay {
+    top: 0 !important;
+    right: 0 !important;
+    bottom: auto !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100svh !important;
+    min-height: 100svh !important;
+    max-height: 100svh !important;
+    align-items: stretch !important;
+    justify-items: stretch !important;
+    overflow: hidden !important;
+    overscroll-behavior: none !important;
+    overflow-anchor: none !important;
+  }
+
+  .cmTallyModal {
+    width: 100vw !important;
+    height: 100svh !important;
+    min-height: 100svh !important;
+    max-height: 100svh !important;
+    margin: 0 !important;
+    align-self: start !important;
+    overflow: hidden !important;
+    overflow-anchor: none !important;
+    contain: layout paint;
+  }
+
+  .cmTallyTableShell {
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: auto !important;
+    overflow-anchor: none !important;
+    overscroll-behavior: contain !important;
+    scroll-behavior: auto !important;
+  }
+
+  .cmTallyOverlay input,
+  .cmTallyOverlay select {
+    font-size: 16px !important;
+  }
+
+  .cmTallyActions {
+    flex-shrink: 0 !important;
+  }
+}
+

@@ -1,0 +1,326 @@
+:root,
+[data-vadma-theme="standard"] {
+  --vadma-page-bg:
+    radial-gradient(circle at top left, rgba(255, 130, 0, 0.09), transparent 30rem),
+    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.06), transparent 26rem),
+    linear-gradient(135deg, #111418 0%, #1b1f26 48%, #0f1116 100%);
+  --vadma-panel-bg: rgba(25, 29, 36, 0.94);
+  --vadma-card-bg: linear-gradient(180deg, rgba(42, 46, 54, 0.94), rgba(18, 21, 27, 0.9));
+  --vadma-text: #f8fafc;
+  --vadma-text-muted: rgba(255, 255, 255, 0.72);
+  --vadma-accent: #ff9f43;
+  --vadma-accent-soft: #ffd29a;
+  --vadma-accent-contrast: #111827;
+  --vadma-accent-translucent: rgba(255, 159, 67, 0.22);
+  --vadma-border: rgba(255, 255, 255, 0.14);
+  --vadma-subtle: rgba(255, 255, 255, 0.065);
+  --vadma-hover: rgba(255, 255, 255, 0.095);
+  --vadma-success: #22c55e;
+  --vadma-warning: #f59e0b;
+  --vadma-danger: #ef4444;
+  --vadma-info: #60a5fa;
+  --vadma-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+  --vadma-radius-small: 11px;
+  --vadma-radius-medium: 17px;
+  --vadma-radius-large: 22px;
+}
+
+[data-vadma-theme="blackbanded-sunfish"] {
+  --vadma-page-bg:
+    radial-gradient(circle at 14% 8%, rgba(245, 158, 11, 0.13), transparent 28rem),
+    radial-gradient(circle at 88% 82%, rgba(55, 112, 139, 0.16), transparent 27rem),
+    linear-gradient(140deg, #06080b 0%, #10161b 50%, #050608 100%);
+  --vadma-panel-bg: rgba(15, 20, 25, 0.96);
+  --vadma-card-bg: linear-gradient(180deg, rgba(28, 35, 42, 0.96), rgba(10, 13, 17, 0.94));
+  --vadma-text: #f8fafc;
+  --vadma-text-muted: rgba(226, 232, 240, 0.7);
+  --vadma-accent: #f59e0b;
+  --vadma-accent-soft: #f8c45b;
+  --vadma-accent-contrast: #171006;
+  --vadma-accent-translucent: rgba(245, 158, 11, 0.22);
+  --vadma-border: rgba(126, 169, 188, 0.2);
+  --vadma-subtle: rgba(79, 143, 168, 0.1);
+  --vadma-hover: rgba(245, 158, 11, 0.09);
+  --vadma-success: #4ade80;
+  --vadma-warning: #fbbf24;
+  --vadma-danger: #fb7185;
+  --vadma-info: #67c5e8;
+  --vadma-shadow: 0 20px 55px rgba(0, 0, 0, 0.42);
+  --vadma-radius-small: 11px;
+  --vadma-radius-medium: 17px;
+  --vadma-radius-large: 22px;
+}
+
+[data-vadma-theme="red-drum"] {
+  --vadma-page-bg:
+    radial-gradient(circle at 10% 4%, rgba(197, 103, 53, 0.19), transparent 30rem),
+    radial-gradient(circle at 90% 90%, rgba(34, 87, 120, 0.18), transparent 26rem),
+    linear-gradient(135deg, #081018 0%, #161d24 50%, #090b0f 100%);
+  --vadma-panel-bg: rgba(24, 29, 35, 0.95);
+  --vadma-card-bg: linear-gradient(180deg, rgba(52, 48, 45, 0.96), rgba(18, 20, 24, 0.93));
+  --vadma-text: #fff8f2;
+  --vadma-text-muted: rgba(255, 238, 226, 0.71);
+  --vadma-accent: #c56735;
+  --vadma-accent-soft: #e0a175;
+  --vadma-accent-contrast: #1d0f08;
+  --vadma-accent-translucent: rgba(197, 103, 53, 0.22);
+  --vadma-border: rgba(224, 161, 117, 0.18);
+  --vadma-subtle: rgba(197, 103, 53, 0.08);
+  --vadma-hover: rgba(197, 103, 53, 0.12);
+  --vadma-success: #65a879;
+  --vadma-warning: #e4a853;
+  --vadma-danger: #e76f67;
+  --vadma-info: #6fa4c4;
+  --vadma-shadow: 0 20px 54px rgba(0, 0, 0, 0.36);
+  --vadma-radius-small: 11px;
+  --vadma-radius-medium: 17px;
+  --vadma-radius-large: 22px;
+}
+
+[data-vadma-theme="striped-bass"] {
+  --vadma-page-bg:
+    radial-gradient(circle at top left, rgba(203, 213, 225, 0.12), transparent 30rem),
+    radial-gradient(circle at bottom right, rgba(82, 130, 160, 0.13), transparent 25rem),
+    linear-gradient(135deg, #0e1622 0%, #263342 50%, #0a1019 100%);
+  --vadma-panel-bg: rgba(29, 40, 52, 0.95);
+  --vadma-card-bg: linear-gradient(180deg, rgba(58, 71, 86, 0.95), rgba(18, 27, 38, 0.93));
+  --vadma-text: #f8fafc;
+  --vadma-text-muted: rgba(226, 232, 240, 0.72);
+  --vadma-accent: #cbd5e1;
+  --vadma-accent-soft: #7ea4bf;
+  --vadma-accent-contrast: #172033;
+  --vadma-accent-translucent: rgba(203, 213, 225, 0.2);
+  --vadma-border: rgba(203, 213, 225, 0.18);
+  --vadma-subtle: rgba(148, 163, 184, 0.1);
+  --vadma-hover: rgba(203, 213, 225, 0.1);
+  --vadma-success: #6fc49a;
+  --vadma-warning: #d4ad62;
+  --vadma-danger: #e08086;
+  --vadma-info: #7ea4bf;
+  --vadma-shadow: 0 18px 50px rgba(0, 0, 0, 0.33);
+  --vadma-radius-small: 11px;
+  --vadma-radius-medium: 17px;
+  --vadma-radius-large: 22px;
+}
+
+[data-vadma-theme="bluespotted-sunfish"] {
+  --vadma-page-bg:
+    radial-gradient(circle at 12% 6%, rgba(56, 189, 248, 0.18), transparent 30rem),
+    radial-gradient(circle at 88% 88%, rgba(103, 232, 249, 0.1), transparent 25rem),
+    linear-gradient(135deg, #06131d 0%, #0f2c3e 50%, #041019 100%);
+  --vadma-panel-bg: rgba(10, 31, 44, 0.95);
+  --vadma-card-bg: linear-gradient(180deg, rgba(20, 58, 78, 0.95), rgba(6, 24, 35, 0.93));
+  --vadma-text: #f0f9ff;
+  --vadma-text-muted: rgba(224, 242, 254, 0.72);
+  --vadma-accent: #38bdf8;
+  --vadma-accent-soft: #67e8f9;
+  --vadma-accent-contrast: #042536;
+  --vadma-accent-translucent: rgba(56, 189, 248, 0.22);
+  --vadma-border: rgba(125, 211, 252, 0.2);
+  --vadma-subtle: rgba(56, 189, 248, 0.09);
+  --vadma-hover: rgba(56, 189, 248, 0.13);
+  --vadma-success: #4ade80;
+  --vadma-warning: #facc15;
+  --vadma-danger: #fb7185;
+  --vadma-info: #38bdf8;
+  --vadma-shadow: 0 20px 56px rgba(0, 6, 14, 0.4);
+  --vadma-radius-small: 11px;
+  --vadma-radius-medium: 17px;
+  --vadma-radius-large: 22px;
+}
+
+[data-vadma-theme="largemouth-bass"] {
+  --vadma-page-bg:
+    radial-gradient(circle at 10% 5%, rgba(132, 169, 79, 0.17), transparent 30rem),
+    radial-gradient(circle at 90% 90%, rgba(88, 114, 63, 0.13), transparent 25rem),
+    linear-gradient(135deg, #08110a 0%, #17251a 50%, #070d08 100%);
+  --vadma-panel-bg: rgba(19, 32, 22, 0.95);
+  --vadma-card-bg: linear-gradient(180deg, rgba(41, 59, 43, 0.95), rgba(14, 24, 16, 0.93));
+  --vadma-text: #f7faef;
+  --vadma-text-muted: rgba(235, 242, 220, 0.72);
+  --vadma-accent: #84a94f;
+  --vadma-accent-soft: #c3d59b;
+  --vadma-accent-contrast: #142008;
+  --vadma-accent-translucent: rgba(132, 169, 79, 0.22);
+  --vadma-border: rgba(195, 213, 155, 0.18);
+  --vadma-subtle: rgba(132, 169, 79, 0.09);
+  --vadma-hover: rgba(132, 169, 79, 0.13);
+  --vadma-success: #73b56c;
+  --vadma-warning: #d1aa55;
+  --vadma-danger: #df766f;
+  --vadma-info: #77a2a8;
+  --vadma-shadow: 0 20px 54px rgba(0, 0, 0, 0.37);
+  --vadma-radius-small: 11px;
+  --vadma-radius-medium: 17px;
+  --vadma-radius-large: 22px;
+}
+
+
+[data-vadma-theme="pumpkinseed"] {
+  --vadma-page-bg:
+    radial-gradient(circle at 10% 6%, rgba(242, 140, 40, 0.2), transparent 29rem),
+    radial-gradient(circle at 88% 88%, rgba(79, 195, 161, 0.14), transparent 26rem),
+    linear-gradient(135deg, #120d08 0%, #2a1c13 50%, #0d0a07 100%);
+  --vadma-panel-bg: rgba(38, 27, 19, 0.96);
+  --vadma-card-bg: linear-gradient(180deg, rgba(62, 42, 28, 0.96), rgba(24, 17, 12, 0.94));
+  --vadma-text: #fff8ed;
+  --vadma-text-muted: rgba(255, 239, 218, 0.74);
+  --vadma-accent: #f28c28;
+  --vadma-accent-soft: #ffc36f;
+  --vadma-accent-contrast: #231204;
+  --vadma-accent-translucent: rgba(242, 140, 40, 0.22);
+  --vadma-border: rgba(79, 195, 161, 0.2);
+  --vadma-subtle: rgba(242, 140, 40, 0.09);
+  --vadma-hover: rgba(79, 195, 161, 0.11);
+  --vadma-success: #4fc3a1;
+  --vadma-warning: #f6b94b;
+  --vadma-danger: #ef767a;
+  --vadma-info: #62b7c8;
+  --vadma-shadow: 0 20px 54px rgba(0, 0, 0, 0.38);
+  --vadma-radius-small: 11px;
+  --vadma-radius-medium: 17px;
+  --vadma-radius-large: 22px;
+}
+
+[data-vadma-theme="american-shad"] {
+  --vadma-page-bg:
+    radial-gradient(circle at 12% 5%, rgba(143, 211, 255, 0.16), transparent 30rem),
+    radial-gradient(circle at 88% 88%, rgba(216, 227, 234, 0.1), transparent 25rem),
+    linear-gradient(135deg, #07121b 0%, #183040 50%, #071018 100%);
+  --vadma-panel-bg: rgba(18, 39, 52, 0.95);
+  --vadma-card-bg: linear-gradient(180deg, rgba(39, 65, 81, 0.96), rgba(12, 28, 39, 0.94));
+  --vadma-text: #f4fbff;
+  --vadma-text-muted: rgba(225, 242, 252, 0.73);
+  --vadma-accent: #8fd3ff;
+  --vadma-accent-soft: #d8e3ea;
+  --vadma-accent-contrast: #082031;
+  --vadma-accent-translucent: rgba(143, 211, 255, 0.2);
+  --vadma-border: rgba(216, 227, 234, 0.2);
+  --vadma-subtle: rgba(143, 211, 255, 0.08);
+  --vadma-hover: rgba(216, 227, 234, 0.1);
+  --vadma-success: #6cc7a0;
+  --vadma-warning: #d9b45f;
+  --vadma-danger: #e67b83;
+  --vadma-info: #8fd3ff;
+  --vadma-shadow: 0 20px 54px rgba(0, 7, 14, 0.4);
+  --vadma-radius-small: 11px;
+  --vadma-radius-medium: 17px;
+  --vadma-radius-large: 22px;
+}
+
+[data-vadma-theme="bowfin"] {
+  --vadma-page-bg:
+    radial-gradient(circle at 10% 6%, rgba(166, 195, 111, 0.16), transparent 30rem),
+    radial-gradient(circle at 90% 88%, rgba(209, 139, 71, 0.14), transparent 26rem),
+    linear-gradient(135deg, #091109 0%, #1d2b20 52%, #080d08 100%);
+  --vadma-panel-bg: rgba(24, 38, 27, 0.96);
+  --vadma-card-bg: linear-gradient(180deg, rgba(49, 67, 51, 0.96), rgba(15, 25, 17, 0.94));
+  --vadma-text: #f7f9ed;
+  --vadma-text-muted: rgba(236, 242, 218, 0.72);
+  --vadma-accent: #a6c36f;
+  --vadma-accent-soft: #d2df9f;
+  --vadma-accent-contrast: #172006;
+  --vadma-accent-translucent: rgba(166, 195, 111, 0.22);
+  --vadma-border: rgba(209, 139, 71, 0.2);
+  --vadma-subtle: rgba(166, 195, 111, 0.09);
+  --vadma-hover: rgba(209, 139, 71, 0.11);
+  --vadma-success: #75b879;
+  --vadma-warning: #d18b47;
+  --vadma-danger: #df756c;
+  --vadma-info: #7fa5a0;
+  --vadma-shadow: 0 20px 54px rgba(0, 0, 0, 0.4);
+  --vadma-radius-small: 11px;
+  --vadma-radius-medium: 17px;
+  --vadma-radius-large: 22px;
+}
+
+[data-vadma-theme="walleye"] {
+  --vadma-page-bg:
+    radial-gradient(circle at 11% 5%, rgba(213, 201, 93, 0.16), transparent 30rem),
+    radial-gradient(circle at 88% 90%, rgba(138, 165, 178, 0.14), transparent 25rem),
+    linear-gradient(135deg, #0b1013 0%, #252d31 50%, #090d10 100%);
+  --vadma-panel-bg: rgba(31, 39, 43, 0.96);
+  --vadma-card-bg: linear-gradient(180deg, rgba(55, 66, 70, 0.96), rgba(19, 25, 28, 0.94));
+  --vadma-text: #fbfae9;
+  --vadma-text-muted: rgba(241, 239, 208, 0.72);
+  --vadma-accent: #d5c95d;
+  --vadma-accent-soft: #eee59a;
+  --vadma-accent-contrast: #211f08;
+  --vadma-accent-translucent: rgba(213, 201, 93, 0.2);
+  --vadma-border: rgba(138, 165, 178, 0.2);
+  --vadma-subtle: rgba(213, 201, 93, 0.08);
+  --vadma-hover: rgba(138, 165, 178, 0.11);
+  --vadma-success: #7fbd82;
+  --vadma-warning: #d5c95d;
+  --vadma-danger: #df7b78;
+  --vadma-info: #8aa5b2;
+  --vadma-shadow: 0 20px 54px rgba(0, 0, 0, 0.38);
+  --vadma-radius-small: 11px;
+  --vadma-radius-medium: 17px;
+  --vadma-radius-large: 22px;
+}
+
+[data-vadma-theme="plain-jane"] {
+  --vadma-page-bg: #f3f3f3;
+  --vadma-panel-bg: #ffffff;
+  --vadma-card-bg: #ffffff;
+  --vadma-text: #1f1f1f;
+  --vadma-text-muted: #616161;
+  --vadma-accent: #0067b8;
+  --vadma-accent-soft: #dbeafe;
+  --vadma-accent-contrast: #ffffff;
+  --vadma-accent-translucent: rgba(0, 103, 184, 0.16);
+  --vadma-border: #c8c8c8;
+  --vadma-subtle: #f5f5f5;
+  --vadma-hover: #ececec;
+  --vadma-success: #107c10;
+  --vadma-warning: #ca5010;
+  --vadma-danger: #d13438;
+  --vadma-info: #0067b8;
+  --vadma-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  --vadma-radius-small: 2px;
+  --vadma-radius-medium: 3px;
+  --vadma-radius-large: 4px;
+}
+
+:root {
+  --ui-card: var(--vadma-card-bg);
+  --ui-panel: var(--vadma-panel-bg);
+  --ui-text: var(--vadma-text);
+  --ui-muted: var(--vadma-text-muted);
+  --ui-border: var(--vadma-border);
+  --ui-subtle: var(--vadma-subtle);
+  --ui-hover: var(--vadma-hover);
+  --ui-shadow: var(--vadma-shadow);
+  --ui-radius-small: var(--vadma-radius-small);
+  --ui-radius-medium: var(--vadma-radius-medium);
+  --ui-radius-large: var(--vadma-radius-large);
+}
+
+html,
+body {
+  color: var(--vadma-text);
+  background: var(--vadma-page-bg);
+  transition: color 180ms ease, background-color 180ms ease;
+}
+
+body {
+  background-attachment: fixed;
+}
+
+button,
+input,
+select,
+textarea,
+article,
+section,
+nav,
+aside,
+header,
+footer {
+  transition:
+    color 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}

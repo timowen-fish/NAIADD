@@ -1,0 +1,1412 @@
+.locationNewStep {
+  display: grid;
+  gap: 16px;
+}
+
+.app .backButton {
+  width: fit-content;
+  margin-bottom: 14px;
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.14)) !important;
+  border-radius: 999px;
+  padding: 10px 16px;
+
+  color: var(--vadma-text, #f8fafc) !important;
+  background:
+    linear-gradient(135deg, rgba(62, 58, 54, 0.96), rgba(28, 31, 37, 0.94)) !important;
+
+  font-weight: 950;
+  cursor: pointer;
+
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+}
+
+.stepHeader {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+
+  color: white !important;
+
+  background:
+    radial-gradient(circle at top left, rgba(255, 130, 0, 0.1), transparent 18rem),
+    linear-gradient(135deg, rgba(31, 35, 42, 0.94), rgba(12, 15, 21, 0.9)) !important;
+
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.13)) !important;
+  border-radius: 26px;
+  padding: 22px;
+
+  box-shadow:
+    0 22px 50px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 var(--vadma-border, rgba(255, 255, 255, 0.08));
+
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+}
+
+.stepIcon {
+  width: 60px;
+  height: 60px;
+  flex: 0 0 auto;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 22px;
+
+  color: white !important;
+  font-size: 28px;
+
+  background:
+    linear-gradient(180deg, rgba(80, 85, 94, 0.88), rgba(35, 39, 47, 0.72)) !important;
+
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.18));
+
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 var(--vadma-border, rgba(255, 255, 255, 0.1));
+}
+
+.stepKicker {
+  margin: 0 0 5px;
+
+  color: var(--vadma-accent-soft, #ffd166) !important;
+
+  font-size: 0.76rem;
+  font-weight: 950;
+
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stepHeader h1 {
+  margin: 0;
+
+  color: white !important;
+
+  font-size: 2rem;
+  line-height: 1.05;
+  font-weight: 950;
+
+  letter-spacing: -0.02em;
+
+  text-shadow: 0 8px 22px rgba(0, 0, 0, 0.38);
+}
+
+.stepHeader p {
+  margin: 8px 0 0;
+
+  max-width: 760px;
+
+  color: var(--vadma-text-muted, rgba(255, 255, 255, 0.76)) !important;
+
+  font-weight: 700;
+  line-height: 1.42;
+}
+
+.newLocCard,
+.existingSiteCard {
+  overflow: hidden;
+
+  border-radius: 26px;
+  padding: 20px;
+
+  color: var(--vadma-text, #f8fafc) !important;
+
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--vadma-accent, #ff9f43) 12%, transparent), transparent 18rem),
+    var(--vadma-card-bg, linear-gradient(180deg, rgba(42, 46, 54, 0.94), rgba(18, 21, 27, 0.9))) !important;
+
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.12)) !important;
+
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 var(--vadma-border, rgba(255, 255, 255, 0.08));
+
+  backdrop-filter: blur(18px) saturate(135%);
+  -webkit-backdrop-filter: blur(18px) saturate(135%);
+}
+
+.newLocCard h2,
+.existingSiteCard h2 {
+  margin: 0 0 10px;
+
+  color: var(--vadma-text, #f8fafc) !important;
+
+  font-size: 1.28rem;
+  font-weight: 950;
+}
+
+.mapCard {
+  max-width: 940px;
+  width: 100%;
+  justify-self: center;
+}
+
+.cardTitleRow,
+.mapHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+
+  margin-bottom: 14px;
+}
+
+.cardTitleRow p,
+.thinText {
+  margin: 0;
+
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.68)) !important;
+
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.mapHeaderRow h2 {
+  margin-bottom: 0;
+}
+
+.basemapOptionsGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  padding: 6px;
+
+  border-radius: 999px;
+
+  background: rgba(10, 12, 16, 0.72);
+
+  border: 1px solid rgba(255, 179, 107, 0.3);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 22px rgba(0, 0, 0, 0.16);
+}
+
+.basemapOptionsLabel {
+  padding: 0 8px;
+
+  color: var(--vadma-accent-soft, #ffd29a);
+
+  font-size: 0.7rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.basemapOptionButton {
+  border: 0;
+
+  border-radius: 999px;
+
+  padding: 8px 12px;
+
+  color: var(--vadma-text-muted, rgba(248, 250, 252, 0.84));
+
+  background: rgba(255, 255, 255, 0.07);
+
+  font-size: 0.72rem;
+  font-weight: 950;
+
+  cursor: pointer;
+
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.basemapOptionButton:hover {
+  transform: translateY(-1px);
+  background: var(--vadma-border, rgba(255, 255, 255, 0.12));
+}
+
+.basemapOptionButton.active {
+  color: #111827;
+
+  background:
+    linear-gradient(135deg, var(--vadma-accent, #ff9f43), var(--vadma-accent-soft, #ffd29a));
+
+  box-shadow: 0 10px 20px color-mix(in srgb, var(--vadma-accent, #ff9f43) 26%, transparent);
+}
+
+.coordinateModeRow,
+.coordToggle {
+  display: inline-flex;
+  gap: 7px;
+
+  background:
+    rgba(10, 12, 16, 0.72);
+
+  padding: 6px;
+
+  border-radius: 999px;
+
+  border: 1px solid rgba(255, 179, 107, 0.3);
+
+  flex: 0 0 auto;
+  width: fit-content;
+
+  margin: 12px 0;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 10px 22px rgba(0, 0, 0, 0.16);
+}
+
+.coordinateModeButton,
+.coordToggle button {
+  border: none;
+  background: transparent;
+
+  border-radius: 999px;
+
+  padding: 10px 16px;
+
+  font-weight: 950;
+
+  color: var(--vadma-text-muted, rgba(248, 250, 252, 0.84));
+
+  cursor: pointer;
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.coordinateModeButton:hover,
+.coordToggle button:hover {
+  transform: translateY(-1px);
+  background: var(--vadma-border, rgba(255, 255, 255, 0.1));
+}
+
+.coordinateModeButton.active,
+.coordToggle button.active {
+  color: #111827;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--vadma-accent, #ff9f43),
+      var(--vadma-accent-soft, #ffd29a)
+    );
+
+  box-shadow:
+    0 10px 22px color-mix(in srgb, var(--vadma-accent, #ff9f43) 28%, transparent);
+}
+
+.coordinateModeButton.active::before,
+.coordToggle button.active::before {
+  content: "✓";
+  margin-right: 7px;
+}
+
+.leafletShell,
+.leafletMap {
+  height: 430px;
+  width: 100% !important;
+  max-width: none !important;
+
+  margin: 0 auto;
+
+  overflow: hidden;
+
+  border-radius: 22px;
+
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.13)) !important;
+
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 var(--vadma-border, rgba(255, 255, 255, 0.09));
+}
+
+.newSiteLeafletMap {
+  width: 100% !important;
+  height: 100% !important;
+  background: #111827;
+}
+
+.vadmaLeafletPin {
+  width: 34px !important;
+  height: 34px !important;
+
+  border-radius: 50% 50% 50% 6px;
+
+  transform: rotate(-45deg);
+
+  display: grid !important;
+  place-items: center;
+
+  color: white;
+  font-weight: 950;
+
+  border: 2px solid rgba(255, 255, 255, 0.94);
+
+  box-shadow:
+    0 12px 26px rgba(2, 6, 23, 0.38);
+}
+
+.vadmaLeafletPin span {
+  transform: rotate(45deg);
+  display: block;
+
+  font-size: 13px;
+  line-height: 1;
+}
+
+.vadmaLeafletPinDownstream {
+  background:
+    linear-gradient(
+      135deg,
+      var(--vadma-accent, #ff9f43),
+      var(--vadma-accent-soft, #ffd29a)
+    );
+}
+
+.vadmaLeafletPinUpstream {
+  background:
+    linear-gradient(
+      135deg,
+      #7f1d1d,
+      var(--vadma-accent, #ff9f43)
+    );
+}
+
+.leaflet-control-attribution {
+  font-size: 10px !important;
+}
+
+.leaflet-container {
+  font-family: inherit;
+}
+
+.modernLeafletMap .leaflet-control-zoom {
+  overflow: hidden;
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.16)) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.32) !important;
+}
+
+.modernLeafletMap .leaflet-control-zoom a {
+  color: white !important;
+  background: rgba(15, 18, 24, 0.92) !important;
+  border-bottom: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1)) !important;
+}
+
+.modernLeafletMap .leaflet-control-zoom a:hover {
+  background: rgba(56, 61, 70, 0.95) !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 16px !important;
+  background: rgba(22, 25, 32, 0.96) !important;
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.14));
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.34) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.leaflet-popup-tip {
+  background: rgba(22, 25, 32, 0.96) !important;
+}
+
+.leaflet-popup-content {
+  color: var(--vadma-text, #f8fafc) !important;
+
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.mapHint {
+  margin: 10px 0 0;
+
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.68)) !important;
+
+  text-align: center;
+
+  font-weight: 700;
+}
+
+.formGrid,
+.detailsGrid {
+  display: grid;
+  gap: 14px;
+
+  margin-bottom: 14px;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+}
+
+.formGrid.coords {
+  grid-template-columns:
+    repeat(4, minmax(145px, 1fr));
+}
+
+.formGrid.primarySite {
+  grid-template-columns: 1.1fr 0.9fr;
+}
+
+.formGrid.textAreas {
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+}
+
+.formGrid.propertyGrid {
+  grid-template-columns:
+    0.9fr 1fr 1fr;
+}
+
+.formGrid.spatialGrid {
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+}
+
+label {
+  display: grid;
+  gap: 7px;
+
+  color: var(--vadma-text-muted, rgba(255, 255, 255, 0.86)) !important;
+
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+label span {
+  color: var(--vadma-accent-soft, #ffd166);
+}
+
+input,
+textarea,
+select,
+.input {
+  width: 100%;
+  box-sizing: border-box;
+
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.14)) !important;
+  border-radius: 16px;
+
+  padding: 11px 13px;
+
+  color: var(--vadma-text, #f8fafc) !important;
+
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+
+  background: color-mix(in srgb, var(--vadma-card-bg, rgba(10, 13, 18, 0.72)) 86%, black) !important;
+
+  outline: none;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 20px rgba(0, 0, 0, 0.12);
+
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+input::placeholder,
+textarea::placeholder,
+.input::placeholder {
+  color: rgba(226, 232, 240, 0.46) !important;
+}
+
+textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.input:focus {
+  border-color: rgba(255, 209, 102, 0.72) !important;
+
+  background: color-mix(in srgb, var(--vadma-card-bg, rgba(12, 15, 21, 0.9)) 86%, black) !important;
+
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--vadma-accent, #ff9f43) 16%, transparent),
+    0 10px 24px rgba(0, 0, 0, 0.2);
+}
+
+input:disabled,
+.locked {
+  background: rgba(10, 12, 16, 0.55) !important;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.78)) !important;
+  cursor: not-allowed;
+}
+
+select option {
+  color: #111827;
+  background: var(--vadma-text, #f8fafc);
+}
+
+.checkboxCard {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 11px;
+
+  padding: 12px 14px;
+
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+  border-radius: 18px;
+
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.035));
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.checkboxCard input {
+  width: 19px;
+  height: 19px;
+}
+
+.checkboxCard small {
+  display: block;
+
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.68));
+
+  font-weight: 700;
+
+  margin-top: 2px;
+}
+
+.additionalToggle,
+.secondaryAction {
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.12));
+
+  background:
+    var(--vadma-border, rgba(255, 255, 255, 0.09));
+
+  color: var(--vadma-text, #f8fafc);
+
+  border-radius: 999px;
+
+  padding: 11px 18px;
+
+  font-weight: 950;
+
+  cursor: pointer;
+
+  margin-top: 2px;
+
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.16);
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    background 160ms ease;
+}
+
+.additionalToggle:hover,
+.secondaryAction:hover {
+  transform: translateY(-1px);
+
+  background: var(--vadma-border, rgba(255, 255, 255, 0.13));
+
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.24);
+}
+
+.additionalFields {
+  margin-top: 16px;
+  padding-top: 16px;
+
+  border-top: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+}
+
+.actionBar {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  padding: 18px;
+
+  border-radius: 26px;
+
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--vadma-accent, #ff9f43) 12%, transparent), transparent 18rem),
+    var(--vadma-card-bg, linear-gradient(180deg, rgba(42, 46, 54, 0.94), rgba(18, 21, 27, 0.9))) !important;
+
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.12));
+
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.28);
+
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.primaryActionBtn,
+.secondaryActionBtn,
+.primaryAction {
+  border: none;
+
+  border-radius: 18px;
+
+  padding: 14px 22px;
+  min-width: 170px;
+
+  font-weight: 950;
+
+  cursor: pointer;
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    filter 160ms ease;
+
+  letter-spacing: 0.2px;
+}
+
+.primaryActionBtn:hover,
+.secondaryActionBtn:hover,
+.primaryAction:hover {
+  transform: translateY(-2px);
+}
+
+.primaryActionBtn,
+.primaryAction {
+  color: #111827 !important;
+
+  background:
+    linear-gradient(
+      135deg,
+      var(--vadma-accent, #ff9f43),
+      var(--vadma-accent-soft, #ffd29a)
+    ) !important;
+
+  box-shadow:
+    0 16px 32px color-mix(in srgb, var(--vadma-accent, #ff9f43) 28%, transparent);
+}
+
+.primaryActionBtn:hover,
+.primaryAction:hover {
+  box-shadow:
+    0 20px 40px color-mix(in srgb, var(--vadma-accent, #ff9f43) 34%, transparent);
+}
+
+.secondaryActionBtn {
+  color: var(--vadma-text, #f8fafc);
+
+  background:
+    var(--vadma-border, rgba(255, 255, 255, 0.09));
+
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.12));
+
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.16);
+}
+
+.secondaryActionBtn:hover {
+  background: var(--vadma-border, rgba(255, 255, 255, 0.13));
+
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.24);
+}
+
+.errorBanner,
+.okBanner {
+  border-radius: 18px;
+
+  padding: 13px 16px;
+
+  font-weight: 900;
+}
+
+.errorBanner {
+  color: #fecaca;
+
+  background: rgba(127, 29, 29, 0.38);
+
+  border: 1px solid rgba(254, 202, 202, 0.22);
+}
+
+.okBanner {
+  color: #bbf7d0;
+
+  background: rgba(20, 83, 45, 0.38);
+
+  border: 1px solid rgba(187, 247, 208, 0.22);
+}
+
+.emptyPreview {
+  border-radius: 18px;
+
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.035));
+
+  border: 1px dashed var(--vadma-border, rgba(255, 255, 255, 0.16));
+
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.68));
+
+  padding: 18px;
+
+  font-weight: 800;
+
+  text-align: center;
+}
+
+.previewTableWrap {
+  overflow-x: auto;
+}
+
+.previewTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+
+.previewTable th,
+.previewTable td {
+  border-bottom: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.08));
+
+  padding: 11px 12px;
+
+  text-align: left;
+}
+
+.previewTable th {
+  width: 260px;
+
+  color: var(--vadma-accent-soft, #ffd166);
+
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.035));
+}
+
+.previewTable td {
+  color: var(--vadma-text-muted, rgba(248, 250, 252, 0.84));
+}
+
+@media (max-width: 980px) {
+  .formGrid.coords,
+  .formGrid.primarySite,
+  .formGrid.textAreas,
+  .formGrid.propertyGrid,
+  .formGrid.spatialGrid,
+  .detailsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .checkboxCard {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 760px) {
+  .cardTitleRow,
+  .mapHeaderRow {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .coordToggle,
+  .coordinateModeRow {
+    width: 100%;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .coordToggle button,
+  .coordinateModeButton {
+    width: 100%;
+  }
+
+  .leafletShell,
+  .leafletMap {
+    width: 100%;
+  }
+
+  .basemapOptionsGroup {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .basemapOptionsLabel {
+    grid-column: span 2;
+    text-align: center;
+    padding-bottom: 2px;
+  }
+}
+
+@media (max-width: 680px) {
+  .stepHeader {
+    align-items: flex-start;
+  }
+
+  .stepHeader h1 {
+    font-size: 1.65rem;
+  }
+
+  .stepIcon {
+    width: 52px;
+    height: 52px;
+
+    border-radius: 18px;
+
+    font-size: 24px;
+  }
+
+  .newLocCard,
+  .existingSiteCard {
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .leafletShell,
+  .leafletMap {
+    height: 330px;
+  }
+
+  .formGrid.coords,
+  .formGrid.primarySite,
+  .formGrid.textAreas,
+  .formGrid.propertyGrid,
+  .formGrid.spatialGrid,
+  .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .checkboxCard {
+    grid-column: auto;
+  }
+
+  .primaryActionBtn,
+  .secondaryActionBtn,
+  .primaryAction {
+    width: 100%;
+  }
+}
+
+.mapCard {
+  width: 100% !important;
+  max-width: 100% !important;
+  justify-self: stretch !important;
+}
+
+.leafletShell,
+.leafletMap,
+.newSiteLeafletMap {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+
+/* Modern Waterbody searchable pick-list */
+.waterbodyPickListField {
+  position: relative;
+}
+
+.waterbodyPickListControl {
+  position: relative;
+  width: 100%;
+}
+
+.waterbodyPickListControl input {
+  padding-right: 42px;
+}
+
+.waterbodyPickListControl::after {
+  content: "⌕";
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.58));
+  font-size: 1rem;
+  font-weight: 950;
+  pointer-events: none;
+}
+
+.waterbodyPickListDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 3000;
+  max-height: 320px;
+  overflow-y: auto;
+  border-radius: 18px;
+  padding: 8px;
+  border: 1px solid rgba(255, 209, 102, 0.22);
+  background:
+    radial-gradient(circle at top left, rgba(255, 130, 0, 0.12), transparent 14rem),
+    linear-gradient(180deg, rgba(22, 26, 34, 0.98), rgba(10, 13, 18, 0.98));
+  box-shadow:
+    0 22px 52px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+}
+
+.waterbodyPickListHeader {
+  padding: 8px 10px 7px;
+  color: var(--vadma-accent-soft, #ffd166);
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.waterbodyPickListDropdown button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-radius: 14px;
+  padding: 10px 12px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--vadma-text, #f8fafc);
+  background: transparent;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 850;
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    transform 140ms ease;
+}
+
+.waterbodyPickListDropdown button::after {
+  content: "Select";
+  opacity: 0;
+  color: inherit;
+  font-size: 0.68rem;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.waterbodyPickListDropdown button:hover {
+  color: #111827;
+  background:
+    linear-gradient(
+      135deg,
+      var(--vadma-accent, #ff9f43),
+      var(--vadma-accent-soft, #ffd29a)
+    );
+  transform: translateY(-1px);
+}
+
+.waterbodyPickListDropdown button:hover::after {
+  opacity: 0.78;
+}
+
+.waterbodyPickListEmpty {
+  padding: 14px 12px;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.72));
+  font-size: 0.9rem;
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.waterbodyPickListHint {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.72));
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.waterbodyPickListHint.warning {
+  color: #fed7aa;
+}
+
+.waterbodyPickListDropdown::-webkit-scrollbar {
+  width: 12px;
+}
+
+.waterbodyPickListDropdown::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.88);
+  border-radius: 999px;
+}
+
+.waterbodyPickListDropdown::-webkit-scrollbar-thumb {
+  background: rgba(255, 209, 102, 0.48);
+  border-radius: 999px;
+  border: 3px solid rgba(15, 23, 42, 0.88);
+}
+
+/* Location step aesthetic cleanup */
+.locationNewStep {
+  --new-site-field-min-height: 44px;
+}
+
+.newLocCard {
+  padding: 22px;
+}
+
+.cardTitleRow {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+}
+
+.formGrid {
+  align-items: start;
+  row-gap: 16px;
+}
+
+.formGrid.primarySite {
+  grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+  column-gap: 14px;
+}
+
+.formGrid.coords {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  column-gap: 14px;
+}
+
+.formGrid.textAreas {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 14px;
+}
+
+label {
+  min-width: 0;
+  align-content: start;
+}
+
+.fieldLabelText {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 18px;
+  color: var(--vadma-text-muted, rgba(255, 255, 255, 0.86)) !important;
+}
+
+.requiredMark {
+  display: inline !important;
+  color: var(--vadma-accent-soft, #ffd166) !important;
+  line-height: 1;
+}
+
+input,
+textarea,
+select,
+.input {
+  min-height: var(--new-site-field-min-height);
+}
+
+textarea {
+  min-height: 92px;
+}
+
+.waterbodyPickListField {
+  z-index: 50;
+}
+
+.waterbodyPickListControl input {
+  height: 44px;
+  border-radius: 16px;
+}
+
+.waterbodyPickListDropdown {
+  max-height: 284px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.waterbodyPickListDropdown button {
+  min-height: 40px;
+}
+
+.waterbodyPickListHeader {
+  position: sticky;
+  top: -8px;
+  z-index: 1;
+  margin: -8px -8px 7px;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid rgba(255, 209, 102, 0.14);
+  background: linear-gradient(180deg, rgba(22, 26, 34, 0.99), rgba(22, 26, 34, 0.94));
+}
+
+.waterbodyPickListHint {
+  min-height: 17px;
+}
+
+.additionalToggle {
+  margin-top: 4px;
+}
+
+@media (max-width: 980px) {
+  .formGrid.primarySite,
+  .formGrid.coords,
+  .formGrid.textAreas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .newLocCard {
+    padding: 16px;
+  }
+
+  .formGrid.primarySite,
+  .formGrid.coords,
+  .formGrid.textAreas {
+    grid-template-columns: 1fr;
+  }
+
+  .waterbodyPickListDropdown {
+    max-height: 250px;
+  }
+}
+
+.locationSavedBanner{margin-top:18px;padding:14px 18px;border-radius:18px;background:rgba(20,83,45,.38);border:1px solid rgba(187,247,208,.22);color:#bbf7d0;font-weight:800}
+
+
+/* ============================================================
+   Dedicated native-style mobile step footer
+   ============================================================ */
+.mobileStepFooter {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  .desktopStepActions {
+    display: none !important;
+  }
+
+  .mobileStepFooter {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5000;
+
+    display: grid;
+    gap: 10px;
+
+    padding:
+      10px
+      max(12px, env(safe-area-inset-right, 0px))
+      max(10px, env(safe-area-inset-bottom, 0px))
+      max(12px, env(safe-area-inset-left, 0px));
+
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--vadma-card-bg, #20242b) 95%, transparent),
+        color-mix(in srgb, var(--vadma-card-bg, #111827) 98%, black)
+      );
+
+    border-top: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.14));
+
+    box-shadow:
+      0 -18px 38px rgba(0, 0, 0, 0.38),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+    backdrop-filter: blur(20px) saturate(145%);
+    -webkit-backdrop-filter: blur(20px) saturate(145%);
+  }
+
+  .mobileStepFooterSingle {
+    grid-template-columns: 1fr;
+  }
+
+  .mobileStepFooterSplit {
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  }
+
+  .mobileStepPrimaryAction,
+  .mobileStepSecondaryAction {
+    width: 100%;
+    min-width: 0;
+    min-height: 54px;
+    margin: 0;
+
+    border-radius: 16px;
+    padding: 12px 14px;
+
+    font: inherit;
+    font-size: 0.95rem;
+    font-weight: 950;
+    line-height: 1.15;
+
+    cursor: pointer;
+  }
+
+  .mobileStepPrimaryAction {
+    border: 0;
+
+    color: #111827 !important;
+
+    background:
+      linear-gradient(
+        135deg,
+        var(--vadma-accent, #ff9f43),
+        var(--vadma-accent-soft, #ffd29a)
+      ) !important;
+
+    box-shadow:
+      0 12px 26px
+      color-mix(in srgb, var(--vadma-accent, #ff9f43) 32%, transparent);
+  }
+
+  .mobileStepSecondaryAction {
+    color: var(--vadma-text, #f8fafc);
+
+    background:
+      color-mix(
+        in srgb,
+        var(--vadma-card-bg, rgba(31, 35, 42, 0.96)) 88%,
+        white
+      );
+
+    border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.14));
+  }
+
+  .mobileStepPrimaryAction:disabled,
+  .mobileStepSecondaryAction:disabled {
+    opacity: 0.58;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+}
+
+
+@media (max-width: 680px) {
+  .locationNewStep {
+    padding-bottom: calc(102px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .locationNewStep .basemapOptionsGroup {
+    grid-template-columns: 1fr 1fr auto;
+    align-items: center;
+    border-radius: 20px;
+  }
+
+  .locationNewStep .basemapOptionsLabel {
+    grid-column: 1 / -1;
+  }
+
+  .locationNewStep .basemapOptionButton {
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 10px;
+  }
+
+  .locationNewStep .newSiteCoordinateControls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 9px;
+
+    width: 100%;
+    margin: 12px 0 14px;
+    padding: 0;
+
+    border: 0;
+    border-radius: 0;
+
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .locationNewStep .newSiteCoordinateControls .coordinateModeButton {
+    width: 100%;
+    min-height: 52px;
+    padding: 11px 10px;
+    white-space: normal;
+  }
+
+  .locationNewStep .newSiteCoordinateControls .secondaryAction {
+    grid-column: 1 / -1;
+
+    width: 100%;
+    min-height: 52px;
+    margin: 0;
+    padding: 12px 14px;
+
+    border-radius: 16px;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 420px) {
+  .mobileStepFooterSplit {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  }
+
+  .mobileStepPrimaryAction,
+  .mobileStepSecondaryAction {
+    padding-inline: 10px;
+    font-size: 0.9rem;
+  }
+}
+
+
+/* ============================================================
+   Mobile validation/status message attached to the sticky footer
+   ============================================================ */
+@media (max-width: 680px) {
+  .locationNewStep .locationPageMessage {
+    display: none;
+  }
+
+  .locationNewStep:has(.mobileStepFooterWithMessage) {
+    padding-bottom: calc(158px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .locationNewStep .mobileStepFooterWithMessage {
+    grid-template-rows: auto auto;
+  }
+
+  .locationNewStep .mobileStepFooterMessage {
+    grid-column: 1 / -1;
+
+    display: flex;
+    align-items: center;
+
+    min-height: 42px;
+    padding: 10px 12px;
+
+    border-radius: 14px;
+
+    font-size: 0.84rem;
+    font-weight: 900;
+    line-height: 1.3;
+    text-align: left;
+
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 8px 20px rgba(0, 0, 0, 0.18);
+  }
+
+  .locationNewStep .mobileStepFooterMessageError {
+    color: #fecaca;
+    background: rgba(127, 29, 29, 0.88);
+    border: 1px solid rgba(254, 202, 202, 0.28);
+  }
+
+  .locationNewStep .mobileStepFooterMessageOk {
+    color: #bbf7d0;
+    background: rgba(20, 83, 45, 0.86);
+    border: 1px solid rgba(187, 247, 208, 0.24);
+  }
+}
+
+@media (max-width: 420px) {
+  .locationNewStep:has(.mobileStepFooterWithMessage) {
+    padding-bottom: calc(170px + env(safe-area-inset-bottom, 0px));
+  }
+}

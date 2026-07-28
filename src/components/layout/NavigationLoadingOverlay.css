@@ -1,0 +1,91 @@
+.navigation-loading-overlay {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  opacity: 0;
+  visibility: hidden;
+  background: rgba(6, 9, 13, 0.48);
+  transition:
+    opacity 80ms ease,
+    visibility 0s linear 80ms;
+  pointer-events: none;
+  contain: strict;
+}
+
+.navigation-loading-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 80ms ease,
+    visibility 0s linear 0s;
+  pointer-events: auto;
+  cursor: wait;
+}
+
+.navigation-loading-card {
+  min-width: 176px;
+  display: grid;
+  place-items: center;
+  gap: 7px;
+  padding: 20px 24px;
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.12));
+  border-radius: 16px;
+  color: var(--vadma-text, #f8fafc);
+  background: color-mix(
+    in srgb,
+    var(--vadma-panel-bg, #12171f) 96%,
+    black
+  );
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28);
+  text-align: center;
+  transform: translateZ(0);
+}
+
+.navigation-loading-spinner {
+  width: 32px;
+  height: 32px;
+  display: block;
+  box-sizing: border-box;
+  margin-bottom: 3px;
+  border: 3px solid
+    color-mix(in srgb, var(--vadma-accent, #ff9f43) 22%, transparent);
+  border-top-color: var(--vadma-accent, #ff9f43);
+  border-radius: 50%;
+  animation: navigationLoadingSpin 680ms linear infinite;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.navigation-loading-card strong {
+  font-size: 0.96rem;
+  font-weight: 900;
+}
+
+.navigation-loading-card > span:last-child {
+  color: var(--vadma-text-muted, rgba(255, 255, 255, 0.62));
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+@keyframes navigationLoadingSpin {
+  from {
+    transform: translateZ(0) rotate(0deg);
+  }
+
+  to {
+    transform: translateZ(0) rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navigation-loading-overlay {
+    transition: none;
+  }
+
+  .navigation-loading-spinner {
+    animation-duration: 1.4s;
+  }
+}

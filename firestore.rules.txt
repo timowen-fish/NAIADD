@@ -1,0 +1,82 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isActiveAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.active == true
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    match /sites/{siteId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
+      allow delete: if isActiveAdmin();
+    }
+
+    match /users/{userId} {
+
+      allow read: if isOwner(userId) || isActiveAdmin();
+
+      allow create: if isActiveAdmin()
+        || (
+          isOwner(userId)
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.role == "viewer"
+          && request.resource.data.active == true
+          && request.resource.data.keys().hasAll([
+            "uid","email","displayName","role","active",
+            "createdAt","updatedAt","lastLoginAt"
+          ])
+          && request.resource.data.keys().hasOnly([
+            "uid","email","displayName","role","active",
+            "createdAt","updatedAt","lastLoginAt"
+          ])
+        );
+
+      allow update: if isActiveAdmin()
+        || (
+          isOwner(userId)
+          && request.resource.data
+              .diff(resource.data)
+              .affectedKeys()
+              .hasOnly([
+                "email","displayName","updatedAt","lastLoginAt"
+              ])
+        );
+
+      allow delete: if isActiveAdmin();
+    }
+
+    match /submissions/{submissionId} {
+
+      allow read:
+        if isActiveAdmin()
+        || (
+          isSignedIn()
+          && resource.data.metadata.ownerUid == request.auth.uid
+        );
+
+      allow create:
+        if isSignedIn()
+        && request.resource.data.metadata.ownerUid == request.auth.uid
+        && request.resource.data.metadata.submittedByUid == request.auth.uid;
+
+      allow update:
+        if isActiveAdmin();
+
+      allow delete:
+        if isActiveAdmin();
+    }
+  }
+}

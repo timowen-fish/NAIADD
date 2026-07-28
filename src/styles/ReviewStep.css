@@ -1,0 +1,474 @@
+.reviewStep,
+.reviewStep * {
+  box-sizing: border-box;
+}
+
+.reviewStep {
+  width: 100%;
+  display: grid;
+  gap: 16px;
+  color: var(--vadma-text, #f8fafc);
+}
+
+.reviewProgressCard,
+.reviewCard,
+.reviewValidationCard,
+.reviewFooter {
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.12));
+  background:
+    radial-gradient(circle at top left, color-mix(in srgb, var(--vadma-accent, #ff9f43) 10%, transparent), transparent 22rem),
+    var(--vadma-card-bg, linear-gradient(180deg, rgba(42, 46, 54, 0.96), rgba(18, 21, 27, 0.94)));
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px) saturate(135%);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+}
+
+.reviewProgressCard {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border-radius: 26px;
+}
+
+.reviewKicker {
+  margin: 0 0 5px;
+  color: var(--vadma-accent-soft, #ffd29a);
+  font-size: 11px;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.reviewProgressCard h2,
+.reviewCard h2,
+.reviewValidationCard h2 {
+  margin: 0;
+  color: var(--vadma-text, #f8fafc);
+  font-weight: 950;
+  line-height: 1.1;
+}
+
+.reviewProgressCard h2 {
+  font-size: clamp(24px, 4vw, 36px);
+}
+
+.reviewProgressCard p:not(.reviewKicker) {
+  max-width: 760px;
+  margin: 8px 0 0;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.72));
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.reviewProgressChecks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.reviewProgressChecks span {
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 14px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.reviewProgressChecks .complete {
+  color: var(--vadma-accent-contrast, #111827);
+  background: linear-gradient(135deg, var(--vadma-accent, #ff9f43), var(--vadma-accent-soft, #ffd29a));
+}
+
+.reviewProgressChecks .complete::before {
+  content: "✓ ";
+}
+
+.reviewProgressChecks .incomplete {
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.68));
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+}
+
+.reviewCardGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.reviewCard,
+.reviewValidationCard {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+.reviewCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+}
+
+.reviewCardTitle {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reviewCardTitle > span {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: var(--vadma-accent-soft, #ffd29a);
+  background: color-mix(in srgb, var(--vadma-accent, #ff9f43) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--vadma-accent, #ff9f43) 28%, transparent);
+  font-size: 18px;
+  font-weight: 950;
+}
+
+.reviewCardHeader h2 {
+  font-size: 19px;
+}
+
+.reviewCardHeader > button {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.14));
+  border-radius: 999px;
+  color: var(--vadma-text, #f8fafc);
+  background: rgba(255, 255, 255, 0.07);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.reviewCardBody {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.reviewDefinition {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.reviewDefinition > span,
+.reviewMetric > span {
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.64));
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.reviewDefinition > strong,
+.reviewMetric > strong {
+  min-width: 0;
+  color: var(--vadma-text, #f8fafc);
+  font-size: 15px;
+  font-weight: 950;
+  overflow-wrap: anywhere;
+}
+
+.reviewDefinition .mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+.reviewCoordinateGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.reviewMapPreview {
+  position: relative;
+  min-height: 150px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  margin-top: 4px;
+  border-radius: 18px;
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+  background:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+    color-mix(in srgb, var(--vadma-card-bg, #111827) 78%, #020617);
+  background-size: 24px 24px;
+}
+
+.reviewMapPreview::before,
+.reviewMapPreview::after {
+  content: "";
+  position: absolute;
+  width: 130%;
+  height: 22px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--vadma-accent, #ff9f43) 18%, transparent);
+  transform: rotate(-14deg);
+}
+
+.reviewMapPreview::after {
+  transform: rotate(24deg) translateY(30px);
+  opacity: 0.5;
+}
+
+.reviewMapMarker {
+  position: relative;
+  z-index: 2;
+  color: var(--vadma-accent, #ff9f43);
+  font-size: 34px;
+  line-height: 1;
+  text-shadow: 0 0 0 8px color-mix(in srgb, var(--vadma-accent, #ff9f43) 16%, transparent), 0 10px 24px rgba(0,0,0,0.48);
+}
+
+.reviewMapPreview strong {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  z-index: 2;
+  color: var(--vadma-text-muted, rgba(226,232,240,0.76));
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.reviewMetricGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.reviewMetric {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  padding: 13px;
+  border-radius: 17px;
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.reviewMetric > strong {
+  font-size: 16px;
+}
+
+.reviewSpeciesSummary {
+  margin-top: 4px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.1));
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.reviewSpeciesSummary h3 {
+  margin: 0 0 10px;
+  color: var(--vadma-text, #f8fafc);
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.reviewSpeciesSummary p {
+  margin: 0;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.7));
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.reviewSpeciesRows {
+  display: grid;
+  gap: 7px;
+}
+
+.reviewSpeciesRows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--vadma-border, rgba(255, 255, 255, 0.08));
+}
+
+.reviewSpeciesRows > div:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.reviewSpeciesRows span {
+  min-width: 0;
+  color: var(--vadma-text, #f8fafc);
+  font-size: 13px;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.reviewSpeciesRows strong {
+  flex: 0 0 auto;
+  color: var(--vadma-accent-soft, #ffd29a);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.reviewValidationList {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.reviewValidationList button {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: 15px;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.reviewValidationList button > span {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  font-weight: 950;
+}
+
+.reviewValidationList button > strong {
+  min-width: 0;
+  color: var(--vadma-text, #f8fafc);
+  font-size: 13px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.reviewValidationList button > small {
+  color: inherit;
+  font-size: 11px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.reviewValidationList .complete {
+  color: #86efac;
+  border: 1px solid rgba(74, 222, 128, 0.22);
+  background: rgba(22, 163, 74, 0.1);
+}
+
+.reviewValidationList .complete > span {
+  background: rgba(74, 222, 128, 0.16);
+}
+
+.reviewValidationList .warning {
+  color: #fde68a;
+  border: 1px solid rgba(250, 204, 21, 0.24);
+  background: rgba(202, 138, 4, 0.11);
+}
+
+.reviewValidationList .warning > span {
+  background: rgba(250, 204, 21, 0.16);
+}
+
+.reviewValidationList .error {
+  color: #fca5a5;
+  border: 1px solid rgba(248, 113, 113, 0.24);
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.reviewValidationList .error > span {
+  background: rgba(248, 113, 113, 0.16);
+}
+
+.reviewFooter {
+  position: sticky;
+  bottom: 10px;
+  z-index: 20;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 22px;
+}
+
+.reviewFooter > div {
+  display: grid;
+  gap: 3px;
+}
+
+.reviewFooter strong {
+  color: var(--vadma-text, #f8fafc);
+  font-size: 15px;
+  font-weight: 950;
+}
+
+.reviewFooter span {
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.68));
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.reviewFooter button {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 16px;
+  color: var(--vadma-accent-contrast, #111827);
+  background: linear-gradient(135deg, var(--vadma-accent, #ff9f43), var(--vadma-accent-soft, #ffd29a));
+  font: inherit;
+  font-size: 14px;
+  font-weight: 950;
+  cursor: pointer;
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--vadma-accent, #ff9f43) 28%, transparent);
+}
+
+.reviewFooter button:disabled {
+  cursor: not-allowed;
+  color: var(--vadma-text-muted, rgba(226, 232, 240, 0.48));
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+
+@media (min-width: 760px) {
+  .reviewProgressCard {
+    grid-template-columns: minmax(0, 1fr) minmax(330px, 0.7fr);
+    align-items: center;
+    padding: 26px;
+  }
+
+  .reviewCardGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reviewCard.wide {
+    grid-column: 1 / -1;
+  }
+
+  .reviewMetricGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .reviewFooter {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    padding: 16px 18px;
+  }
+
+  .reviewFooter button {
+    width: auto;
+    min-width: 220px;
+  }
+}

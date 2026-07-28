@@ -1,0 +1,176 @@
+
+/* Responsive layout correction.
+   This patch overrides the original desktop grid before content becomes cramped. */
+
+.login-page {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.login-shell {
+  width: min(1500px, 100%);
+  grid-template-columns: minmax(0, 1fr) minmax(390px, 470px);
+  gap: clamp(28px, 3vw, 52px);
+}
+
+.login-brand-panel {
+  grid-template-columns: clamp(210px, 23vw, 347px) minmax(300px, 1fr);
+  gap: clamp(24px, 3vw, 44px);
+}
+
+.login-shield {
+  width: 100%;
+  max-width: 347px;
+}
+
+.login-brand-copy h1,
+.login-brand-copy p {
+  overflow-wrap: normal;
+  word-break: normal;
+  hyphens: none;
+}
+
+@media (max-width: 1320px) {
+  .login-page {
+    padding: 26px;
+  }
+
+  .login-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(370px, 430px);
+    gap: 28px;
+  }
+
+  .login-brand-panel {
+    grid-template-columns: clamp(190px, 22vw, 270px) minmax(280px, 1fr);
+    gap: 26px;
+  }
+
+  .login-brand-copy h1 {
+    font-size: clamp(2rem, 3vw, 3rem);
+  }
+
+  .login-feature-list {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+  }
+
+  .login-feature-pill {
+    justify-content: center;
+    min-width: 0;
+    text-align: center;
+  }
+}
+
+@media (max-width: 1050px) {
+  .login-page {
+    min-height: 100svh;
+    padding: 24px;
+    overflow: auto;
+  }
+
+  .login-shell {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 24px 0;
+  }
+
+  .login-brand-panel {
+    grid-template-columns: minmax(150px, 230px) minmax(0, 1fr);
+    width: min(850px, 100%);
+    margin: 0 auto;
+  }
+
+  .login-shield {
+    width: 100%;
+  }
+
+  .login-panel {
+    width: min(560px, 100%);
+    justify-self: center;
+  }
+}
+
+@media (max-width: 720px) {
+  .login-page {
+    padding: 16px;
+    background-position: center;
+  }
+
+  .login-shell {
+    gap: 22px;
+    padding: 10px 0 24px;
+  }
+
+  .login-brand-panel {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    text-align: center;
+  }
+
+  .login-shield {
+    width: min(190px, 52vw);
+    margin: 0 auto;
+  }
+
+  .login-brand-copy h1 {
+    max-width: 620px;
+    margin: 0 auto;
+    font-size: clamp(1.9rem, 8vw, 2.8rem);
+  }
+
+  .login-brand-copy p {
+    max-width: 590px;
+    margin: 15px auto 0;
+  }
+
+  .login-feature-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(520px, 100%);
+    margin: 22px auto 0;
+  }
+
+  .login-feature-pill,
+  .login-feature-pill:nth-child(5) {
+    grid-column: auto;
+    width: 100%;
+    min-height: 42px;
+    padding: 9px 13px;
+    font-size: 0.9rem;
+  }
+
+  .login-feature-pill:nth-child(5) {
+    grid-column: 1 / -1;
+  }
+
+  .login-panel {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 460px) {
+  .login-page {
+    padding: 10px;
+  }
+
+  .login-brand-copy h1 {
+    font-size: 1.85rem;
+  }
+
+  .login-brand-copy p {
+    font-size: 0.9rem;
+  }
+
+  .login-feature-list {
+    display: none;
+  }
+
+  .login-panel {
+    padding: 19px;
+    border-radius: 20px;
+  }
+
+  .login-panel-heading h2 {
+    font-size: 1.55rem;
+  }
+}
