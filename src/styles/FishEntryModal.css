@@ -508,7 +508,7 @@ thead .rowNumberCol {
 }
 
 
-/* VADMA specimen modal clean-up: keeps the table compact, covers the side nav,
+/* NAIADD specimen modal clean-up: keeps the table compact, covers the side nav,
    and replaces the browser datalist popup with a controlled pick-list. */
 .fishModalOverlay {
   z-index: 2147483000 !important;
@@ -821,7 +821,7 @@ thead .rowNumberCol {
   }
 }
 
-/* Final VADMA theme integration + compact reorder panel */
+/* Final NAIADD theme integration + compact reorder panel */
 .fishModalOverlay {
   color: var(--vadma-text, #f8fafc) !important;
   background:

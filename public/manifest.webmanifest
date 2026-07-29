@@ -1,7 +1,7 @@
 {
-  "name": "Virginia Aquatics Data Management Application",
-  "short_name": "VADMA",
-  "description": "Virginia Aquatics Data Management Application",
+  "name": "Nonindigenous Aquatic and Invasive Data Database",
+  "short_name": "NAIADD",
+  "description": "Nonindigenous Aquatic and Invasive Data Database",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#111827",

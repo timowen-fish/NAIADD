@@ -172,7 +172,7 @@ function normalizeLengthToMm(
     return length * 25.4;
   }
 
-  // VADMA specimen lengths are normally stored in millimeters.
+  // Legacy specimen lengths are normally stored in millimeters.
   return length;
 }
 

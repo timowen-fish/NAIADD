@@ -4,7 +4,7 @@ import L from "leaflet";
 import { booleanPointInPolygon, point } from "@turf/turf";
 import "leaflet/dist/leaflet.css";
 import type { UserProfile } from "../../types/user";
-import type { LocationRecord, SiteAccess } from "../../types/location";
+import type { LocationRecord } from "../../types/location";
 import { loadReferenceData } from "../../services/referenceDataService";
 import { createSite, saveCurrentLocation } from "../../services/siteService";
 import "../../styles/LocationStepNew.css";
@@ -36,13 +36,9 @@ const spatialLayers = {
     url: "/spatial/physiographic_provinces.geojson",
     fields: ["PROVINCE", "Province", "PHYS_PROV", "NAME", "Name"],
   },
-  huc6: {
-    url: "/spatial/huc06.geojson",
-    fields: ["HUC6Name", "HUC6", "huc6", "NAME", "Name", "BASIN_NAME"],
-  },
-  huc8: {
+  huc7: {
     url: "/spatial/huc08.geojson",
-    fields: ["HUC8Name", "HUC8", "huc8", "NAME", "Name", "SUBBASIN"],
+    fields: ["HUC8", "huc8", "HUC_8", "HUC08", "huc_8"],
   },
 } as const;
 
@@ -119,7 +115,26 @@ function Fly({ target }: { target: [number, number] | null }) { const map = useM
 function makeSiteId(profile: UserProfile) { const raw = (profile.email.split("@")[0] || profile.displayName || "USER").replace(/[^a-z0-9]/gi, "").toUpperCase(); const d = new Date(); const pad=(n:number)=>String(n).padStart(2,"0"); return `SITE_${raw}_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}_${crypto.randomUUID().slice(0,4).toUpperCase()}`; }
 
 export default function LocationStepNew({ profile, onBack, onLocationSaved }: Props) {
-  const [record, setRecord] = useState<LocationRecord>({ SiteID: makeSiteId(profile), SiteName:"", Waterbody:"", DownstreamLat:NaN, DownstreamLong:NaN, UpstreamLat:null, UpstreamLong:null, PrivatePublic:"Public", County:"", State:"", PhysiographicProvince:"", HUC6:"", HUC8:"", createdBy:profile.uid });
+  const [record, setRecord] = useState<LocationRecord>({
+    SiteID: makeSiteId(profile),
+    SiteName: "",
+    Waterbody: "",
+    LatitudeDD: Number.NaN,
+    LongitudeDD: Number.NaN,
+    DownstreamLat: Number.NaN,
+    DownstreamLong: Number.NaN,
+    UpstreamLat: null,
+    UpstreamLong: null,
+    LocDescription: "",
+    County: "",
+    State: "",
+    RiverBasin: "",
+    HUC7: "",
+    PhysiographicProvince: "",
+    RoadName: "",
+    RoadNumber: "",
+    createdBy: profile.uid,
+  });
   const [mode,setMode]=useState<Mode>("downstream"); const [basemap,setBasemap]=useState<Basemap>("satellite"); const [message,setMessage]=useState(""); const [harvestingSpatial,setHarvestingSpatial]=useState(false); const [saving,setSaving]=useState(false); const [showAdditional,setShowAdditional]=useState(false); const [waterbodies,setWaterbodies]=useState<string[]>([]); const [waterbodySearch,setWaterbodySearch]=useState(""); const [open,setOpen]=useState(false); const [flyTarget,setFlyTarget]=useState<[number,number]|null>(null);
   useEffect(()=>{ loadReferenceData().then((data)=>{ setWaterbodies(data.generalLists.waterbody ?? data.generalLists.Waterbody ?? data.generalLists.Waterbodies ?? []); }).catch(()=>setMessage("Waterbody reference data could not be loaded.")); },[]);
   const deferred=useDeferredValue(waterbodySearch); const options=useMemo(()=>{ const q=deferred.trim().toLowerCase(); if(q.length<2)return[]; return waterbodies.filter((v)=>v.toLowerCase().includes(q)).sort((a,b)=>Number(!a.toLowerCase().startsWith(q))-Number(!b.toLowerCase().startsWith(q))).slice(0,20); },[deferred,waterbodies]);
@@ -127,32 +142,61 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
   const update=<K extends keyof LocationRecord>(key:K,value:LocationRecord[K])=>setRecord((r)=>({...r,[key]:value}));
   async function harvestSpatialFields(lat: number, lng: number) {
     setHarvestingSpatial(true);
-    setMessage("Harvesting county, state, physiographic province, HUC6, and HUC8…");
+    setMessage("Harvesting county, state, physiographic province, and HUC 7…");
 
     try {
-      const [county, state, province, huc6, huc8] = await Promise.all([
-        findPolygonValue(spatialLayers.county.url, spatialLayers.county.fields, lat, lng),
-        findPolygonValue(spatialLayers.state.url, spatialLayers.state.fields, lat, lng),
-        findPolygonValue(spatialLayers.province.url, spatialLayers.province.fields, lat, lng),
-        findPolygonValue(spatialLayers.huc6.url, spatialLayers.huc6.fields, lat, lng),
-        findPolygonValue(spatialLayers.huc8.url, spatialLayers.huc8.fields, lat, lng),
+      const [county, stateValue, province, huc7] = await Promise.all([
+        findPolygonValue(
+          spatialLayers.county.url,
+          spatialLayers.county.fields,
+          lat,
+          lng,
+        ),
+        findPolygonValue(
+          spatialLayers.state.url,
+          spatialLayers.state.fields,
+          lat,
+          lng,
+        ),
+        findPolygonValue(
+          spatialLayers.province.url,
+          spatialLayers.province.fields,
+          lat,
+          lng,
+        ),
+        findPolygonValue(
+          spatialLayers.huc7.url,
+          spatialLayers.huc7.fields,
+          lat,
+          lng,
+        ),
       ]);
+
+      const stateAliases: Record<string, string> = {
+        Virginia: "VA",
+        Tennessee: "TN",
+        "North Carolina": "NC",
+        Maryland: "MD",
+        "West Virginia": "WV",
+        Kentucky: "KY",
+        Pennsylvania: "PA",
+        "District of Columbia": "DC",
+      };
+      const state = stateAliases[stateValue] ?? stateValue;
 
       setRecord((current) => ({
         ...current,
         County: county,
         State: state,
         PhysiographicProvince: province,
-        HUC6: huc6,
-        HUC8: huc8,
+        HUC7: huc7,
       }));
 
       const missing = [
         !county && "County",
         !state && "State",
         !province && "Physiographic Province",
-        !huc6 && "HUC6",
-        !huc8 && "HUC8",
+        !huc7 && "HUC 7",
       ].filter(Boolean);
 
       setMessage(
@@ -172,7 +216,15 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
 
   async function setPoint(which:Mode,lat:number,lng:number){
     if(which==="downstream") {
-      setRecord(r=>({...r,DownstreamLat:+lat.toFixed(6),DownstreamLong:+lng.toFixed(6)}));
+      const latitude = +lat.toFixed(6);
+      const longitude = +lng.toFixed(6);
+      setRecord((current) => ({
+        ...current,
+        LatitudeDD: latitude,
+        LongitudeDD: longitude,
+        DownstreamLat: latitude,
+        DownstreamLong: longitude,
+      }));
       await harvestSpatialFields(lat, lng);
     } else {
       setRecord(r=>({...r,UpstreamLat:+lat.toFixed(6),UpstreamLong:+lng.toFixed(6)}));
@@ -348,22 +400,6 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
               className="locked"
             />
           </label>
-
-          <label>
-            Public / Private
-            <select
-              value={record.PrivatePublic}
-              onChange={(event) =>
-                update(
-                  "PrivatePublic",
-                  event.target.value as SiteAccess,
-                )
-              }
-            >
-              <option>Public</option>
-              <option>Private</option>
-            </select>
-          </label>
         </div>
 
         <div className="formGrid primarySite">
@@ -440,12 +476,14 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
                   ? record.DownstreamLat
                   : ""
               }
-              onChange={(event) =>
-                update(
-                  "DownstreamLat",
-                  Number(event.target.value),
-                )
-              }
+              onChange={(event) => {
+                const value = Number(event.target.value);
+                setRecord((current) => ({
+                  ...current,
+                  LatitudeDD: value,
+                  DownstreamLat: value,
+                }));
+              }}
             />
           </label>
 
@@ -458,12 +496,14 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
                   ? record.DownstreamLong
                   : ""
               }
-              onChange={(event) =>
-                update(
-                  "DownstreamLong",
-                  Number(event.target.value),
-                )
-              }
+              onChange={(event) => {
+                const value = Number(event.target.value);
+                setRecord((current) => ({
+                  ...current,
+                  LongitudeDD: value,
+                  DownstreamLong: value,
+                }));
+              }}
             />
           </label>
 
@@ -504,22 +544,11 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
           <label>
             Location Description
             <textarea
-              value={record.LocationDesc ?? ""}
+              value={record.LocDescription ?? ""}
               onChange={(event) =>
-                update("LocationDesc", event.target.value)
+                update("LocDescription", event.target.value)
               }
               placeholder="Describe the sampling reach or recognizable landmarks."
-            />
-          </label>
-
-          <label>
-            Access Information
-            <textarea
-              value={record.AccessInfo ?? ""}
-              onChange={(event) =>
-                update("AccessInfo", event.target.value)
-              }
-              placeholder="Parking, gate, landowner, or access instructions."
             />
           </label>
         </div>
@@ -541,15 +570,25 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
                 [
                   "County",
                   "State",
+                  "RiverBasin",
+                  "HUC7",
                   "PhysiographicProvince",
-                  "HUC6",
-                  "HUC8",
+                  "RoadName",
+                  "RoadNumber",
                 ] as const
               ).map((field) => (
                 <label key={field}>
                   {field === "PhysiographicProvince"
                     ? "Physiographic Province"
-                    : field}
+                    : field === "RiverBasin"
+                      ? "River Basin"
+                      : field === "HUC7"
+                        ? "HUC 7"
+                        : field === "RoadName"
+                          ? "Road Name"
+                          : field === "RoadNumber"
+                            ? "Road Number"
+                            : field}
                   <input
                     value={(record[field] as string) || ""}
                     onChange={(event) =>
@@ -592,16 +631,20 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
                   SiteID: makeSiteId(profile),
                   SiteName: "",
                   Waterbody: "",
-                  DownstreamLat: NaN,
-                  DownstreamLong: NaN,
+                  LatitudeDD: Number.NaN,
+                  LongitudeDD: Number.NaN,
+                  DownstreamLat: Number.NaN,
+                  DownstreamLong: Number.NaN,
                   UpstreamLat: null,
                   UpstreamLong: null,
-                  PrivatePublic: "Public",
+                  LocDescription: "",
                   County: "",
                   State: "",
+                  RiverBasin: "",
+                  HUC7: "",
                   PhysiographicProvince: "",
-                  HUC6: "",
-                  HUC8: "",
+                  RoadName: "",
+                  RoadNumber: "",
                   createdBy: profile.uid,
                 });
                 setWaterbodySearch("");
@@ -653,16 +696,20 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
               SiteID: makeSiteId(profile),
               SiteName: "",
               Waterbody: "",
-              DownstreamLat: NaN,
-              DownstreamLong: NaN,
+              LatitudeDD: Number.NaN,
+              LongitudeDD: Number.NaN,
+              DownstreamLat: Number.NaN,
+              DownstreamLong: Number.NaN,
               UpstreamLat: null,
               UpstreamLong: null,
-              PrivatePublic: "Public",
+              LocDescription: "",
               County: "",
               State: "",
+              RiverBasin: "",
+              HUC7: "",
               PhysiographicProvince: "",
-              HUC6: "",
-              HUC8: "",
+              RoadName: "",
+              RoadNumber: "",
               createdBy: profile.uid,
             });
             setWaterbodySearch("");

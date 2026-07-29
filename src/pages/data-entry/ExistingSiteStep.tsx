@@ -11,7 +11,7 @@ import "leaflet/dist/leaflet.css";
 
 import type { LocationRecord } from "../../types/location";
 import { saveCurrentLocation } from "../../services/siteService";
-import { readCachedVadmaSnapshotRows } from "../../services/snapshotService";
+import { readSnapshotRows } from "../../services/snapshotService";
 
 import "../../styles/ExistingSiteStep.css";
 
@@ -40,9 +40,9 @@ type SiteRecord = LocationTable & {
 
 const virginiaCenter: [number, number] = [37.55, -78.6];
 
-const SITES_CACHE_KEY = "vadma_existing_sites_cache_v3";
-const SITES_CACHE_TIME_KEY = "vadma_existing_sites_cached_at_v3";
-const SITES_CACHE_VERSION = 2;
+const SITES_CACHE_KEY = "naiadd_existing_sites_cache_v1";
+const SITES_CACHE_TIME_KEY = "naiadd_existing_sites_cached_at_v1";
+const SITES_CACHE_VERSION = 1;
 
 type CachedSitesPackage = {
   version: number;
@@ -52,29 +52,44 @@ type CachedSitesPackage = {
 
 const SNAPSHOT_SITE_COLUMNS = [
   "SiteID",
+  "SiteID_AccessDB",
+  "SiteID_Previous",
+  "SiteName",
+  "Waterbody",
+  "County",
+  "State",
+  "RiverBasin",
+  "HUC7",
+  "PhysiographicProvince",
+  "RoadName",
+  "RoadNumber",
+  "LocDescription",
+  "LatitudeDD",
+  "LongitudeDD",
+  "DownstreamLat",
+  "DownstreamLong",
+  "UpstreamLat",
+  "UpstreamLong",
+
+  // Read-only migration aliases supported when older rows remain in the
+  // unified snapshot. These are normalized into NAIADD fields below and are
+  // never written back to the current-location cache.
   "Site_Id",
   "siteID",
   "siteId",
-  "SiteName",
   "Site_Name",
   "Locality",
   "Station",
   "StationName",
-  "Waterbody",
   "Stream",
   "WaterbodyName",
-  "County",
   "CountyName",
   "LocationDesc",
   "LocationDescription",
   "Description",
-  "DownstreamLat",
   "DownstreamLatitude",
-  "DownstreamLong",
   "DownstreamLongitude",
-  "UpstreamLat",
   "UpstreamLatitude",
-  "UpstreamLong",
   "UpstreamLongitude",
   "Latitude",
   "Longitude",
@@ -176,7 +191,19 @@ function deriveSitesFromSnapshotRows(
     "waterbodyName",
   ];
   const countyKeys = ["County", "county", "CountyName"];
+  const stateKeys = ["State", "state"];
+  const riverBasinKeys = ["RiverBasin", "riverBasin", "Basin"];
+  const huc7Keys = ["HUC7", "huc7", "HUC8", "huc8"];
+  const provinceKeys = [
+    "PhysiographicProvince",
+    "physiographicProvince",
+    "Province",
+  ];
+  const roadNameKeys = ["RoadName", "roadName"];
+  const roadNumberKeys = ["RoadNumber", "roadNumber"];
   const locationDescKeys = [
+    "LocDescription",
+    "locDescription",
     "LocationDesc",
     "locationDesc",
     "LocationDescription",
@@ -188,6 +215,8 @@ function deriveSitesFromSnapshotRows(
     "downstreamLat",
     "DownstreamLatitude",
     "downstreamLatitude",
+    "LatitudeDD",
+    "latitudeDD",
     "Latitude",
     "latitude",
     "Lat",
@@ -201,6 +230,8 @@ function deriveSitesFromSnapshotRows(
     "downstreamLong",
     "DownstreamLongitude",
     "downstreamLongitude",
+    "LongitudeDD",
+    "longitudeDD",
     "Longitude",
     "longitude",
     "Long",
@@ -230,7 +261,13 @@ function deriveSitesFromSnapshotRows(
     const siteName =
       getObjectString(row, siteNameKeys) || waterbody || rawSiteId;
     const county = getObjectString(row, countyKeys);
-    const locationDesc = getObjectString(row, locationDescKeys);
+    const state = getObjectString(row, stateKeys);
+    const riverBasin = getObjectString(row, riverBasinKeys);
+    const huc7 = getObjectString(row, huc7Keys);
+    const physiographicProvince = getObjectString(row, provinceKeys);
+    const roadName = getObjectString(row, roadNameKeys);
+    const roadNumber = getObjectString(row, roadNumberKeys);
+    const locDescription = getObjectString(row, locationDescKeys);
     const downstreamLat = getObjectNumber(row, downstreamLatKeys);
     const downstreamLong = getObjectNumber(row, downstreamLongKeys);
 
@@ -261,15 +298,15 @@ function deriveSitesFromSnapshotRows(
       const existingWaterbody = asString((existing as any).Waterbody).trim();
       const existingCounty = asString((existing as any).County).trim();
       const existingLocationDesc = asString(
-        (existing as any).LocationDesc,
+        (existing as any).LocDescription,
       ).trim();
 
       if (!existingSiteName && siteName) (existing as any).SiteName = siteName;
       if (!existingWaterbody && waterbody)
         (existing as any).Waterbody = waterbody;
       if (!existingCounty && county) (existing as any).County = county;
-      if (!existingLocationDesc && locationDesc)
-        (existing as any).LocationDesc = locationDesc;
+      if (!existingLocationDesc && locDescription)
+        (existing as any).LocDescription = locDescription;
 
       return;
     }
@@ -280,16 +317,19 @@ function deriveSitesFromSnapshotRows(
       SiteName: siteName || siteId,
       Waterbody: waterbody,
       County: county,
+      State: state,
+      RiverBasin: riverBasin,
+      HUC7: huc7,
+      PhysiographicProvince: physiographicProvince,
+      RoadName: roadName,
+      RoadNumber: roadNumber,
+      LocDescription: locDescription,
+      LatitudeDD: downstreamLat,
+      LongitudeDD: downstreamLong,
       DownstreamLat: downstreamLat,
       DownstreamLong: downstreamLong,
       UpstreamLat: getObjectNumber(row, upstreamLatKeys),
       UpstreamLong: getObjectNumber(row, upstreamLongKeys),
-      LocationDesc: locationDesc,
-      PrivatePublic:
-        asString((row as Record<string, unknown>).PrivatePublic).trim() ===
-        "Private"
-          ? "Private"
-          : "Public",
     } as LocationTable);
   });
 
@@ -348,17 +388,39 @@ function cleanSites(data: LocationTable[]): SiteRecord[] {
       const siteName = asString((rawSite as any).SiteName);
       const waterbody = asString((rawSite as any).Waterbody);
       const county = asString((rawSite as any).County);
-      const lat = asNumber((rawSite as any).DownstreamLat);
-      const lng = asNumber((rawSite as any).DownstreamLong);
+      const lat = asNumber(
+        (rawSite as any).DownstreamLat ?? (rawSite as any).LatitudeDD,
+      );
+      const lng = asNumber(
+        (rawSite as any).DownstreamLong ?? (rawSite as any).LongitudeDD,
+      );
 
       return {
-        ...rawSite,
         SiteID: siteId,
+        SiteID_AccessDB: asString((rawSite as any).SiteID_AccessDB) || undefined,
+        SiteID_Previous: asString((rawSite as any).SiteID_Previous) || undefined,
         SiteName: siteName,
         Waterbody: waterbody,
         County: county,
+        State: asString((rawSite as any).State),
+        RiverBasin: asString((rawSite as any).RiverBasin),
+        HUC7: asString((rawSite as any).HUC7),
+        PhysiographicProvince: asString(
+          (rawSite as any).PhysiographicProvince,
+        ),
+        RoadName: asString((rawSite as any).RoadName),
+        RoadNumber: asString((rawSite as any).RoadNumber),
+        LocDescription: asString((rawSite as any).LocDescription),
+        LatitudeDD: lat,
+        LongitudeDD: lng,
         DownstreamLat: lat,
         DownstreamLong: lng,
+        UpstreamLat: Number.isFinite(asNumber((rawSite as any).UpstreamLat))
+          ? asNumber((rawSite as any).UpstreamLat)
+          : null,
+        UpstreamLong: Number.isFinite(asNumber((rawSite as any).UpstreamLong))
+          ? asNumber((rawSite as any).UpstreamLong)
+          : null,
         DraftSource: (rawSite as any).DraftSource,
         PendingSourceFileId: (rawSite as any).PendingSourceFileId,
         PendingSourceFileName: (rawSite as any).PendingSourceFileName,
@@ -499,11 +561,6 @@ function ExistingSiteStep({
   });
 
   useEffect(() => {
-    localStorage.removeItem("vadma_existing_sites_cache_v1");
-    localStorage.removeItem("vadma_existing_sites_cached_at_v1");
-    localStorage.removeItem("vadma_existing_sites_cache_v2");
-    localStorage.removeItem("vadma_existing_sites_cached_at_v2");
-
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -524,7 +581,7 @@ function ExistingSiteStep({
       setSites(cleaned);
       setDataSource("cached");
       setSiteStatusMessage(
-        `Loaded ${cleaned.length.toLocaleString()} cached official site(s)${
+        `Loaded ${cleaned.length.toLocaleString()} cached NAIADD site(s)${
           getCachedSitesTime() ? ` from ${getCachedSitesTime()}` : ""
         }.`,
       );
@@ -534,7 +591,7 @@ function ExistingSiteStep({
     setSites([]);
     setDataSource("empty");
     setSiteStatusMessage(
-      "No cached official snapshot site index is available yet. Use Refresh Sites once while online after syncing the production snapshot.",
+      "No cached NAIADD snapshot site index is available yet. Use Refresh Sites once while online after syncing the NAIADD production snapshot.",
     );
   }
 
@@ -547,10 +604,10 @@ function ExistingSiteStep({
     if (refreshingSites) return;
 
     setRefreshingSites(true);
-    setSiteStatusMessage("Refreshing sites from the cached production snapshot…");
+    setSiteStatusMessage("Refreshing sites from the cached NAIADD production snapshot…");
 
     try {
-      const snapshotRows = await readCachedVadmaSnapshotRows({
+      const snapshotRows = await readSnapshotRows({
         columns: [...SNAPSHOT_SITE_COLUMNS],
       });
 
@@ -558,7 +615,7 @@ function ExistingSiteStep({
 
       if (snapshotSites.length === 0) {
         throw new Error(
-          "The cached production snapshot did not contain usable site records. Sync the production snapshot from the Home Dashboard first.",
+          "The cached NAIADD production snapshot did not contain usable site records. Sync the NAIADD production snapshot from the Home Dashboard first.",
         );
       }
 
@@ -576,7 +633,7 @@ function ExistingSiteStep({
       setSites(cleaned);
       setDataSource("snapshot");
       setSiteStatusMessage(
-        `Refreshed ${cleaned.length.toLocaleString()} unique sites from the cached production snapshot.`,
+        `Refreshed ${cleaned.length.toLocaleString()} unique sites from the cached NAIADD production snapshot.`,
       );
     } catch (error) {
       console.warn("Unable to refresh existing site cache:", error);
@@ -700,7 +757,7 @@ function ExistingSiteStep({
     <main className="app existingSitePage">
       {(dataSource === "cached" || !isOnline) && (
         <div className="existingSiteOfflineNotice">
-          Using the locally cached official site index. Basemap tiles may be
+          Using the locally cached NAIADD site index. Basemap tiles may be
           limited to areas previously viewed.
         </div>
       )}
@@ -734,7 +791,7 @@ function ExistingSiteStep({
           <div>
             <h2>Search Sites</h2>
             <p className="thinText">
-              {sites.length.toLocaleString()} official Virginia site
+              {sites.length.toLocaleString()} NAIADD site
               {sites.length === 1 ? "" : "s"} loaded.
             </p>
           </div>
@@ -979,6 +1036,16 @@ function ExistingSiteStep({
             <div>
               <small>County</small>
               <strong>{selectedSite.County || "—"}</strong>
+            </div>
+
+            <div>
+              <small>State</small>
+              <strong>{selectedSite.State || "—"}</strong>
+            </div>
+
+            <div>
+              <small>River Basin</small>
+              <strong>{selectedSite.RiverBasin || "—"}</strong>
             </div>
 
             <div>

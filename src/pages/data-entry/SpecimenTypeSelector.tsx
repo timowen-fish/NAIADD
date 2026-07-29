@@ -11,25 +11,37 @@ type SpecimenTypeOption = {
 
 const specimenTypes: SpecimenTypeOption[] = [
   {
-    id: "standard",
-    icon: "🐟",
-    title: "Standard Fish Processing",
-    subtitle: "Individual fish measurements and biological observations",
-    details: ["Length and weight", "Traits and condition", "Tags, tissue, and otoliths"],
+    id: "standard_mussel",
+    icon: "◒",
+    title: "Standard Mussel Processing",
+    subtitle: "Individual mussel measurements and biological observations",
+    details: [
+      "Species and quantity",
+      "Measurements and condition",
+      "Tags, tissue, and comments",
+    ],
   },
   {
-    id: "gillnet",
-    icon: "🎣",
-    title: "Gill Net Survey",
-    subtitle: "Net deployment, panel catches, and fish processing",
-    details: ["Nets and panels", "Bar mesh and gear details", "Set and pull information"],
+    id: "quads",
+    icon: "▦",
+    title: "Quads",
+    subtitle: "Quadrat-based mussel processing using the standard entry form",
+    details: [
+      "Quad and replicate groups",
+      "Individual or batch records",
+      "Ready for a dedicated quad form later",
+    ],
   },
   {
-    id: "cm_tally",
-    icon: "📏",
-    title: "Centimeter Tally",
-    subtitle: "Rapid species counts organized by centimeter class",
-    details: ["Species tally grid", "Centimeter length classes", "Fast quantity entry"],
+    id: "musselrama",
+    icon: "◉",
+    title: "Musselrama",
+    subtitle: "Musselrama observations using the standard entry form",
+    details: [
+      "Station and pass groups",
+      "Individual or batch records",
+      "Ready for a dedicated form later",
+    ],
   },
 ];
 
@@ -57,7 +69,7 @@ export default function SpecimenTypeSelector({
         <div>
           <p>Step 3 — Biological Observations</p>
           <h1>Select Specimen Entry Method</h1>
-          <span>Choose the form that matches how this survey was sampled.</span>
+          <span>Choose the mussel-processing workflow used for this survey.</span>
         </div>
       </section>
 
@@ -94,7 +106,7 @@ export default function SpecimenTypeSelector({
         <div className="specimen-type-actions">
           <div>
             {selectedType ? (
-              <span>A specimen entry method is selected.</span>
+              <span>A mussel-processing method is selected.</span>
             ) : (
               <span>Select one method to continue.</span>
             )}

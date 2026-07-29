@@ -1,6 +1,7 @@
 {
   "projects": {
-    "Rules": "vadma2"
+    "Rules": "vadma2",
+    "TimOwenNAIADD": "naiadd"
   },
   "targets": {},
   "etags": {}

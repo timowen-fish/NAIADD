@@ -30,7 +30,7 @@ export default function PreferencesPage() {
           <p>Personalization</p>
           <h1>Preferences</h1>
           <span>
-            Choose the application theme used across VADMA. Changes apply
+            Choose the application theme used across NAIADD. Changes apply
             immediately and remain selected on this device.
           </span>
         </div>
@@ -40,7 +40,7 @@ export default function PreferencesPage() {
         <div className="preferences-section-heading">
           <div>
             <p>Appearance</p>
-            <h2 id="theme-heading">VADMA Theme</h2>
+            <h2 id="theme-heading">NAIADD Theme</h2>
           </div>
           <span>{VADMA_THEMES.length} available themes</span>
         </div>

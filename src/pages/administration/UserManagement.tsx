@@ -40,7 +40,7 @@ function getDisplayName(user: UserProfile): string {
     return explicitName;
   }
 
-  const emailName = user.email.split("@")[0] ?? "VADMA User";
+  const emailName = user.email.split("@")[0] ?? "NAIADD User";
 
   return emailName
     .split(/[._-]+/)
@@ -345,7 +345,7 @@ export default function UserManagement({
       <PageHeader
         eyebrow="Administration"
         title="User Management"
-        description="Manage VADMA user roles, display names, and account status."
+        description="Manage NAIADD user roles, display names, and account status."
         actions={
           <SecondaryButton onClick={onBack}>
             ← Administration

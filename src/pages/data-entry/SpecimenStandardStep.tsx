@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import FishEntryModal, { type FishRow } from "./FishEntryModal";
+import type { SpecimenFormType } from "../../types/surveySession";
 import "../../styles/SpecimenStandardStep.css";
 
-export type FishObservationTable = {
+export type MusselObservationTable = {
   SiteID?: string;
   CustomRunName?: string;
   RunN?: number;
@@ -43,6 +44,9 @@ export type FishObservationTable = {
   Comments?: string;
 };
 
+// Compatibility alias for existing workflow code during the NAIADD migration.
+export type FishObservationTable = MusselObservationTable;
+
 type LengthType = "Fork Length" | "Total Length";
 type LengthUnit = "Millimeter" | "Centimeter Class";
 type WeightUnit = "Grams" | "Kilograms";
@@ -58,6 +62,7 @@ type RunData = {
 };
 
 type Props = {
+  processingType?: SpecimenFormType;
   siteID?: string;
   onBack: () => void;
   onContinueToSaveDraft?: (rows: FishObservationTable[]) => void;
@@ -264,12 +269,46 @@ const allOptionalColumns: OptionalColumn[] = [
   { key: "Comments", label: "Comments" },
 ];
 
+type ProcessingConfiguration = {
+  title: string;
+  icon: string;
+  sampleGroupLabel: string;
+  subsampleLabel: string;
+  intro: string;
+};
+
+const PROCESSING_CONFIG: Record<SpecimenFormType, ProcessingConfiguration> = {
+  standard_mussel: {
+    title: "Standard Mussel Processing",
+    icon: "◒",
+    sampleGroupLabel: "Sample Group",
+    subsampleLabel: "Pass",
+    intro: "Enter mussel observations by sample group and pass.",
+  },
+  quads: {
+    title: "Quads",
+    icon: "▦",
+    sampleGroupLabel: "Quad",
+    subsampleLabel: "Replicate",
+    intro: "Enter quadrat observations using the standard mussel-processing form.",
+  },
+  musselrama: {
+    title: "Musselrama",
+    icon: "◉",
+    sampleGroupLabel: "Station",
+    subsampleLabel: "Pass",
+    intro: "Enter Musselrama observations using the standard mussel-processing form.",
+  },
+};
+
 export default function SpecimenStandardStep({
+  processingType = "standard_mussel",
   siteID,
   onBack,
   onContinueToSaveDraft,
   draftFishRows = [],
 }: Props) {
+  const processingConfig = PROCESSING_CONFIG[processingType];
   const [runsCount, setRunsCount] = useState(1);
   const [passesCount, setPassesCount] = useState(1);
 
@@ -342,7 +381,7 @@ export default function SpecimenStandardStep({
       reductionWouldClearData(safeRuns, safePasses)
     ) {
       const confirmed = window.confirm(
-        "Are you sure? Reducing the number of runs or passes will clear fish data from removed tables.",
+        "Are you sure? Reducing the number of runs or passes will clear mussel data from removed tables.",
       );
 
       if (!confirmed) return false;
@@ -568,35 +607,35 @@ export default function SpecimenStandardStep({
       </button>
 
       <section className="standardHero">
-        <div className="standardHeroIcon">🐟</div>
+        <div className="standardHeroIcon">{processingConfig.icon}</div>
 
         <div className="standardHeroText">
           <p className="stepKicker">Step 3 — Biological Observations</p>
-          <h1>Species Data — Standard Form</h1>
-          <p>Enter biological observations by run and pass.</p>
+          <h1>{processingConfig.title}</h1>
+          <p>{processingConfig.intro}</p>
         </div>
       </section>
 
       <section className="sampleControlCard">
         {draftFishRows.length > 0 && (
           <div className="importedDraftNotice">
-            <strong>Draft fish data loaded.</strong> Existing fish observations
+            <strong>Draft mussel data loaded.</strong> Existing mussel observations
             were imported from the active draft. Open any saved pass below to
-            edit, add, or remove records in the fish modal.
+            edit, add, or remove records in the mussel modal.
           </div>
         )}
 
         <div className="sampleControlHeader">
           <h2>Sample Details</h2>
           <p>
-            Set the number of runs, passes, and measurement units for this
+            Set the number of sample groups, subsamples, and measurement units for this
             survey event.
           </p>
         </div>
 
         <div className="counterGrid">
           <div className="counterBox">
-            <span>Number of Runs</span>
+            <span>Number of {processingConfig.sampleGroupLabel}s</span>
 
             <div className="counterControls">
               <button type="button" onClick={() => changeRuns(-1)}>
@@ -612,7 +651,7 @@ export default function SpecimenStandardStep({
           </div>
 
           <div className="counterBox">
-            <span>Number of Passes</span>
+            <span>Number of {processingConfig.subsampleLabel}s</span>
 
             <div className="counterControls">
               <button type="button" onClick={() => changePasses(-1)}>
@@ -667,8 +706,8 @@ export default function SpecimenStandardStep({
 
       <section className="runsShell">
         <div className="sectionTitleBlock">
-          <h2>Runs & Passes</h2>
-          <p>Open each pass to enter fish observations.</p>
+          <h2>{processingConfig.sampleGroupLabel}s &amp; {processingConfig.subsampleLabel}s</h2>
+          <p>Open each {processingConfig.subsampleLabel.toLowerCase()} to enter mussel observations.</p>
         </div>
 
         <div className="runsStack">
@@ -676,12 +715,12 @@ export default function SpecimenStandardStep({
             <section key={runIndex} className="runGroup">
               <div className="runGroupHeader">
                 <div className="runGroupTitle">
-                  <span className="runBadge">Run {runIndex + 1}</span>
-                  <p>All passes below belong to this run.</p>
+                  <span className="runBadge">{processingConfig.sampleGroupLabel} {runIndex + 1}</span>
+                  <p>All {processingConfig.subsampleLabel.toLowerCase()}s below belong to this {processingConfig.sampleGroupLabel.toLowerCase()}.</p>
                 </div>
 
                 <label className="runNBox">
-                  CustomRunName
+                  {processingConfig.sampleGroupLabel} Name
                   <input
                     value={run.customRunName}
                     onChange={(e) => {
@@ -703,7 +742,7 @@ export default function SpecimenStandardStep({
                 {run.passes.map((pass, passIndex) => (
                   <article key={passIndex} className="passPanel">
                     <div className="passPanelHeader">
-                      <h3>Pass {passIndex + 1}</h3>
+                      <h3>{processingConfig.subsampleLabel} {passIndex + 1}</h3>
 
                       <span
                         className={
@@ -756,8 +795,8 @@ export default function SpecimenStandardStep({
                       className="modernAddFishButton"
                       onClick={() => openModal(runIndex, passIndex)}
                     >
-                      <span>🐟</span>
-                      Add Fish
+                      <span>◒</span>
+                      Add Mussels
                     </button>
                   </article>
                 ))}
@@ -768,11 +807,11 @@ export default function SpecimenStandardStep({
       </section>
 
       <section className="finalSpecimenCard">
-        <h2>Final Specimen Datasheet</h2>
+        <h2>Final Mussel Datasheet</h2>
 
         <div className="specimenSummaryGrid">
           <div className="summaryCard">
-            <span>Number of Species</span>
+            <span>Number of Mussel Species</span>
             <strong>{speciesSummary.length}</strong>
           </div>
 
@@ -796,10 +835,10 @@ export default function SpecimenStandardStep({
         </div>
 
         <div className="speciesQuantitySummary">
-          <h3>Quantity Total by Species</h3>
+          <h3>Mussel Quantity by Species</h3>
 
           {speciesSummary.length === 0 ? (
-            <p>No fish entered yet.</p>
+            <p>No mussels entered yet.</p>
           ) : (
             <div className="speciesSummaryPills">
               {speciesSummary.map((species) => (

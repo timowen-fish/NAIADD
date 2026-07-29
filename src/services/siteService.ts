@@ -7,15 +7,17 @@ import {
 } from "firebase/firestore";
 
 import { db } from "../firebase";
-import type { LocationRecord, SiteAccess } from "../types/location";
-import { readCachedVadmaSnapshotRows } from "./snapshotService";
+import type { LocationRecord } from "../types/location";
+import { readSnapshotRows } from "./snapshotService";
 
 const SITES_COLLECTION = "sites";
-const CURRENT_LOCATION_KEY = "vadma2.currentLocation";
-const SITE_CACHE_KEY = "vadma2.sites.cache.v2";
+const CURRENT_LOCATION_KEY = "naiadd.currentLocation";
+const SITE_CACHE_KEY = "naiadd.sites.cache.v2";
 
 const SNAPSHOT_SITE_COLUMNS = [
   "SiteID",
+  "SiteID_AccessDB",
+  "SiteID_Previous",
   "Site_Id",
   "siteID",
   "siteId",
@@ -37,10 +39,21 @@ const SNAPSHOT_SITE_COLUMNS = [
   "County",
   "county",
   "CountyName",
+  "State",
+  "RiverBasin",
+  "Basin",
+  "HUC7",
+  "HUC8",
+  "PhysiographicProvince",
+  "RoadName",
+  "RoadNumber",
+  "LocDescription",
   "LocationDesc",
   "locationDesc",
   "LocationDescription",
   "Description",
+  "LatitudeDD",
+  "LongitudeDD",
   "DownstreamLat",
   "downstreamLat",
   "DownstreamLatitude",
@@ -69,12 +82,6 @@ const SNAPSHOT_SITE_COLUMNS = [
   "UpstreamLong",
   "upstreamLong",
   "UpstreamLongitude",
-  "PrivatePublic",
-  "Access",
-  "State",
-  "PhysiographicProvince",
-  "HUC6",
-  "HUC8",
 ] as const;
 
 type SnapshotRow = Record<string, unknown>;
@@ -85,11 +92,19 @@ function asString(value: unknown): string {
 }
 
 function asNumber(value: unknown): number {
-  const numberValue = Number(value);
-  return Number.isFinite(numberValue) ? numberValue : Number.NaN;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
-function getValue(row: SnapshotRow, keys: readonly string[]): unknown {
+function finiteOrNull(value: unknown): number | null {
+  const parsed = asNumber(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getValue(
+  row: SnapshotRow,
+  keys: readonly string[],
+): unknown {
   for (const key of keys) {
     if (Object.prototype.hasOwnProperty.call(row, key)) {
       return row[key];
@@ -111,19 +126,24 @@ function getValue(row: SnapshotRow, keys: readonly string[]): unknown {
   return undefined;
 }
 
-function getString(row: SnapshotRow, keys: readonly string[]): string {
+function getString(
+  row: SnapshotRow,
+  keys: readonly string[],
+): string {
   return asString(getValue(row, keys));
 }
 
-function getNumber(row: SnapshotRow, keys: readonly string[]): number {
+function getNumber(
+  row: SnapshotRow,
+  keys: readonly string[],
+): number {
   return asNumber(getValue(row, keys));
 }
 
-function normalizeAccess(value: unknown): SiteAccess {
-  return asString(value).toLowerCase() === "private" ? "Private" : "Public";
-}
-
-function isVirginiaCoordinate(latitude: number, longitude: number): boolean {
+function isVirginiaCoordinate(
+  latitude: number,
+  longitude: number,
+): boolean {
   return (
     Number.isFinite(latitude) &&
     Number.isFinite(longitude) &&
@@ -134,149 +154,223 @@ function isVirginiaCoordinate(latitude: number, longitude: number): boolean {
   );
 }
 
-function fallbackSiteId(latitude: number, longitude: number): string {
+function fallbackSiteId(
+  latitude: number,
+  longitude: number,
+): string {
   const latPart = Math.round(latitude * 1_000_000);
   const longPart = Math.round(longitude * 1_000_000);
 
   return `SITE_${Math.abs(latPart * 31 + longPart)}`;
 }
 
-function snapshotRowsToSites(rows: SnapshotRow[]): LocationRecord[] {
-  const sitesById = new Map<string, LocationRecord>();
+function normalizeState(value: string): string {
+  const aliases: Record<string, string> = {
+    Virginia: "VA",
+    Tennessee: "TN",
+    "North Carolina": "NC",
+    Maryland: "MD",
+    "West Virginia": "WV",
+    Kentucky: "KY",
+    Pennsylvania: "PA",
+    "District of Columbia": "DC",
+  };
 
-  for (const row of rows) {
-    const waterbody = getString(row, [
-      "Waterbody",
-      "waterbody",
-      "Stream",
-      "stream",
-      "WaterbodyName",
-    ]);
+  return aliases[value] ?? value;
+}
 
-    const siteIdFromRow = getString(row, [
-      "SiteID",
-      "Site_Id",
-      "siteID",
-      "siteId",
-      "NewSiteID",
-      "savedSiteID",
-    ]);
+function normalizeLocationRecord(
+  raw: SnapshotRow,
+  forcedSiteId?: string,
+): LocationRecord | null {
+  const waterbody = getString(raw, [
+    "Waterbody",
+    "waterbody",
+    "Stream",
+    "stream",
+    "WaterbodyName",
+  ]);
 
-    const siteName =
-      getString(row, [
-        "SiteName",
-        "Site_Name",
-        "siteName",
-        "savedSiteName",
-        "Locality",
-        "Station",
-        "StationName",
-        "LocationName",
-      ]) ||
-      waterbody ||
-      siteIdFromRow;
+  const sourceSiteId = getString(raw, [
+    "SiteID",
+    "Site_Id",
+    "siteID",
+    "siteId",
+    "NewSiteID",
+    "savedSiteID",
+  ]);
 
-    const latitude = getNumber(row, [
-      "DownstreamLat",
-      "downstreamLat",
-      "DownstreamLatitude",
-      "Latitude",
-      "latitude",
-      "Lat",
-      "lat",
-      "Lat_Decimal_Degree",
-      "Y",
-      "y",
-    ]);
+  const siteName =
+    getString(raw, [
+      "SiteName",
+      "Site_Name",
+      "siteName",
+      "savedSiteName",
+      "Locality",
+      "Station",
+      "StationName",
+      "LocationName",
+    ]) ||
+    waterbody ||
+    sourceSiteId ||
+    forcedSiteId ||
+    "";
 
-    const longitude = getNumber(row, [
-      "DownstreamLong",
-      "downstreamLong",
-      "DownstreamLongitude",
-      "Longitude",
-      "longitude",
-      "Long",
-      "long",
-      "Lng",
-      "lng",
-      "Long_Decimal_Degree",
-      "X",
-      "x",
-    ]);
+  const downstreamLat = getNumber(raw, [
+    "DownstreamLat",
+    "downstreamLat",
+    "DownstreamLatitude",
+    "LatitudeDD",
+    "Latitude",
+    "latitude",
+    "Lat",
+    "lat",
+    "Lat_Decimal_Degree",
+    "Y",
+    "y",
+  ]);
 
-    if (!isVirginiaCoordinate(latitude, longitude)) {
-      continue;
-    }
+  const downstreamLong = getNumber(raw, [
+    "DownstreamLong",
+    "downstreamLong",
+    "DownstreamLongitude",
+    "LongitudeDD",
+    "Longitude",
+    "longitude",
+    "Long",
+    "long",
+    "Lng",
+    "lng",
+    "Long_Decimal_Degree",
+    "X",
+    "x",
+  ]);
 
-    if (!siteIdFromRow && !siteName && !waterbody) {
-      continue;
-    }
+  if (!isVirginiaCoordinate(downstreamLat, downstreamLong)) {
+    return null;
+  }
 
-    const siteId =
-      siteIdFromRow || fallbackSiteId(latitude, longitude);
+  const siteId =
+    forcedSiteId ||
+    sourceSiteId ||
+    fallbackSiteId(downstreamLat, downstreamLong);
 
-    const candidate: LocationRecord = {
-      SiteID: siteId,
-      SiteName: siteName || siteId,
-      Waterbody: waterbody,
-      DownstreamLat: latitude,
-      DownstreamLong: longitude,
-      UpstreamLat: getNumber(row, [
+  if (!siteId || !siteName) {
+    return null;
+  }
+
+  return {
+    SiteID: siteId,
+    SiteID_AccessDB: getString(raw, ["SiteID_AccessDB"]),
+    SiteID_Previous: getString(raw, ["SiteID_Previous"]),
+    SiteName: siteName,
+    Waterbody: waterbody,
+    LatitudeDD: downstreamLat,
+    LongitudeDD: downstreamLong,
+    DownstreamLat: downstreamLat,
+    DownstreamLong: downstreamLong,
+    UpstreamLat: finiteOrNull(
+      getValue(raw, [
         "UpstreamLat",
         "upstreamLat",
         "UpstreamLatitude",
       ]),
-      UpstreamLong: getNumber(row, [
+    ),
+    UpstreamLong: finiteOrNull(
+      getValue(raw, [
         "UpstreamLong",
         "upstreamLong",
         "UpstreamLongitude",
       ]),
-      LocationDesc: getString(row, [
-        "LocationDesc",
-        "locationDesc",
-        "LocationDescription",
-        "Description",
-      ]),
-      PrivatePublic: normalizeAccess(
-        getValue(row, ["PrivatePublic", "Access"]),
-      ),
-      County: getString(row, ["County", "county", "CountyName"]),
-      State: getString(row, ["State"]),
-      PhysiographicProvince: getString(row, [
-        "PhysiographicProvince",
-      ]),
-      HUC6: getString(row, ["HUC6"]),
-      HUC8: getString(row, ["HUC8"]),
-    };
+    ),
+    LocDescription: getString(raw, [
+      "LocDescription",
+      "LocationDesc",
+      "locationDesc",
+      "LocationDescription",
+      "Description",
+    ]),
+    County: getString(raw, ["County", "county", "CountyName"]),
+    State: normalizeState(getString(raw, ["State"])),
+    RiverBasin: getString(raw, ["RiverBasin", "Basin"]),
+    HUC7: getString(raw, ["HUC7", "HUC8"]),
+    PhysiographicProvince: getString(raw, [
+      "PhysiographicProvince",
+    ]),
+    RoadName: getString(raw, ["RoadName"]),
+    RoadNumber: getString(raw, ["RoadNumber"]),
+    createdBy: getString(raw, ["createdBy"]),
+  };
+}
 
-    const existing = sitesById.get(siteId);
+function mergeLocationFields(
+  existing: LocationRecord,
+  candidate: LocationRecord,
+): LocationRecord {
+  return {
+    ...existing,
+    SiteName: existing.SiteName || candidate.SiteName,
+    Waterbody: existing.Waterbody || candidate.Waterbody,
+    LatitudeDD: Number.isFinite(existing.LatitudeDD)
+      ? existing.LatitudeDD
+      : candidate.LatitudeDD,
+    LongitudeDD: Number.isFinite(existing.LongitudeDD)
+      ? existing.LongitudeDD
+      : candidate.LongitudeDD,
+    DownstreamLat: Number.isFinite(existing.DownstreamLat)
+      ? existing.DownstreamLat
+      : candidate.DownstreamLat,
+    DownstreamLong: Number.isFinite(existing.DownstreamLong)
+      ? existing.DownstreamLong
+      : candidate.DownstreamLong,
+    UpstreamLat:
+      existing.UpstreamLat !== null &&
+      existing.UpstreamLat !== undefined &&
+      Number.isFinite(existing.UpstreamLat)
+        ? existing.UpstreamLat
+        : candidate.UpstreamLat,
+    UpstreamLong:
+      existing.UpstreamLong !== null &&
+      existing.UpstreamLong !== undefined &&
+      Number.isFinite(existing.UpstreamLong)
+        ? existing.UpstreamLong
+        : candidate.UpstreamLong,
+    SiteID_AccessDB:
+      existing.SiteID_AccessDB || candidate.SiteID_AccessDB,
+    SiteID_Previous:
+      existing.SiteID_Previous || candidate.SiteID_Previous,
+    LocDescription:
+      existing.LocDescription || candidate.LocDescription,
+    County: existing.County || candidate.County,
+    State: existing.State || candidate.State,
+    RiverBasin: existing.RiverBasin || candidate.RiverBasin,
+    HUC7: existing.HUC7 || candidate.HUC7,
+    PhysiographicProvince:
+      existing.PhysiographicProvince ||
+      candidate.PhysiographicProvince,
+    RoadName: existing.RoadName || candidate.RoadName,
+    RoadNumber: existing.RoadNumber || candidate.RoadNumber,
+    createdBy: existing.createdBy || candidate.createdBy,
+  };
+}
 
-    if (!existing) {
-      sitesById.set(siteId, candidate);
-      continue;
-    }
+function snapshotRowsToSites(
+  rows: SnapshotRow[],
+): LocationRecord[] {
+  const sitesById = new Map<string, LocationRecord>();
 
-    sitesById.set(siteId, {
-      ...existing,
-      SiteName: existing.SiteName || candidate.SiteName,
-      Waterbody: existing.Waterbody || candidate.Waterbody,
-      County: existing.County || candidate.County,
-      LocationDesc: existing.LocationDesc || candidate.LocationDesc,
-      State: existing.State || candidate.State,
-      PhysiographicProvince:
-        existing.PhysiographicProvince ||
-        candidate.PhysiographicProvince,
-      HUC6: existing.HUC6 || candidate.HUC6,
-      HUC8: existing.HUC8 || candidate.HUC8,
-      UpstreamLat:
-        Number.isFinite(existing.UpstreamLat) ?
-          existing.UpstreamLat :
-          candidate.UpstreamLat,
-      UpstreamLong:
-        Number.isFinite(existing.UpstreamLong) ?
-          existing.UpstreamLong :
-          candidate.UpstreamLong,
-    });
+  for (const row of rows) {
+    const candidate = normalizeLocationRecord(row);
+    if (!candidate) continue;
+
+    const existing = sitesById.get(candidate.SiteID);
+
+    sitesById.set(
+      candidate.SiteID,
+      existing
+        ? mergeLocationFields(existing, candidate)
+        : candidate,
+    );
   }
 
   return Array.from(sitesById.values());
@@ -293,33 +387,48 @@ function mergeSites(
   }
 
   /*
-   * Firestore contains newly created or pending sites. Let those records
-   * replace a snapshot record with the same SiteID because they are newer.
+   * Firestore contains newly created NAIADD sites. Let those records replace
+   * an older snapshot record with the same SiteID.
    */
   for (const site of firestoreSites) {
     merged.set(site.SiteID, site);
   }
 
-  return Array.from(merged.values()).sort((a, b) => {
-    const waterbodyCompare = a.Waterbody.localeCompare(b.Waterbody);
+  return Array.from(merged.values()).sort((left, right) => {
+    const waterbodyCompare = left.Waterbody.localeCompare(
+      right.Waterbody,
+    );
 
     if (waterbodyCompare !== 0) {
       return waterbodyCompare;
     }
 
-    return a.SiteName.localeCompare(b.SiteName);
+    return left.SiteName.localeCompare(right.SiteName);
   });
 }
 
-function readCachedSites(): LocationRecord[] {
+export function getCachedSites(): LocationRecord[] {
   try {
     const cached = localStorage.getItem(SITE_CACHE_KEY);
 
     if (!cached) return [];
 
-    const parsed = JSON.parse(cached);
+    const parsed = JSON.parse(cached) as unknown;
 
-    return Array.isArray(parsed) ? (parsed as LocationRecord[]) : [];
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((item) =>
+        normalizeLocationRecord(
+          item as SnapshotRow,
+          getString(item as SnapshotRow, ["SiteID"]),
+        ),
+      )
+      .filter(
+        (site): site is LocationRecord => site !== null,
+      );
   } catch {
     return [];
   }
@@ -329,41 +438,55 @@ function cacheSites(sites: LocationRecord[]): void {
   try {
     localStorage.setItem(SITE_CACHE_KEY, JSON.stringify(sites));
   } catch (error) {
-    console.warn("Unable to cache the VADMA site index:", error);
+    console.warn("Unable to cache the NAIADD site index:", error);
   }
 }
 
 async function readFirestoreSites(): Promise<LocationRecord[]> {
-  const snapshot = await getDocs(collection(db, SITES_COLLECTION));
+  const snapshot = await getDocs(
+    collection(db, SITES_COLLECTION),
+  );
 
-  return snapshot.docs.map((item) => ({
-    ...(item.data() as Omit<LocationRecord, "SiteID">),
-    SiteID: item.id,
-  }));
+  return snapshot.docs
+    .map((item) =>
+      normalizeLocationRecord(
+        item.data() as SnapshotRow,
+        item.id,
+      ),
+    )
+    .filter(
+      (site): site is LocationRecord => site !== null,
+    );
 }
 
-export async function listSites(): Promise<LocationRecord[]> {
+export async function refreshSites(): Promise<LocationRecord[]> {
   let snapshotSites: LocationRecord[] = [];
   let firestoreSites: LocationRecord[] = [];
   let snapshotError: unknown = null;
   let firestoreError: unknown = null;
 
   try {
-    const rows = await readCachedVadmaSnapshotRows({
+    const rows = await readSnapshotRows({
       columns: [...SNAPSHOT_SITE_COLUMNS],
     });
 
     snapshotSites = snapshotRowsToSites(rows as SnapshotRow[]);
   } catch (error) {
     snapshotError = error;
-    console.warn("Unable to read sites from the cached VADMA snapshot:", error);
+    console.warn(
+      "Unable to read sites from the cached NAIADD snapshot:",
+      error,
+    );
   }
 
   try {
     firestoreSites = await readFirestoreSites();
   } catch (error) {
     firestoreError = error;
-    console.warn("Unable to read newly created sites from Firestore:", error);
+    console.warn(
+      "Unable to read newly created NAIADD sites from Firestore:",
+      error,
+    );
   }
 
   const combined = mergeSites(snapshotSites, firestoreSites);
@@ -373,7 +496,7 @@ export async function listSites(): Promise<LocationRecord[]> {
     return combined;
   }
 
-  const cached = readCachedSites();
+  const cached = getCachedSites();
 
   if (cached.length > 0) {
     return cached;
@@ -388,22 +511,66 @@ export async function listSites(): Promise<LocationRecord[]> {
   }
 
   throw new Error(
-    "No sites were available from the VADMA snapshot, Firestore, or local cache.",
+    "No sites were available from the NAIADD snapshot, Firestore, or local cache.",
   );
 }
 
-export async function createSite(site: LocationRecord): Promise<void> {
-  await setDoc(doc(db, SITES_COLLECTION, site.SiteID), {
-    ...site,
+export async function listSites(): Promise<LocationRecord[]> {
+  const cached = getCachedSites();
+
+  if (cached.length > 0) {
+    return cached;
+  }
+
+  return refreshSites();
+}
+
+export async function createSite(
+  site: LocationRecord,
+): Promise<void> {
+  const normalized = normalizeLocationRecord(
+    site as unknown as SnapshotRow,
+    site.SiteID,
+  );
+
+  if (!normalized) {
+    throw new Error(
+      "The site record does not contain valid NAIADD location coordinates.",
+    );
+  }
+
+  await setDoc(doc(db, SITES_COLLECTION, normalized.SiteID), {
+    ...normalized,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
 
-  const cached = readCachedSites();
-  const updated = mergeSites(cached, [site]);
-  cacheSites(updated);
+  const cached = getCachedSites();
+  cacheSites(mergeSites(cached, [normalized]));
 }
 
-export function saveCurrentLocation(site: LocationRecord): void {
-  localStorage.setItem(CURRENT_LOCATION_KEY, JSON.stringify(site));
+export function saveCurrentLocation(
+  site: LocationRecord,
+): void {
+  localStorage.setItem(
+    CURRENT_LOCATION_KEY,
+    JSON.stringify(site),
+  );
+}
+
+export function loadCurrentLocation(): LocationRecord | null {
+  try {
+    const raw = localStorage.getItem(CURRENT_LOCATION_KEY);
+    if (!raw) return null;
+
+    return normalizeLocationRecord(
+      JSON.parse(raw) as SnapshotRow,
+    );
+  } catch {
+    return null;
+  }
+}
+
+export function clearCurrentLocation(): void {
+  localStorage.removeItem(CURRENT_LOCATION_KEY);
 }

@@ -1178,3 +1178,27 @@ select option {
     border: 1px solid rgba(187, 247, 208, 0.24);
   }
 }
+
+/* NAIADD survey-form refinements */
+.surveyInfoStep textarea.input {
+  min-height: 104px;
+  resize: vertical;
+}
+
+.surveyInfoStep .requiredBadge {
+  min-width: 72px;
+}
+
+.surveyInfoStep .detailsGrid > label {
+  min-width: 0;
+}
+
+.surveyInfoStep .locked {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 680px) {
+  .surveyInfoStep .detailsGrid {
+    grid-template-columns: 1fr;
+  }
+}

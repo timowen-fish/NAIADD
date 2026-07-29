@@ -1,32 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import shieldImage from "../assets/vadma-shield.png";
+import shieldImage from "../assets/naiadd-shield.png";
 import "../styles/LoginScreen.css";
 import "../styles/LoginScreen-responsive.css";
 
-const loginBackgrounds = [
-  "/images/login-backgrounds/CreateNewSite.jpg",
-  "/images/login-backgrounds/Species-Header-Alewife.jpg",
-  "/images/login-backgrounds/Species-Header-AmericanShad.jpg",
-  "/images/login-backgrounds/Species-Header-AshyDarter.jpg",
-  "/images/login-backgrounds/Species-Header-BandedSunfish.jpg",
-  "/images/login-backgrounds/Species-Header-BlackCrappie.jpg",
-  "/images/login-backgrounds/Species-Header-Bluegill.jpg",
-  "/images/login-backgrounds/Species-Header-BrookTrout.jpg",
-  "/images/login-backgrounds/Species-Header-ChainPickerel.jpg",
-  "/images/login-backgrounds/Species-Header-GreenSunfish.jpg",
-  "/images/login-backgrounds/Species-Header-HickoryShad.jpg",
-  "/images/login-backgrounds/Species-Header-LargemouthBass.jpg",
-  "/images/login-backgrounds/Species-Header-Muskellunge.jpg",
-  "/images/login-backgrounds/Species-Header-NorthernPike.jpg",
-  "/images/login-backgrounds/Species-Header-Pumpkinseed.jpg",
-  "/images/login-backgrounds/Species-Header-RainbowTrout.jpg",
-  "/images/login-backgrounds/Species-Header-SmallmouthBass.jpg",
-  "/images/login-backgrounds/Species-Header-Walleye.jpg",
-  "/images/login-backgrounds/Species-Header-YellowPerch.jpg",
-  "/images/login-backgrounds/UseExistingSite.jpg",
-  "/images/login-backgrounds/VirginiaWaters.jpg",
-];
+const loginBackgrounds = Object.values(
+  import.meta.glob("../assets/login-backgrounds/*.{jpg,jpeg,png,webp,avif}", {
+    eager: true,
+    import: "default",
+  }),
+) as string[];
 
 type LoginScreenProps = {
   loading: boolean;
@@ -46,10 +29,38 @@ export default function LoginScreen({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const backgroundImage = useMemo(() => {
+  const [backgroundImage, setBackgroundImage] = useState("");
+
+  const selectedBackground = useMemo(() => {
+    if (loginBackgrounds.length === 0) return "";
+
     const index = Math.floor(Math.random() * loginBackgrounds.length);
     return loginBackgrounds[index];
   }, []);
+
+  useEffect(() => {
+    if (!selectedBackground) return;
+
+    const image = new Image();
+
+    image.onload = () => {
+      setBackgroundImage(selectedBackground);
+    };
+
+    image.onerror = () => {
+      console.error(
+        "Unable to load the selected NAIADD login background:",
+        selectedBackground,
+      );
+    };
+
+    image.src = selectedBackground;
+
+    return () => {
+      image.onload = null;
+      image.onerror = null;
+    };
+  }, [selectedBackground]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -63,7 +74,11 @@ export default function LoginScreen({
   return (
     <main
       className="login-page"
-      style={{ backgroundImage: `url("${backgroundImage}")` }}
+      style={
+        backgroundImage
+          ? { backgroundImage: `url("${backgroundImage}")` }
+          : undefined
+      }
     >
       <div className="login-shell">
         <section className="login-brand-panel">
@@ -71,16 +86,17 @@ export default function LoginScreen({
             <img
               className="login-shield"
               src={shieldImage}
-              alt="VADMA shield"
+              alt="NAIADD shield"
             />
           </div>
 
           <div className="login-brand-copy">
-            <p className="login-kicker">VADMA</p>
-            <h1>Virginia Aquatics Data Management Application</h1>
+            <p className="login-kicker">NAIADD</p>
+            <h1>Nongame Aquatic Invertebrate Assessment and Distribution Database</h1>
             <p>
-              A DWR Aquatics Division platform for secure data acquisition,
-              analysis, and survey management.
+              A Virginia Department of Wildlife Resources platform for the
+              collection, management, analysis, and distribution of
+              nongame aquatic invertebrate observations.
             </p>
 
             <div className="login-feature-list">
@@ -96,7 +112,7 @@ export default function LoginScreen({
         <section className="login-panel" aria-labelledby="login-heading">
           <div className="login-panel-heading">
             <p>AUTHORIZED ACCESS</p>
-            <h2 id="login-heading">Sign in to VADMA</h2>
+            <h2 id="login-heading">Sign in to NAIADD</h2>
             <span>Use the account assigned by your administrator.</span>
           </div>
 
@@ -153,7 +169,7 @@ export default function LoginScreen({
           {error && <div className="login-error">{error}</div>}
 
           <p className="login-footnote">
-            Access is restricted to authorized users. Contact the VADMA
+            Access is restricted to authorized users. Contact the NAIADD
             Administrator if you need an account.
           </p>
         </section>

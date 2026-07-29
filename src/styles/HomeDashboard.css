@@ -968,3 +968,31 @@
     height: 245px;
   }
 }
+
+
+/* Most common species metric and scientific-name presentation */
+.home-metric-value-species {
+  overflow: visible;
+  font-size: clamp(1rem, 1.35vw, 1.3rem);
+  font-style: italic;
+  line-height: 1.18;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.home-scientific-name {
+  font-style: italic;
+}
+
+@media (max-width: 1250px) {
+  .home-metric-value-species {
+    font-size: clamp(1.05rem, 1.7vw, 1.35rem);
+  }
+}
+
+@media (max-width: 500px) {
+  .home-metric-value-species {
+    font-size: 1.15rem;
+  }
+}

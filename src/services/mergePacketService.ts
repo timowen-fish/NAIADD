@@ -100,7 +100,7 @@ export function mergePacketFilename(packet: MergePacket): string {
     ? packet.generatedAt.replace(/[^0-9]/g, "").slice(0, 14)
     : safeTimestamp(generatedAt);
 
-  return `VADMA_MergePacket_${timestamp}_${packet.summary.submissionCount}_submissions.json`;
+  return `NAIADD_MergePacket_${timestamp}_${packet.summary.submissionCount}_submissions.json`;
 }
 
 export function downloadMergePacket(packet: MergePacket): string {

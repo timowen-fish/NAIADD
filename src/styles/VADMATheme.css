@@ -158,25 +158,26 @@
 
 [data-vadma-theme="pumpkinseed"] {
   --vadma-page-bg:
-    radial-gradient(circle at 10% 6%, rgba(242, 140, 40, 0.2), transparent 29rem),
-    radial-gradient(circle at 88% 88%, rgba(79, 195, 161, 0.14), transparent 26rem),
-    linear-gradient(135deg, #120d08 0%, #2a1c13 50%, #0d0a07 100%);
-  --vadma-panel-bg: rgba(38, 27, 19, 0.96);
-  --vadma-card-bg: linear-gradient(180deg, rgba(62, 42, 28, 0.96), rgba(24, 17, 12, 0.94));
-  --vadma-text: #fff8ed;
-  --vadma-text-muted: rgba(255, 239, 218, 0.74);
-  --vadma-accent: #f28c28;
-  --vadma-accent-soft: #ffc36f;
-  --vadma-accent-contrast: #231204;
-  --vadma-accent-translucent: rgba(242, 140, 40, 0.22);
-  --vadma-border: rgba(79, 195, 161, 0.2);
-  --vadma-subtle: rgba(242, 140, 40, 0.09);
-  --vadma-hover: rgba(79, 195, 161, 0.11);
-  --vadma-success: #4fc3a1;
-  --vadma-warning: #f6b94b;
-  --vadma-danger: #ef767a;
-  --vadma-info: #62b7c8;
-  --vadma-shadow: 0 20px 54px rgba(0, 0, 0, 0.38);
+    radial-gradient(circle at 9% 4%, rgba(192, 132, 252, 0.24), transparent 30rem),
+    radial-gradient(circle at 86% 16%, rgba(103, 232, 249, 0.15), transparent 24rem),
+    radial-gradient(circle at 78% 90%, rgba(244, 114, 182, 0.14), transparent 28rem),
+    linear-gradient(138deg, #0d0613 0%, #24102f 48%, #100819 100%);
+  --vadma-panel-bg: rgba(30, 15, 40, 0.96);
+  --vadma-card-bg: linear-gradient(180deg, rgba(61, 34, 78, 0.96), rgba(23, 11, 32, 0.94));
+  --vadma-text: #fbf5ff;
+  --vadma-text-muted: rgba(243, 226, 255, 0.76);
+  --vadma-accent: #c084fc;
+  --vadma-accent-soft: #e9d5ff;
+  --vadma-accent-contrast: #1c0929;
+  --vadma-accent-translucent: rgba(192, 132, 252, 0.25);
+  --vadma-border: rgba(103, 232, 249, 0.23);
+  --vadma-subtle: rgba(192, 132, 252, 0.1);
+  --vadma-hover: rgba(244, 114, 182, 0.13);
+  --vadma-success: #5eead4;
+  --vadma-warning: #f0abfc;
+  --vadma-danger: #fb7185;
+  --vadma-info: #67e8f9;
+  --vadma-shadow: 0 22px 58px rgba(8, 0, 16, 0.48);
   --vadma-radius-small: 11px;
   --vadma-radius-medium: 17px;
   --vadma-radius-large: 22px;

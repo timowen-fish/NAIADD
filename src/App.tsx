@@ -201,7 +201,7 @@ export default function App() {
   if (!userProfile.active) {
     return (
       <div className="app-loading">
-        This account is inactive. Contact the VADMA Administrator.
+        This account is inactive. Contact the NAIADD Administrator.
       </div>
     );
   }

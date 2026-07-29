@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import vadmaShield from "../../assets/vadma-shield.png";
+import naiaddShield from "../../assets/naiadd-shield.png";
 import type { UserProfile } from "../../types/user";
 import { USER_ROLE_LABELS } from "../../types/user";
 import { getDisplayName } from "../../utils/displayName";
@@ -270,10 +270,10 @@ export default function AppShell({
             className="app-brand"
             onClick={() => navigate("dashboard")}
           >
-            <img src={vadmaShield} alt="" />
+            <img src={naiaddShield} alt="" />
             <span>
-              <strong>VADMA</strong>
-              <small>Virginia Aquatics Data Management Application</small>
+              <strong>NAIADD</strong>
+              <small>Nongame Aquatic Invertebrate Assessment &amp; Distribution Database</small>
             </span>
           </button>
         </div>

@@ -1,13 +1,13 @@
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 
-const SNAPSHOT_DB_NAME = "vadma_snapshot_cache_v2";
+const SNAPSHOT_DB_NAME = "naiadd_snapshot_cache_v1";
 const SNAPSHOT_DB_VERSION = 1;
 const SNAPSHOT_STORE_NAME = "snapshotCache";
 
 const SNAPSHOT_RECORD_ID = "currentSnapshot";
 const COLLECTION_INDEX_RECORD_ID = "currentCollectionIndex";
-const SNAPSHOT_META_KEY = "vadma_snapshot_meta_v2";
+const SNAPSHOT_META_KEY = "naiadd_snapshot_meta_v1";
 
 export type SnapshotConfiguration = {
   active: boolean;
@@ -78,7 +78,10 @@ type CacheRecord = SnapshotCacheRecord | CollectionIndexCacheRecord;
 type DataRow = Record<string, unknown>;
 
 type EncryptedPayload = {
-  format: "VADMA_AES_256_CBC_HMAC_SHA256_V1";
+  format:
+    | "naiadd_AES_256_CBC_HMAC_SHA256_V1"
+    | "NAIADD_AES_256_CBC_HMAC_SHA256_V1"
+    | "VADMA_AES_256_CBC_HMAC_SHA256_V1";
   algorithm?: string;
   integrity?: string;
   keyLengthBits?: number;
@@ -107,7 +110,7 @@ function openSnapshotDatabase(): Promise<IDBDatabase> {
     request.onerror = () => {
       reject(
         request.error ??
-          new Error("Unable to open the local VADMA snapshot database."),
+          new Error("Unable to open the local NAIADD snapshot database."),
       );
     };
   });
@@ -130,7 +133,7 @@ async function readCacheRecord<T extends CacheRecord>(
     request.onerror = () => {
       reject(
         request.error ??
-          new Error("Unable to read the local VADMA snapshot cache."),
+          new Error("Unable to read the local NAIADD snapshot cache."),
       );
     };
 
@@ -153,7 +156,7 @@ async function writeCacheRecord(record: CacheRecord): Promise<void> {
     request.onerror = () => {
       reject(
         request.error ??
-          new Error("Unable to write the local VADMA snapshot cache."),
+          new Error("Unable to write the local NAIADD snapshot cache."),
       );
     };
 
@@ -176,7 +179,7 @@ async function deleteCacheRecord(id: string): Promise<void> {
     request.onerror = () => {
       reject(
         request.error ??
-          new Error("Unable to delete the local VADMA snapshot cache."),
+          new Error("Unable to delete the local NAIADD snapshot cache."),
       );
     };
 
@@ -194,7 +197,7 @@ function validateConfiguration(value: unknown): SnapshotConfiguration {
   const configuration = value as Partial<SnapshotConfiguration>;
 
   if (configuration.active !== true) {
-    throw new Error("The production VADMA snapshot is not active.");
+    throw new Error("The production NAIADD snapshot is not active.");
   }
 
   if (
@@ -299,8 +302,21 @@ function parseEncryptedPayload(text: string): EncryptedPayload {
 
   const payload = JSON.parse(jsonText) as Partial<EncryptedPayload>;
 
-  if (payload.format !== "VADMA_AES_256_CBC_HMAC_SHA256_V1") {
-    throw new Error("Unsupported VADMA snapshot encryption format.");
+  const supportedFormats = new Set<EncryptedPayload["format"]>([
+    "naiadd_AES_256_CBC_HMAC_SHA256_V1",
+    "NAIADD_AES_256_CBC_HMAC_SHA256_V1",
+    "VADMA_AES_256_CBC_HMAC_SHA256_V1",
+  ]);
+
+  if (
+    typeof payload.format !== "string" ||
+    !supportedFormats.has(payload.format as EncryptedPayload["format"])
+  ) {
+    throw new Error(
+      `Unsupported NAIADD snapshot encryption format: ${String(
+        payload.format ?? "missing",
+      )}`,
+    );
   }
 
   if (
@@ -308,7 +324,7 @@ function parseEncryptedPayload(text: string): EncryptedPayload {
     typeof payload.ciphertext !== "string" ||
     typeof payload.hmac !== "string"
   ) {
-    throw new Error("Encrypted VADMA payload is incomplete.");
+    throw new Error("Encrypted NAIADD payload is incomplete.");
   }
 
   return payload as EncryptedPayload;
@@ -342,7 +358,7 @@ async function decryptPayload(
   );
 
   const macInput = concatenateBytes([
-    new TextEncoder().encode("VADMA_AES_256_CBC_HMAC_SHA256_V1"),
+    new TextEncoder().encode(payload.format),
     iv,
     ciphertext,
   ]);
@@ -680,7 +696,7 @@ export async function readSnapshotRows(
   const cached = await getCachedSnapshot();
 
   if (!cached?.blob) {
-    throw new Error("No cached VADMA snapshot is available.");
+    throw new Error("No cached NAIADD snapshot is available.");
   }
 
   const file = await cached.blob.arrayBuffer();
@@ -747,7 +763,7 @@ export async function readSnapshotColumnNames(): Promise<string[]> {
   const cached = await getCachedSnapshot();
 
   if (!cached?.blob) {
-    throw new Error("No cached VADMA snapshot is available.");
+    throw new Error("No cached NAIADD snapshot is available.");
   }
 
   const columns = await getAvailableParquetColumns(
@@ -766,22 +782,34 @@ export async function clearSnapshotCache(): Promise<void> {
   localStorage.removeItem(SNAPSHOT_META_KEY);
 }
 
-/*
-  Compatibility aliases matching the older VADMA application. These let
-  existing components migrate without having to rename every import at once.
-*/
-export const fetchVadmaSnapshotConfig = fetchSnapshotConfiguration;
-export const downloadVadmaSnapshotBlob = downloadSnapshotBlob;
-export const downloadVadmaCollectionIndex = downloadCollectionIndex;
-export const getCachedVadmaSnapshotMeta = getCachedSnapshotMetadata;
-export const getCachedVadmaSnapshot = getCachedSnapshot;
-export const getCachedVadmaCollectionIndex = getCachedCollectionIndex;
-export const ensureVadmaCollectionIndex = ensureCollectionIndex;
-export const syncVadmaSnapshotIfNeeded = syncSnapshotIfNeeded;
-export const forceSyncVadmaSnapshot = forceSyncSnapshot;
-export const readCachedVadmaSnapshotRows = readSnapshotRows;
-export const readCachedVadmaSnapshotCollectionRows =
-  readSnapshotCollectionRows;
-export const readCachedVadmaSnapshotColumnNames =
-  readSnapshotColumnNames;
-export const clearVadmaSnapshotCache = clearSnapshotCache;
+
+// ---------------------------------------------------------------------
+// Backwards compatibility aliases (temporary)
+// ---------------------------------------------------------------------
+
+export function getCachedVadmaSnapshotMeta() {
+  return getCachedSnapshotMetadata();
+}
+
+export async function readCachedVadmaSnapshotRows(
+  options?: SnapshotReadOptions,
+) {
+  return readSnapshotRows(options);
+}
+
+
+export async function getCachedVadmaCollectionIndex() {
+  return getCachedCollectionIndex();
+}
+
+
+export async function readCachedVadmaSnapshotCollectionRows(
+  collectionID: string,
+) {
+  return readSnapshotCollectionRows(collectionID);
+}
+
+
+export async function readCachedVadmaSnapshotColumnNames() {
+  return readSnapshotColumnNames();
+}

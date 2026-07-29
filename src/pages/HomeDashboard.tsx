@@ -3,7 +3,7 @@ import {
   BarChart3,
   ClipboardList,
   Database,
-  Fish,
+  Shell,
   MapPin,
   RefreshCw,
   Ruler,
@@ -18,7 +18,7 @@ import {
 import type { LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-import vadmaShield from "../assets/vadma-shield.png";
+import naiaddShield from "../assets/naiadd-shield.png";
 import type { UserProfile } from "../types/user";
 import { USER_ROLE_LABELS } from "../types/user";
 import { getDisplayName } from "../utils/displayName";
@@ -27,9 +27,9 @@ import {
   WORKFLOW_SESSION_EVENT,
 } from "../services/surveySessionService";
 import {
-  forceSyncVadmaSnapshot,
-  getCachedVadmaSnapshotMeta,
-  readCachedVadmaSnapshotRows,
+  forceSyncSnapshot,
+  getCachedSnapshotMetadata,
+  readSnapshotRows,
 } from "../services/snapshotService";
 
 import "../styles/HomeDashboard.css";
@@ -44,7 +44,7 @@ type DashboardSummary = {
   surveysCompleted: number;
   sitesSampled: number;
   speciesEncountered: number;
-  fishProcessed: number;
+  musselsProcessed: number;
   mostCommonSpecies: string;
 };
 
@@ -55,7 +55,7 @@ type RecentSurvey = {
   dateLabel: string;
   timestamp: number;
   method: string;
-  fishCount: number;
+  musselCount: number;
   speciesCount: number;
 };
 
@@ -90,60 +90,29 @@ const SCENERY_IMAGES = Array.from(
 
 const DASHBOARD_SNAPSHOT_COLUMNS = [
   "CollectionID",
-  "Collection_Id",
-  "SiteID",
-  "Site_Id",
-  "CommonName",
-  "Common_Name",
-  "Species",
-  "Survey_Date",
-  "SampleDate",
-  "CollectionDate",
-  "Date",
-  "FinalDate",
-  "Waterbody",
-  "Stream",
-  "SiteName",
-  "Locality",
-  "Sampling_Method",
-  "SamplingMethod",
-  "Survey_Type",
-  "SurveyType",
-  "GearType",
-  "Geartype",
+  "SurveyDate",
+  "Taxa",
+  "ScientificName",
+  "Condition",
   "Quantity",
-  "Count",
-  "Qty",
-  "Number",
+  "SamplingMethod",
+  "SiteID",
+  "SiteID_AccessDB",
+  "SiteID_Previous",
+  "SiteName",
+  "LocDescription",
+  "Waterbody",
+  "LatitudeDD",
+  "LongitudeDD",
   "DownstreamLat",
-  "downstreamLat",
-  "DownstreamLatitude",
-  "Latitude",
-  "latitude",
-  "Lat",
-  "lat",
-  "Lat_Decimal_Degree",
-  "Y",
-  "y",
   "DownstreamLong",
-  "downstreamLong",
-  "DownstreamLongitude",
-  "Longitude",
-  "longitude",
-  "Long",
-  "long",
-  "Lng",
-  "lng",
-  "Long_Decimal_Degree",
-  "X",
-  "x",
 ] as const;
 
 const EMPTY_DASHBOARD_SUMMARY: DashboardSummary = {
   surveysCompleted: 0,
   sitesSampled: 0,
   speciesEncountered: 0,
-  fishProcessed: 0,
+  musselsProcessed: 0,
   mostCommonSpecies: "—",
 };
 
@@ -156,7 +125,7 @@ async function readDashboardSnapshotRowsOnce(): Promise<AnyRecord[]> {
   }
 
   if (!dashboardSnapshotRowsPromise) {
-    dashboardSnapshotRowsPromise = readCachedVadmaSnapshotRows({
+    dashboardSnapshotRowsPromise = readSnapshotRows({
       columns: [...DASHBOARD_SNAPSHOT_COLUMNS],
     })
       .then((rows) => {
@@ -209,7 +178,7 @@ function toText(value: unknown): string {
   return String(value).trim();
 }
 
-function toFishCount(value: unknown): number {
+function toMusselCount(value: unknown): number {
   if (value === undefined || value === null || value === "") return 0;
 
   const parsed = Number(value);
@@ -291,25 +260,31 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
     }
 
     const siteID =
-      toText(getValue(row, ["SiteID", "Site_Id"])) || "Unknown Site";
+      toText(
+        getValue(row, [
+          "SiteID",
+          "SiteID_AccessDB",
+          "SiteID_Previous",
+        ]),
+      ) || "Unknown Site";
 
     if (siteID !== "Unknown Site") {
       siteIDs.add(siteID);
     }
 
     const siteName =
-      toText(getValue(row, ["SiteName", "Locality"])) || siteID;
+      toText(getValue(row, ["SiteName", "LocDescription"])) || siteID;
 
     const waterbody =
       toText(
-        getValue(row, ["Waterbody", "Stream", "SiteName", "Locality"]),
+        getValue(row, ["Waterbody", "SiteName", "LocDescription"]),
       ) || "Unknown Waterbody";
 
     const species =
-      toText(getValue(row, ["CommonName", "Common_Name", "Species"])) ||
+      toText(getValue(row, ["ScientificName", "Taxa"])) ||
       "Unknown Species";
 
-    const quantity = toFishCount(
+    const quantity = toMusselCount(
       getValue(row, ["Quantity", "Count", "Qty", "Number"]),
     );
 
@@ -322,6 +297,7 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
       getValue(row, [
         "DownstreamLat",
         "downstreamLat",
+        "LatitudeDD",
         "DownstreamLatitude",
         "Latitude",
         "latitude",
@@ -337,6 +313,7 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
       getValue(row, [
         "DownstreamLong",
         "downstreamLong",
+        "LongitudeDD",
         "DownstreamLongitude",
         "Longitude",
         "longitude",
@@ -370,6 +347,7 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
     }
 
     const dateValue = getValue(row, [
+      "SurveyDate",
       "Survey_Date",
       "SampleDate",
       "CollectionDate",
@@ -399,7 +377,7 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
         dateLabel: formatDate(dateValue),
         timestamp,
         method,
-        fishCount: 0,
+        musselCount: 0,
         speciesCount: 0,
         species: new Set<string>(),
       });
@@ -412,7 +390,7 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
       survey.dateLabel = formatDate(dateValue);
     }
 
-    survey.fishCount += quantity;
+    survey.musselCount += quantity;
 
     if (species !== "Unknown Species") {
       survey.species.add(species);
@@ -436,7 +414,7 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
       surveysCompleted: collectionIDs.size,
       sitesSampled: siteIDs.size,
       speciesEncountered: speciesNames.size,
-      fishProcessed: [...speciesTotals.values()].reduce(
+      musselsProcessed: [...speciesTotals.values()].reduce(
         (total, quantity) => total + quantity,
         0,
       ),
@@ -503,7 +481,7 @@ function SceneryHeader({
       <div className="home-scenery-shade" />
 
       <div className="home-scenery-brand">
-        <img src={vadmaShield} alt="VADMA" />
+        <img src={naiaddShield} alt="NAIADD" />
 
         <div>
           <p>WELCOME BACK</p>
@@ -530,6 +508,7 @@ type MetricCardProps = {
   subtitle: string;
   icon: React.ReactNode;
   isLoading: boolean;
+  valueClassName?: string;
 };
 
 function MetricCard({
@@ -538,6 +517,7 @@ function MetricCard({
   subtitle,
   icon,
   isLoading,
+  valueClassName = "",
 }: MetricCardProps) {
   return (
     <article className="home-metric-card">
@@ -546,7 +526,16 @@ function MetricCard({
         <div className="home-metric-icon">{icon}</div>
       </div>
 
-      <strong className={isLoading ? "home-metric-value loading" : "home-metric-value"}>
+      <strong
+        className={[
+          "home-metric-value",
+          isLoading ? "loading" : "",
+          valueClassName,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        title={!isLoading ? value : undefined}
+      >
         {isLoading ? "—" : value}
       </strong>
 
@@ -574,7 +563,7 @@ function ChartList({
       {rows.map((row) => (
         <div className="home-chart-row" key={row.label}>
           <div className="home-chart-label">
-            <span title={row.label}>{row.label}</span>
+            <span className="home-scientific-name" title={row.label}>{row.label}</span>
             <strong>{row.displayValue ?? formatWholeNumber(row.value)}</strong>
           </div>
 
@@ -610,7 +599,7 @@ function FitMapToVirginia() {
   return null;
 }
 
-function useVadmaAccentColor(): string {
+function useNaiaddAccentColor(): string {
   const readAccentColor = () => {
     const candidates = [
       document.documentElement,
@@ -675,7 +664,7 @@ function useVadmaAccentColor(): string {
 }
 
 function SiteDistributionMap({ points }: { points: SiteMapPoint[] }) {
-  const accentColor = useVadmaAccentColor();
+  const accentColor = useNaiaddAccentColor();
   if (points.length === 0) {
     return (
       <div className="home-map-empty">
@@ -743,10 +732,10 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
   const [snapshotStatus, setSnapshotStatus] = useState(() =>
     dashboardSnapshotRowsCache
       ? "Cached production snapshot loaded."
-      : "Loading cached VADMA production snapshot...",
+      : "Loading cached NAIADD production snapshot...",
   );
   const [snapshotVersion, setSnapshotVersion] = useState<string | null>(
-    () => getCachedVadmaSnapshotMeta()?.version ?? null,
+    () => getCachedSnapshotMetadata()?.version ?? null,
   );
   const [isSyncing, setIsSyncing] = useState(false);
   const [isRecentActivityOpen, setIsRecentActivityOpen] = useState(false);
@@ -818,7 +807,7 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
     async function loadSnapshotFromCache() {
       try {
         if (dashboardSnapshotRowsCache) {
-          const meta = getCachedVadmaSnapshotMeta();
+          const meta = getCachedSnapshotMetadata();
 
           setSnapshotRows(dashboardSnapshotRowsCache);
           setSnapshotVersion(meta?.version ?? null);
@@ -834,14 +823,14 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
         }
 
         setSnapshotState("loading");
-        setSnapshotStatus("Loading cached VADMA production snapshot...");
+        setSnapshotStatus("Loading cached NAIADD production snapshot...");
 
-        const cachedMeta = getCachedVadmaSnapshotMeta();
+        const cachedMeta = getCachedSnapshotMetadata();
         const rows = await readDashboardSnapshotRowsOnce();
 
         if (loadState.cancelled) return;
 
-        const meta = getCachedVadmaSnapshotMeta();
+        const meta = getCachedSnapshotMetadata();
 
         setSnapshotRows(rows);
         setSnapshotVersion(meta?.version ?? null);
@@ -856,14 +845,14 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
       } catch (error) {
         if (loadState.cancelled) return;
 
-        console.error("Unable to load cached VADMA snapshot dashboard metrics:", error);
+        console.error("Unable to load cached NAIADD snapshot dashboard metrics:", error);
 
         setSnapshotRows([]);
         setSnapshotState("error");
         setSnapshotStatus(
           error instanceof Error
             ? error.message
-            : "Unable to read the cached VADMA production snapshot.",
+            : "Unable to read the cached NAIADD production snapshot.",
         );
       }
     }
@@ -879,13 +868,13 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
     try {
       setIsSyncing(true);
       setSnapshotState("loading");
-      setSnapshotStatus("Syncing VADMA production snapshot...");
+      setSnapshotStatus("Syncing NAIADD production snapshot...");
 
-      const result = await forceSyncVadmaSnapshot();
-      const rows = await readCachedVadmaSnapshotRows({
+      const result = await forceSyncSnapshot();
+      const rows = await readSnapshotRows({
         columns: [...DASHBOARD_SNAPSHOT_COLUMNS],
       });
-      const meta = getCachedVadmaSnapshotMeta();
+      const meta = getCachedSnapshotMetadata();
 
       setDashboardSnapshotRowsCache(rows);
       setSnapshotRows(rows);
@@ -893,13 +882,13 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
       setSnapshotState(rows.length > 0 ? "ready" : "empty");
       setSnapshotStatus(result.message);
     } catch (error) {
-      console.error("Unable to refresh VADMA production snapshot:", error);
+      console.error("Unable to refresh NAIADD production snapshot:", error);
 
       setSnapshotState(snapshotRows.length > 0 ? "ready" : "error");
       setSnapshotStatus(
         error instanceof Error
           ? error.message
-          : "Unable to refresh the VADMA production snapshot.",
+          : "Unable to refresh the NAIADD production snapshot.",
       );
     } finally {
       setIsSyncing(false);
@@ -948,7 +937,7 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
           <Database size={18} aria-hidden="true" />
 
           <div>
-            <strong>VADMA Production Database</strong>
+            <strong>NAIADD Production Database</strong>
             <span>{snapshotStatus}</span>
           </div>
         </div>
@@ -988,15 +977,15 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
         <MetricCard
           title="Species Encountered"
           value={analytics.summary.speciesEncountered.toLocaleString()}
-          subtitle="Unique common names"
-          icon={<Fish size={30} />}
+          subtitle="Unique scientific names"
+          icon={<Shell size={30} />}
           isLoading={isSnapshotLoading}
         />
 
         <MetricCard
-          title="Fish Processed"
-          value={formatWholeNumber(analytics.summary.fishProcessed)}
-          subtitle="Summed specimen quantity"
+          title="Mussels Processed"
+          value={formatWholeNumber(analytics.summary.musselsProcessed)}
+          subtitle="Summed mussel quantity"
           icon={<Ruler size={30} />}
           isLoading={isSnapshotLoading}
         />
@@ -1007,6 +996,7 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
           subtitle="By total quantity"
           icon={<BarChart3 size={30} />}
           isLoading={isSnapshotLoading}
+          valueClassName="home-metric-value-species"
         />
       </section>
 
@@ -1064,7 +1054,7 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
                       <span>{survey.method}</span>
                     </div>
                     <div className="home-recent-survey-stats">
-                      <span><b>{formatWholeNumber(survey.fishCount)}</b> fish</span>
+                      <span><b>{formatWholeNumber(survey.musselCount)}</b> mussels</span>
                       <span><b>{survey.speciesCount.toLocaleString()}</b> species</span>
                     </div>
                   </article>

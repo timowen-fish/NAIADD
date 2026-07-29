@@ -45,12 +45,12 @@ export type SavedQueryData = {
   session: QueryDataSession;
 };
 
-const QUERY_DATA_SESSION_KEY = "vadma-query-data-session";
-const SAVED_QUERY_DATA_KEY_PREFIX = "vadma-query-data-saved";
-export const SAVED_QUERY_DATA_EVENT = "vadma-query-data-saved-updated";
-export const QUERY_DATA_SESSION_EVENT = "vadma-query-data-session-updated";
-export const APPLIED_QUERY_DATA_EVENT = "vadma-query-data-applied-updated";
-const APPLIED_QUERY_DATA_KEY = "vadma-query-data-applied";
+const QUERY_DATA_SESSION_KEY = "naiadd-query-data-session";
+const SAVED_QUERY_DATA_KEY_PREFIX = "naiadd-query-data-saved";
+export const SAVED_QUERY_DATA_EVENT = "naiadd-query-data-saved-updated";
+export const QUERY_DATA_SESSION_EVENT = "naiadd-query-data-session-updated";
+export const APPLIED_QUERY_DATA_EVENT = "naiadd-query-data-applied-updated";
+const APPLIED_QUERY_DATA_KEY = "naiadd-query-data-applied";
 
 const DEFAULT_QUERY_DATA_SESSION: QueryDataSession = {
   startDate: "",

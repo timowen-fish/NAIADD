@@ -197,7 +197,7 @@ function detectHour(rows: CurrentDatasetRow[]): number | null {
     ]);
     if (directHours != null) directHourFallback ??= directHours;
 
-    // The generic VADMA Effort field is stored in seconds.
+    // The legacy generic Effort field is stored in seconds.
     const effortSeconds = firstPositive(row, ["Effort"]);
     if (effortSeconds != null) {
       const effortHours = effortSeconds / 3600;

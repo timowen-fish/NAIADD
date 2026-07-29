@@ -3,12 +3,12 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDpkfFb84QzFqtYq-ig9Zo90M95gt4rp3k",
-  authDomain: "vadma2.firebaseapp.com",
-  projectId: "vadma2",
-  storageBucket: "vadma2.firebasestorage.app",
-  messagingSenderId: "422493120352",
-  appId: "1:422493120352:web:cac7cb5272f9e944fce005",
+  apiKey: "AIzaSyDwRKUnfgeNpd-y2gmM0575HGHilLF-Z2g",
+  authDomain: "naiadd.firebaseapp.com",
+  projectId: "naiadd",
+  storageBucket: "naiadd.firebasestorage.app",
+  messagingSenderId: "368936200425",
+  appId: "1:368936200425:web:0c1e8a3442299071f62878",
 };
 
 const app = initializeApp(firebaseConfig);

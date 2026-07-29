@@ -347,7 +347,7 @@ async function buildCurrentDataset(
 
   if (!snapshotMetadata) {
     throw new Error(
-      "The VADMA snapshot was not available after synchronization.",
+      "The NAIADD snapshot was not available after synchronization.",
     );
   }
 
@@ -393,7 +393,7 @@ async function buildCurrentDataset(
 }
 
 /**
- * Loads the complete active VADMA dataset:
+ * Loads the complete active NAIADD dataset:
  * historic snapshot rows followed by all rows from active published deltas.
  */
 export async function loadCurrentDataset(

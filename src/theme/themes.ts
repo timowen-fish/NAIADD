@@ -33,9 +33,9 @@ export const DEFAULT_VADMA_THEME: VadmaThemeId = "standard";
 export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
   {
     id: "standard",
-    name: "Standard",
+    name: "Orangefoot Pimpleback",
     description:
-      "The familiar VADMA charcoal interface with warm orange accents.",
+      "A rare Clinch River mussel named for the striking orange tissue visible around its shell.",
     appearance: "dark",
     preview: {
       background: "#111418",
@@ -47,9 +47,9 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
   },
   {
     id: "blackbanded-sunfish",
-    name: "Blackbanded Sunfish",
+    name: "James Spinymussel",
     description:
-      "Blackbanded sunfish favor quiet, heavily vegetated water and are among Virginia’s smallest sunfishes.",
+      "A Virginia native whose young shells have tiny spines that usually disappear with age.",
     appearance: "dark",
     preview: {
       background: "#080b0f",
@@ -61,9 +61,9 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
   },
   {
     id: "red-drum",
-    name: "Red Drum",
+    name: "Cumberland Moccasinshell",
     description:
-      "Red drum can make a croaking sound by vibrating muscles against their swim bladder.",
+      "A compact Appalachian mussel that lives in clean, flowing rivers with gravel and cobble bottoms.",
     appearance: "dark",
     preview: {
       background: "#0b1118",
@@ -75,9 +75,9 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
   },
   {
     id: "striped-bass",
-    name: "Striped Bass",
+    name: "Snuffbox",
     description:
-      "Striped bass move between fresh and salt water and may travel hundreds of miles during migration.",
+      "This small, thick-shelled mussel earned its name from its resemblance to an old-fashioned snuff box.",
     appearance: "dark",
     preview: {
       background: "#111827",
@@ -89,9 +89,9 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
   },
   {
     id: "bluespotted-sunfish",
-    name: "Bluespotted Sunfish",
+    name: "Brook Floater",
     description:
-      "Male bluespotted sunfish display brilliant iridescent blue spots during courtship.",
+      "A stream-dwelling mussel found in Virginia's James and Potomac river basins.",
     appearance: "dark",
     preview: {
       background: "#071521",
@@ -103,9 +103,9 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
   },
   {
     id: "largemouth-bass",
-    name: "Largemouth Bass",
+    name: "Green Floater",
     description:
-      "Largemouth bass can swallow prey that is nearly half their own body length.",
+      "Unlike most freshwater mussels, this little green species may not always need a fish host to reproduce.",
     appearance: "dark",
     preview: {
       background: "#0b140d",
@@ -117,13 +117,13 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
   },
   {
     id: "pumpkinseed",
-    name: "Pumpkinseed",
+    name: "Purple Wartyback",
     description:
-      "Pumpkinseed use strong jaws and specialized teeth to crush snails and other hard-shelled prey.",
+      "Its wonderfully blunt name describes a rounded shell covered in bumps, often hiding vivid purple nacre.",
     appearance: "dark",
     preview: {
-      background: "#15100b",
-      panel: "#35251a",
+      background: "#120d08",
+      panel: "#3e2a1c",
       accent: "#f28c28",
       secondary: "#4fc3a1",
       text: "#fff8ed",
@@ -131,13 +131,13 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
   },
   {
     id: "american-shad",
-    name: "American Shad",
+    name: "Dwarf Wedgemussel",
     description:
-      "American shad return from the ocean to spawn in the same rivers where they were born.",
+      "One of Virginia's smallest native mussels, with adults often measuring less than two inches long.",
     appearance: "dark",
     preview: {
-      background: "#0b1620",
-      panel: "#203443",
+      background: "#07121b",
+      panel: "#274151",
       accent: "#8fd3ff",
       secondary: "#d8e3ea",
       text: "#f4fbff",
@@ -145,13 +145,13 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
   },
   {
     id: "bowfin",
-    name: "Bowfin",
+    name: "Eastern Hellbender",
     description:
-      "Bowfin can gulp air at the surface, helping them survive in warm, oxygen-poor water.",
+      "Virginia's largest aquatic salamander spends nearly its entire life beneath rocks in cool, clean rivers.",
     appearance: "dark",
     preview: {
-      background: "#0d150f",
-      panel: "#26362a",
+      background: "#091109",
+      panel: "#314333",
       accent: "#a6c36f",
       secondary: "#d18b47",
       text: "#f7f9ed",
@@ -159,13 +159,13 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
   },
   {
     id: "walleye",
-    name: "Walleye",
+    name: "Spiny Riversnail",
     description:
-      "Walleye have reflective eyes that help them hunt efficiently in dim or murky water.",
+      "A large river snail whose shell may carry dramatic knobs or spines along its outer ridge.",
     appearance: "dark",
     preview: {
-      background: "#11161a",
-      panel: "#2a3337",
+      background: "#0b1013",
+      panel: "#374246",
       accent: "#d5c95d",
       secondary: "#8aa5b2",
       text: "#fbfae9",
@@ -175,7 +175,7 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
     id: "plain-jane",
     name: "Plain Jane",
     description:
-      "A clean, flat, light interface for users who prefer a traditional office-software look.",
+      "An intentionally minimal Microsoft-style interface with flat white panels, gray borders, and blue controls.",
     appearance: "light",
     preview: {
       background: "#f3f3f3",

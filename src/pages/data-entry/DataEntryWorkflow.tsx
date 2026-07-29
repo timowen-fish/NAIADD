@@ -8,11 +8,12 @@ import type {
 import LocationStep from "./LocationStep";
 import SurveyInfoStep from "./SurveyInfoStep";
 import SpecimenTypeSelector from "./SpecimenTypeSelector";
-import SpecimenStandardStep, {
+import {
   type FishObservationTable,
 } from "./SpecimenStandardStep";
-import SpecimenGillnetStep from "./SpecimenGillnetStep";
-import SpecimenCMTallyStep from "./SpecimenCMTallyStep";
+import StandardMusselProcessingStep from "./StandardMusselProcessingStep";
+import QuadsStep from "./QuadsStep";
+import MusselramaStep from "./MusselramaStep";
 import ReviewStep from "./ReviewStep";
 import SubmitStep from "./SubmitStep";
 import {
@@ -299,24 +300,24 @@ export default function DataEntryWorkflow({
         session.location &&
         session.survey &&
         !showSpecimenSelector &&
-        session.specimenFormType === "standard" && (
-          <SpecimenStandardStep {...specimenProps} />
+        session.specimenFormType === "standard_mussel" && (
+          <StandardMusselProcessingStep {...specimenProps} />
         )}
 
       {step === "specimens" &&
         session.location &&
         session.survey &&
         !showSpecimenSelector &&
-        session.specimenFormType === "gillnet" && (
-          <SpecimenGillnetStep {...specimenProps} />
+        session.specimenFormType === "quads" && (
+          <QuadsStep {...specimenProps} />
         )}
 
       {step === "specimens" &&
         session.location &&
         session.survey &&
         !showSpecimenSelector &&
-        session.specimenFormType === "cm_tally" && (
-          <SpecimenCMTallyStep {...specimenProps} />
+        session.specimenFormType === "musselrama" && (
+          <MusselramaStep {...specimenProps} />
         )}
 
       {step === "specimens" &&

@@ -7,7 +7,7 @@ import {
 } from "react";
 import "../../styles/FishEntryModal.css";
 
-export type FishRow = {
+export type MusselRow = {
   CommonName: string;
   ScientificName?: string;
   Quantity: number | null;
@@ -40,6 +40,9 @@ export type FishRow = {
   OtolithAgeResults?: number | null;
   Comments?: string;
 };
+
+// Compatibility alias while existing parent components are migrated.
+export type FishRow = MusselRow;
 
 type FishField = keyof FishRow;
 
@@ -79,8 +82,8 @@ type SmartTabState = {
   fields: FishField[];
 };
 
-const FIELD_ORDER_STORAGE_KEY = "vadma_fish_entry_field_order_v1";
-const DESKTOP_ENTRY_STORAGE_KEY = "vadma_fish_entry_not_mobile_v1";
+const FIELD_ORDER_STORAGE_KEY = "naiadd_mussel_entry_field_order_v1";
+const DESKTOP_ENTRY_STORAGE_KEY = "naiadd_mussel_entry_not_mobile_v1";
 
 const fixedWildPropagated = ["", "NA", "Wild", "Propagated"];
 const fixedDisposition = ["", "NA", "Collected", "Not Collected"];
@@ -605,30 +608,63 @@ export default function FishEntryModal({
   }, []);
 
   useEffect(() => {
-    fetch("/data/fish_species.json")
-      .then((r) => r.json())
-      .then((data: SpeciesRecord[]) => {
-        setSpecies(data || []);
-        localStorage.setItem("vadma_fish_species", JSON.stringify(data || []));
-      })
-      .catch(() => {
-        const cached = localStorage.getItem("vadma_fish_species");
-        if (cached) setSpecies(JSON.parse(cached));
-      });
+    let cancelled = false;
+
+    async function loadSpecies() {
+      const candidateUrls = [
+        "/data/mussel_species.json",
+        "/data/fish_species.json",
+      ];
+
+      for (const url of candidateUrls) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) continue;
+
+          const data = (await response.json()) as SpeciesRecord[];
+          if (!Array.isArray(data)) continue;
+
+          if (!cancelled) setSpecies(data);
+          localStorage.setItem(
+            "naiadd_mussel_species",
+            JSON.stringify(data),
+          );
+          return;
+        } catch {
+          // Try the next compatible local species file.
+        }
+      }
+
+      try {
+        const cached = localStorage.getItem("naiadd_mussel_species");
+        if (cached && !cancelled) setSpecies(JSON.parse(cached));
+      } catch {
+        // Leave the species list empty; custom species text remains allowed.
+      }
+    }
+
+    void loadSpecies();
 
     fetch("/data/data_entry_lists.json")
-      .then((r) => r.json())
+      .then((response) => response.json())
       .then((data: DataEntryLists) => {
+        if (cancelled) return;
         setLists(data || {});
         localStorage.setItem(
-          "vadma_data_entry_lists",
+          "naiadd_mussel_data_entry_lists",
           JSON.stringify(data || {}),
         );
       })
       .catch(() => {
-        const cached = localStorage.getItem("vadma_data_entry_lists");
-        if (cached) setLists(JSON.parse(cached));
+        const cached = localStorage.getItem(
+          "naiadd_mussel_data_entry_lists",
+        );
+        if (cached && !cancelled) setLists(JSON.parse(cached));
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const speciesNames = useMemo(
@@ -794,7 +830,7 @@ export default function FishEntryModal({
 
   function clearTable() {
     const confirmed = window.confirm(
-      "Are you sure you want to clear this fish table? This cannot be undone.",
+      "Are you sure you want to clear this mussel table? This cannot be undone.",
     );
 
     if (!confirmed) return;
@@ -966,11 +1002,11 @@ export default function FishEntryModal({
             <p className="fishModalKicker">Biological Observations</p>
 
             <h2>
-              Fish for Run {activeRun + 1} · Pass {activePass + 1}
+              Mussels for Sample Group {activeRun + 1} · Subsample {activePass + 1}
             </h2>
 
             <p>
-              Enter fish records for this pass. Drag the small square in the
+              Enter mussel records for this subsample. Drag the small square in the
               bottom-right corner of a cell to copy that value downward.
             </p>
           </div>
@@ -979,7 +1015,7 @@ export default function FishEntryModal({
             type="button"
             className="fishModalClose"
             onClick={onClose}
-            aria-label="Close fish entry modal"
+            aria-label="Close mussel entry modal"
           >
             ×
           </button>
@@ -994,7 +1030,7 @@ export default function FishEntryModal({
             />
             <span className="toggleTileIcon">◇</span>
             <span>
-              <strong>Fish Traits</strong>
+              <strong>Mussel Traits</strong>
               <small>Sex, condition, maturity</small>
             </span>
           </label>
@@ -1020,8 +1056,8 @@ export default function FishEntryModal({
             />
             <span className="toggleTileIcon">⌁</span>
             <span>
-              <strong>Tissue, Otos, Tags</strong>
-              <small>Samples, tags, ages</small>
+              <strong>Tissue and Tags</strong>
+              <small>Samples, tags, and comments</small>
             </span>
           </label>
 
@@ -1154,7 +1190,7 @@ export default function FishEntryModal({
               className="fishSecondaryButton"
               onClick={addNewFish}
             >
-              + New Fish
+              + New Mussel
             </button>
 
             <button
@@ -1162,7 +1198,7 @@ export default function FishEntryModal({
               className="fishSecondaryButton nextFishButton"
               onClick={() => addNextFish(true)}
             >
-              + Next Fish
+              + Next Mussel
             </button>
           </div>
 
@@ -1246,7 +1282,7 @@ function CommonNameCell({
       <input
         ref={inputRef}
         value={value || ""}
-        placeholder="Type species..."
+        placeholder="Type mussel species..."
         autoComplete="off"
         onFocus={() => setIsOpen(true)}
         onChange={(e) => {
@@ -1305,7 +1341,7 @@ function CommonNameCell({
           {matches.length > 0 ? (
             <>
               <div className="fishSpeciesPickListHeader">
-                Matching cached species
+                Matching cached mussel species
               </div>
 
               {matches.map((name, index) => (
@@ -1329,7 +1365,7 @@ function CommonNameCell({
             </>
           ) : (
             <div className="fishSpeciesPickListEmpty">
-              No cached species match. Keep typing to enter a custom value.
+              No cached mussel species match. Keep typing to enter a custom value.
             </div>
           )}
         </div>

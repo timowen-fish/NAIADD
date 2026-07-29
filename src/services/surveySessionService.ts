@@ -3,11 +3,11 @@ import type {
   SurveySession,
 } from "../types/surveySession";
 
-const ACTIVE_SESSION_PREFIX = "vadma2.surveySession";
-const DRAFTS_PREFIX = "vadma2.surveyDrafts";
+const ACTIVE_SESSION_PREFIX = "naiadd.surveySession";
+const DRAFTS_PREFIX = "naiadd.surveyDrafts";
 
-export const WORKFLOW_STEP_EVENT = "vadma-workflow-step";
-export const WORKFLOW_SESSION_EVENT = "vadma-workflow-session";
+export const WORKFLOW_STEP_EVENT = "naiadd-workflow-step";
+export const WORKFLOW_SESSION_EVENT = "naiadd-workflow-session";
 
 type AnyRecord = Record<string, unknown>;
 
