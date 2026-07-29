@@ -281,11 +281,7 @@ export function submissionBusinessStatus(
 export function submissionPayload(
   submission: SurveySubmission,
 ) {
-  return submission.payload ?? submission.data ?? {
-    location: null,
-    survey: null,
-    specimens: [],
-  };
+  return submission.payload;
 }
 
 export async function listSubmissionQueue(

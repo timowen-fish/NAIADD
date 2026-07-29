@@ -11,7 +11,7 @@ export type SubmissionSchemaVersion =
 /**
  * Business lifecycle for a submitted survey.
  *
- * This describes what the submission means to VADMA and the DBA workflow.
+ * This describes the NAIADD submission lifecycle and DBA workflow.
  */
 export type SubmissionStatus =
   | "Draft"
@@ -184,25 +184,18 @@ export type SurveySubmission = {
   /**
    * Immutable biological payload.
    */
-  payload?: SubmissionPayload;
+  payload: SubmissionPayload;
 
   /**
    * Mutable workflow and processor state.
    */
-  processing?: SubmissionProcessing;
+  processing: SubmissionProcessing;
 
   /**
    * Append-only audit trail.
    */
-  history?: SubmissionHistoryEvent[];
+  history: SubmissionHistoryEvent[];
 
-  /**
-   * Transitional compatibility alias for the current submission service.
-   *
-   * This will be removed after submissionService.ts is replaced with the new
-   * Firestore-backed pipeline.
-   */
-  data?: SubmissionPayload;
 };
 
 export type SubmissionBuildInput = {

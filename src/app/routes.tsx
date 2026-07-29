@@ -9,10 +9,9 @@ import DraftsPage from "../pages/DraftsPage";
 import PreferencesPage from "../pages/PreferencesPage";
 import SubmissionHistoryPage from "../pages/SubmissionHistoryPage";
 import SiteConditionsPage from "../pages/SiteConditionsPage";
+import DistributionsPage from "../pages/DistributionsPage";
 import QueryDataPage from "../pages/QueryDataPage";
 import RawDataPage from "../pages/RawDataPage";
-import CPUEPage from "../pages/CPUEPage";
-import SizeStructurePage from "../pages/SizeStructurePage";
 
 export type AppRouteId =
   | "dashboard"
@@ -20,11 +19,10 @@ export type AppRouteId =
   | "drafts"
   | "submissions"
   | "site-conditions"
+  | "distributions"
   | "reports"
   | "query-data"
   | "raw-data"
-  | "cpue"
-  | "size-structure"
   | "admin"
   | "settings";
 
@@ -85,10 +83,19 @@ export const APP_ROUTES: readonly AppRoute[] = [
     showInNavigation: true,
   },
   {
+    id: "distributions",
+    label: "Distributions",
+    icon: "◉",
+    description: "Map current and historical aquatic invertebrate occurrences",
+    permission: "viewReports",
+    render: () => <DistributionsPage />,
+    showInNavigation: true,
+  },
+  {
     id: "reports",
-    label: "Query Data",
+    label: "Reports",
     icon: "⌕",
-    description: "Build and review VADMA data queries",
+    description: "Build and review NAIADD data reports",
     permission: "viewReports",
     render: () => <QueryDataPage />,
     showInNavigation: true,
@@ -97,7 +104,7 @@ export const APP_ROUTES: readonly AppRoute[] = [
     id: "query-data",
     label: "Query Data",
     icon: "⌕",
-    description: "Build and review VADMA data queries",
+    description: "Build and review NAIADD data queries",
     permission: "viewReports",
     render: () => <QueryDataPage />,
     showInNavigation: false,
@@ -109,24 +116,6 @@ export const APP_ROUTES: readonly AppRoute[] = [
     description: "View tabular rows from the applied query",
     permission: "viewReports",
     render: () => <RawDataPage />,
-    showInNavigation: false,
-  },
-  {
-    id: "cpue",
-    label: "CPUE",
-    icon: "◫",
-    description: "Calculate catch per unit effort from the applied query",
-    permission: "viewReports",
-    render: () => <CPUEPage />,
-    showInNavigation: false,
-  },
-  {
-    id: "size-structure",
-    label: "Size Structure",
-    icon: "▥",
-    description: "Calculate Gabelhouse size classes and PSD metrics",
-    permission: "viewReports",
-    render: () => <SizeStructurePage />,
     showInNavigation: false,
   },
   {
@@ -142,7 +131,7 @@ export const APP_ROUTES: readonly AppRoute[] = [
     id: "settings",
     label: "Preferences",
     icon: "◉",
-    description: "Personalize your VADMA experience",
+    description: "Personalize your NAIADD experience",
     permission: "viewDashboard",
     render: () => <PreferencesPage />,
     showInNavigation: true,

@@ -68,7 +68,7 @@ export default function SiteConditionsPage() {
           setError(
             loadError instanceof Error
               ? loadError.message
-              : "Unable to load existing VADMA sites.",
+              : "Unable to load existing NAIADD sites.",
           );
         }
       } finally {

@@ -1,12 +1,12 @@
 import SpecimenStandardStep, {
-  type FishObservationTable,
+  type MusselObservationTable,
 } from "./SpecimenStandardStep";
 
 type Props = {
   siteID?: string;
   onBack: () => void;
-  onContinueToSaveDraft?: (rows: FishObservationTable[]) => void;
-  draftFishRows?: FishObservationTable[];
+  onContinueToSaveDraft?: (rows: MusselObservationTable[]) => void;
+  draftMusselRows?: MusselObservationTable[];
 };
 
 export default function StandardMusselProcessingStep(props: Props) {

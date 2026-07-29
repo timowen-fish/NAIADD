@@ -8,9 +8,7 @@ import type {
 import LocationStep from "./LocationStep";
 import SurveyInfoStep from "./SurveyInfoStep";
 import SpecimenTypeSelector from "./SpecimenTypeSelector";
-import {
-  type FishObservationTable,
-} from "./SpecimenStandardStep";
+import type { MusselObservationTable } from "./SpecimenStandardStep";
 import StandardMusselProcessingStep from "./StandardMusselProcessingStep";
 import QuadsStep from "./QuadsStep";
 import MusselramaStep from "./MusselramaStep";
@@ -206,7 +204,7 @@ export default function DataEntryWorkflow({
     setShowSpecimenSelector(true);
   }
 
-  function saveSpecimens(rows: FishObservationTable[]): void {
+  function saveSpecimens(rows: MusselObservationTable[]): void {
     update({ specimens: rows }, "review");
   }
 
@@ -218,7 +216,7 @@ export default function DataEntryWorkflow({
 
   const specimenProps = {
     siteID: session.location?.SiteID,
-    draftFishRows: session.specimens as FishObservationTable[],
+    draftMusselRows: session.specimens as MusselObservationTable[],
     onBack: returnToSpecimenSelector,
     onContinueToSaveDraft: saveSpecimens,
   };

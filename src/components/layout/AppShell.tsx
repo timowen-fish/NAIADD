@@ -55,9 +55,7 @@ export default function AppShell({
   const [reportsOpen, setReportsOpen] = useState(
     activeSection === "reports" ||
       activeSection === "query-data" ||
-      activeSection === "raw-data" ||
-      activeSection === "cpue" ||
-      activeSection === "size-structure",
+      activeSection === "raw-data",
   );
   const [surveySession, setSurveySession] = useState<SurveySession>(() =>
     loadSurveySession(profile.uid),
@@ -76,9 +74,7 @@ export default function AppShell({
     if (
       activeSection === "reports" ||
       activeSection === "query-data" ||
-      activeSection === "raw-data" ||
-      activeSection === "cpue" ||
-      activeSection === "size-structure"
+      activeSection === "raw-data"
     ) {
       setReportsOpen(true);
     }
@@ -368,9 +364,7 @@ export default function AppShell({
                 const reportsActive =
                   activeSection === "reports" ||
                   activeSection === "query-data" ||
-                  activeSection === "raw-data" ||
-                  activeSection === "cpue" ||
-                  activeSection === "size-structure";
+                  activeSection === "raw-data";
 
                 return (
                   <div className="app-nav-group" key={item.id}>
@@ -414,29 +408,6 @@ export default function AppShell({
                           <span>Raw Data</span>
                         </button>
 
-                        <button
-                          type="button"
-                          className={
-                            activeSection === "cpue" ? "active-child" : ""
-                          }
-                          onClick={() => navigate("cpue")}
-                        >
-                          <span>◫</span>
-                          <span>CPUE</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className={
-                            activeSection === "size-structure"
-                              ? "active-child"
-                              : ""
-                          }
-                          onClick={() => navigate("size-structure")}
-                        >
-                          <span>▥</span>
-                          <span>Size Structure</span>
-                        </button>
                       </div>
                     )}
                   </div>

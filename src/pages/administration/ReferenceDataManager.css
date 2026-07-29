@@ -36,6 +36,12 @@
   background: #dbeafe;
 }
 
+.reference-source-row {
+  display: flex;
+  justify-content: flex-end;
+  margin: -8px 0 14px;
+}
+
 .reference-summary-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(300px, 1.4fr);
@@ -405,6 +411,11 @@
 @media (max-width: 760px) {
   .reference-data-page {
     padding: 18px 14px 28px;
+  }
+
+  .reference-source-row {
+    justify-content: flex-start;
+    margin-top: -4px;
   }
 
   .reference-header-actions,

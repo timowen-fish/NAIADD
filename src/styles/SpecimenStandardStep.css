@@ -444,7 +444,7 @@
   color: var(--vadma-text-muted, rgba(226, 232, 240, 0.68));
 }
 
-.modernAddFishButton {
+.modernAddMusselButton {
   width: 100%;
 
   margin-top: 10px;
@@ -471,7 +471,7 @@
     filter 160ms ease;
 }
 
-.modernAddFishButton:hover {
+.modernAddMusselButton:hover {
   transform: translateY(-1px);
 
   filter: brightness(1.05);

@@ -25,7 +25,6 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-
       allow read: if isOwner(userId) || isActiveAdmin();
 
       allow create: if isActiveAdmin()
@@ -35,12 +34,24 @@ service cloud.firestore {
           && request.resource.data.role == "viewer"
           && request.resource.data.active == true
           && request.resource.data.keys().hasAll([
-            "uid","email","displayName","role","active",
-            "createdAt","updatedAt","lastLoginAt"
+            "uid",
+            "email",
+            "displayName",
+            "role",
+            "active",
+            "createdAt",
+            "updatedAt",
+            "lastLoginAt"
           ])
           && request.resource.data.keys().hasOnly([
-            "uid","email","displayName","role","active",
-            "createdAt","updatedAt","lastLoginAt"
+            "uid",
+            "email",
+            "displayName",
+            "role",
+            "active",
+            "createdAt",
+            "updatedAt",
+            "lastLoginAt"
           ])
         );
 
@@ -48,18 +59,43 @@ service cloud.firestore {
         || (
           isOwner(userId)
           && request.resource.data
-              .diff(resource.data)
-              .affectedKeys()
-              .hasOnly([
-                "email","displayName","updatedAt","lastLoginAt"
-              ])
+            .diff(resource.data)
+            .affectedKeys()
+            .hasOnly([
+              "email",
+              "displayName",
+              "updatedAt",
+              "lastLoginAt"
+            ])
         );
 
       allow delete: if isActiveAdmin();
     }
 
-    match /submissions/{submissionId} {
+    /*
+      NAIADD controlled reference lists.
 
+      All authenticated users may read these values so data-entry dropdowns
+      work online. Only active administrators may publish, replace, or delete
+      reference-list documents.
+    */
+    match /referenceData/{listId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isActiveAdmin();
+    }
+
+    /*
+      NAIADD species catalog.
+
+      The species list is readable by all authenticated users and writable
+      only by active administrators.
+    */
+    match /species/{speciesId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isActiveAdmin();
+    }
+
+    match /submissions/{submissionId} {
       allow read:
         if isActiveAdmin()
         || (
@@ -69,38 +105,52 @@ service cloud.firestore {
 
       allow create:
         if isSignedIn()
+        && request.resource.data.schemaVersion == 1
+        && request.resource.data.keys().hasAll([
+          "schemaVersion",
+          "metadata",
+          "payload",
+          "processing",
+          "history"
+        ])
         && request.resource.data.metadata.ownerUid == request.auth.uid
-        && request.resource.data.metadata.submittedByUid == request.auth.uid;
+        && request.resource.data.metadata.submittedByUid == request.auth.uid
+        && request.resource.data.metadata.specimenFormType in [
+          "standard_mussel",
+          "quads",
+          "musselrama"
+        ]
+        && request.resource.data.payload.keys().hasAll([
+          "location",
+          "survey",
+          "specimens"
+        ])
+        && request.resource.data.payload.specimens is list
+        && request.resource.data.processing.businessStatus == "Queued"
+        && request.resource.data.processing.processingState == "Pending";
 
-      allow update:
-        if isActiveAdmin();
-
-      allow delete:
-        if isActiveAdmin();
+      allow update: if isActiveAdmin();
+      allow delete: if isActiveAdmin();
     }
 
     match /publishedDeltas/{deltaId} {
       allow read: if isSignedIn();
-      allow create, update: if isActiveAdmin();
-      allow delete: if isActiveAdmin();
+      allow create, update, delete: if isActiveAdmin();
 
       match /{document=**} {
         allow read: if isSignedIn();
-        allow create, update: if isActiveAdmin();
-        allow delete: if isActiveAdmin();
+        allow create, update, delete: if isActiveAdmin();
       }
     }
 
     match /deltaIndex/{documentId} {
       allow read: if isSignedIn();
-      allow create, update: if isActiveAdmin();
-      allow delete: if isActiveAdmin();
+      allow create, update, delete: if isActiveAdmin();
     }
 
     match /snapshotKeys/{documentId} {
       allow read: if isSignedIn();
       allow create, update, delete: if isActiveAdmin();
     }
-
   }
 }

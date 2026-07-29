@@ -57,9 +57,9 @@ function numeric(value: unknown): number | null {
 }
 
 function specimenTypeLabel(type: SpecimenFormType | null | undefined): string {
-  if (type === "gillnet") return "Gill Net Survey";
-  if (type === "cm_tally") return "Centimeter Tally";
-  if (type === "standard") return "Standard Fish Processing";
+  if (type === "standard_mussel") return "Standard Mussel Processing";
+  if (type === "quads") return "Quads";
+  if (type === "musselrama") return "Musselrama";
   return "Not selected";
 }
 
@@ -94,8 +94,15 @@ export default function ReviewStep({
   const realRows = useMemo(
     () =>
       rows.filter((row) => {
-        const name = display(firstValue(row, ["CommonName", "commonName"]), "");
-        return name !== "" && name !== "NoFish";
+        const name = display(
+          firstValue(row, ["ScientificName", "scientificName"]),
+          "",
+        );
+
+        return (
+          name !== "" &&
+          name !== "No Specimen"
+        );
       }),
     [rows],
   );
@@ -104,91 +111,95 @@ export default function ReviewStep({
     const summary = new Map<string, number>();
 
     realRows.forEach((row) => {
-      const name = display(firstValue(row, ["CommonName", "commonName"]), "Unknown");
-      const quantity = numeric(firstValue(row, ["Quantity", "quantity"])) ?? 1;
+      const name = display(
+        firstValue(row, ["ScientificName", "scientificName"]),
+        "Unknown",
+      );
+      const quantity =
+        numeric(firstValue(row, ["Quantity", "quantity"])) ?? 1;
+
       summary.set(name, (summary.get(name) ?? 0) + quantity);
     });
 
     return Array.from(summary.entries())
       .map(([name, quantity]) => ({ name, quantity }))
-      .sort((a, b) => b.quantity - a.quantity || a.name.localeCompare(b.name));
+      .sort(
+        (a, b) =>
+          b.quantity - a.quantity ||
+          a.name.localeCompare(b.name),
+      );
   }, [realRows]);
 
-  const totalFish = useMemo(
+  const totalSpecimens = useMemo(
     () =>
       realRows.reduce(
-        (sum, row) => sum + (numeric(firstValue(row, ["Quantity", "quantity"])) ?? 1),
+        (sum, row) =>
+          sum +
+          (numeric(firstValue(row, ["Quantity", "quantity"])) ??
+            1),
         0,
       ),
     [realRows],
   );
 
-  const measuredRows = useMemo(
-    () =>
-      realRows
-        .map((row) => ({
-          row,
-          length: numeric(firstValue(row, ["Length", "length", "ForkLength"])),
-        }))
-        .filter((item): item is { row: AnyRecord; length: number } => item.length !== null),
-    [realRows],
-  );
-
-  const largest = useMemo(
-    () =>
-      measuredRows.length > 0
-        ? measuredRows.reduce((best, item) => (item.length > best.length ? item : best))
-        : null,
-    [measuredRows],
-  );
-
-  const smallest = useMemo(
-    () =>
-      measuredRows.length > 0
-        ? measuredRows.reduce((best, item) => (item.length < best.length ? item : best))
-        : null,
-    [measuredRows],
-  );
-
-  const netCount = useMemo(
+  const sampleGroupCount = useMemo(
     () =>
       new Set(
         realRows
-          .map((row) => display(firstValue(row, ["NetNumber", "CustomRunName"]), ""))
+          .map((row) =>
+            display(
+              firstValue(row, [
+                "CustomRunName",
+                "RunN",
+                "Run_Number",
+              ]),
+              "",
+            ),
+          )
           .filter(Boolean),
       ).size,
     [realRows],
   );
 
-  const panelCount = useMemo(
+  const subsampleCount = useMemo(
     () =>
       new Set(
         realRows
           .map((row) => {
-            const net = display(firstValue(row, ["NetNumber", "CustomRunName"]), "");
-            const panel = display(firstValue(row, ["SamplePass", "Pass"]), "");
-            return net || panel ? `${net}:${panel}` : "";
+            const group = display(
+              firstValue(row, [
+                "CustomRunName",
+                "RunN",
+                "Run_Number",
+              ]),
+              "",
+            );
+            const pass = display(
+              firstValue(row, ["SamplePass", "Pass"]),
+              "",
+            );
+
+            return group || pass ? `${group}:${pass}` : "";
           })
           .filter(Boolean),
       ).size,
     [realRows],
   );
 
-  const cmClassCount = useMemo(
-    () =>
-      new Set(
-        realRows
-          .map((row) => numeric(firstValue(row, ["Length", "length"])))
-          .filter((value): value is number => value !== null),
-      ).size,
-    [realRows],
-  );
-
-  const missingWeight = realRows.filter(
-    (row) => numeric(firstValue(row, ["Weight", "weight"])) === null,
+  const missingCondition = realRows.filter(
+    (row) =>
+      display(
+        firstValue(row, ["Condition", "condition"]),
+        "",
+      ) === "",
   ).length;
-  const missingSex = realRows.filter(
-    (row) => display(firstValue(row, ["Sex", "sex"]), "") === "",
+
+  const missingSexMaturity = realRows.filter(
+    (row) =>
+      display(
+        firstValue(row, ["SexMaturity", "sexMaturity"]),
+        "",
+      ) === "",
   ).length;
 
   const latitude = numeric(
@@ -237,26 +248,24 @@ export default function ReviewStep({
       : { level: "error", text: "Specimen data is required", action: onEditSpecimens },
   ];
 
-  if (missingWeight > 0 && session.specimenFormType !== "cm_tally") {
+  if (missingCondition > 0) {
     validationItems.push({
       level: "warning",
-      text: `${missingWeight} specimen row${missingWeight === 1 ? " is" : "s are"} missing weight`,
+      text: `${missingCondition} specimen row${missingCondition === 1 ? " is" : "s are"} missing condition`,
       action: onEditSpecimens,
     });
   }
 
-  if (missingSex > 0 && session.specimenFormType !== "cm_tally") {
+  if (missingSexMaturity > 0) {
     validationItems.push({
       level: "warning",
-      text: `${missingSex} specimen row${missingSex === 1 ? " is" : "s are"} missing sex`,
+      text: `${missingSexMaturity} specimen row${missingSexMaturity === 1 ? " is" : "s are"} missing sex/maturity`,
       action: onEditSpecimens,
     });
   }
 
-  const hasBlockingErrors = validationItems.some((item) => item.level === "error");
-  const lengthUnit = display(
-    firstValue(realRows[0] ?? {}, ["LengthUnit", "lengthUnit"]),
-    session.specimenFormType === "cm_tally" ? "cm" : "",
+  const hasBlockingErrors = validationItems.some(
+    (item) => item.level === "error",
   );
 
   return (
@@ -336,36 +345,84 @@ export default function ReviewStep({
             value={formatDate(firstValue(survey, ["Survey_Date", "SurveyDate", "surveyDate", "Date"]))}
           />
           <Definition label="Project" value={firstValue(survey, ["Project", "project"])} />
-          <Definition label="Survey Type" value={firstValue(survey, ["SurveyType", "Survey_Type", "surveyType"])} />
-          <Definition label="Sampling Method" value={firstValue(survey, ["SamplingMethod", "Sampling_Method", "samplingMethod"])} />
-          <Definition label="Lead Biologist" value={firstValue(survey, ["LeadBiologist", "Lead_Biologist", "leadBiologist"])} />
-          <Definition label="Surveyors" value={firstValue(survey, ["Surveyors", "surveyors"])} />
-          <Definition label="Weather" value={firstValue(survey, ["Weather", "weather"])} />
+          <Definition
+            label="Identified By"
+            value={firstValue(survey, ["IdentifiedBy", "identifiedBy"])}
+          />
+          <Definition
+            label="Collectors"
+            value={firstValue(survey, ["Collectors", "collectors"])}
+          />
+          <Definition
+            label="Sampling Method"
+            value={firstValue(survey, [
+              "SamplingMethod",
+              "Sampling_Method",
+              "samplingMethod",
+            ])}
+          />
+          <Definition
+            label="Taxa Surveyed"
+            value={firstValue(survey, ["Taxa", "taxa"])}
+          />
+          <Definition
+            label="Target Species"
+            value={firstValue(survey, [
+              "TargetSpecies",
+              "targetSpecies",
+            ])}
+          />
+          <Definition
+            label="Equipment"
+            value={firstValue(survey, ["Equipment", "equipment"])}
+          />
+          <Definition
+            label="Storage Location"
+            value={firstValue(survey, [
+              "StorageLocation",
+              "storageLocation",
+            ])}
+          />
+          <Definition
+            label="Total Person Hours"
+            value={firstValue(survey, [
+              "TotalPersonHours",
+              "totalPersonHours",
+            ])}
+          />
+          <Definition
+            label="Weather"
+            value={firstValue(survey, ["Weather", "weather"])}
+          />
         </ReviewCard>
 
         <ReviewCard title="Specimen Summary" icon="◇" onEdit={onEditSpecimens} wide>
           <div className="reviewMetricGrid">
-            <Metric label="Entry Method" value={specimenTypeLabel(session.specimenFormType)} />
-            <Metric label="Fish Count" value={String(totalFish)} />
-            <Metric label="Species" value={String(speciesSummary.length)} />
-            {session.specimenFormType === "gillnet" && <Metric label="Nets" value={String(netCount)} />}
-            {session.specimenFormType === "gillnet" && <Metric label="Panels" value={String(panelCount)} />}
-            {session.specimenFormType === "cm_tally" && <Metric label="CM Classes" value={String(cmClassCount)} />}
             <Metric
-              label="Largest"
-              value={
-                largest
-                  ? `${display(firstValue(largest.row, ["CommonName"]), "Fish")} — ${largest.length}${lengthUnit ? ` ${lengthUnit}` : ""}`
-                  : "—"
-              }
+              label="Entry Method"
+              value={specimenTypeLabel(
+                session.specimenFormType,
+              )}
             />
             <Metric
-              label="Smallest"
-              value={
-                smallest
-                  ? `${display(firstValue(smallest.row, ["CommonName"]), "Fish")} — ${smallest.length}${lengthUnit ? ` ${lengthUnit}` : ""}`
-                  : "—"
-              }
+              label="Total Quantity"
+              value={String(totalSpecimens)}
+            />
+            <Metric
+              label="Species"
+              value={String(speciesSummary.length)}
+            />
+            <Metric
+              label="Observation Records"
+              value={String(realRows.length)}
+            />
+            <Metric
+              label="Sample Groups"
+              value={String(sampleGroupCount)}
+            />
+            <Metric
+              label="Subsamples"
+              value={String(subsampleCount)}
             />
           </div>
 
@@ -377,7 +434,9 @@ export default function ReviewStep({
               <div className="reviewSpeciesRows">
                 {speciesSummary.slice(0, 12).map((species) => (
                   <div key={species.name}>
-                    <span>{species.name}</span>
+                    <span>
+                      <em>{species.name}</em>
+                    </span>
                     <strong>{species.quantity}</strong>
                   </div>
                 ))}

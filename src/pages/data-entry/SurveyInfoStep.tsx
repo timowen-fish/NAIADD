@@ -17,6 +17,7 @@ type SurveyInfoStepProps = {
 
 type DataEntryLists = {
   Collectors: string[];
+  IdentifiedBy: string[];
   Project: string[];
   SamplingMethod: string[];
   Taxa: string[];
@@ -39,6 +40,7 @@ type DataEntryLists = {
 
 const fallbackLists: DataEntryLists = {
   Collectors: [],
+  IdentifiedBy: [],
   Project: ["General Survey"],
   SamplingMethod: [],
   Taxa: ["mussel"],
@@ -334,15 +336,33 @@ function SurveyInfoStep({
         const referenceData = await loadReferenceDataResilient();
         if (cancelled) return;
 
-        const general = referenceData.generalLists;
+        const general = referenceData.snapshot.generalLists;
+        const species = referenceData.snapshot.species;
+
+        const collectorValues = getReferenceList(general, [
+          "collectors",
+          "collector",
+          "surveyors",
+          "surveyor",
+        ]);
+
+        const identifiedByValues = getReferenceList(general, [
+          "identified by",
+          "identifiedby",
+          "identifiers",
+          "identifier",
+        ]);
+
+        const speciesValues = species
+          .map((record) => String(record.CommonName || "").trim())
+          .filter(Boolean);
+
         const rawLists: Partial<Record<keyof DataEntryLists, unknown>> = {
-          Collectors: getReferenceList(general, [
-            "collectors",
-            "collector",
-            "surveyors",
-            "surveyor",
-            "identified by",
-          ]),
+          Collectors: collectorValues,
+          IdentifiedBy:
+            identifiedByValues.length > 0
+              ? identifiedByValues
+              : collectorValues,
           Project: getReferenceList(general, ["project", "projects"]),
           SamplingMethod: getReferenceList(general, [
             "sampling method",
@@ -353,11 +373,14 @@ function SurveyInfoStep({
           ]),
           Taxa: getReferenceList(general, ["taxa", "taxon", "survey type"]),
           Equipment: getReferenceList(general, ["equipment", "equipment list"]),
-          TargetSpecies: getReferenceList(general, [
-            "target species",
-            "target taxon",
-            "targetspecies",
-          ]),
+          TargetSpecies:
+            speciesValues.length > 0
+              ? ["None", ...speciesValues]
+              : getReferenceList(general, [
+                  "target species",
+                  "target taxon",
+                  "targetspecies",
+                ]),
           StorageLocation: getReferenceList(general, [
             "storage location",
             "storagelocation",
@@ -404,14 +427,23 @@ function SurveyInfoStep({
           ([, values]) => cleanList(values).length > 0,
         ).length;
 
+        const sourceLabel =
+          referenceData.source === "firestore"
+            ? "Firestore"
+            : referenceData.source === "cache"
+              ? "local cache"
+              : "bundled defaults";
+
         setListMessage(
           connected > 0
-            ? `Connected ${connected} NAIADD survey reference list${connected === 1 ? "" : "s"}.`
-            : "Reference Data loaded; unmatched fields are using safe fallback values.",
+            ? `Loaded ${connected} survey reference list${connected === 1 ? "" : "s"} from ${sourceLabel}.`
+            : `Reference Data loaded from ${sourceLabel}; unmatched fields are using safe fallback values.`,
         );
 
         console.info("NAIADD Survey Reference Data", {
+          source: referenceData.source,
           availableKeys: Object.keys(general),
+          speciesCount: species.length,
           connectedLists: Object.fromEntries(
             Object.entries(rawLists).map(([key, values]) => [
               key,
@@ -713,7 +745,7 @@ function SurveyInfoStep({
               onChange={(event) => updateField("IdentifiedBy", event.target.value)}
             >
               <option value="">Select Identifier</option>
-              {lists.Collectors.map((value) => (
+              {lists.IdentifiedBy.map((value) => (
                 <option key={value} value={value}>{value}</option>
               ))}
             </select>

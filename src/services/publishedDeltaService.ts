@@ -265,7 +265,7 @@ function validateSelectedRecords(
       collectionIds.add(collectionId);
     }
 
-    const payload = record.submission.payload ?? record.submission.data;
+    const payload = record.submission.payload;
     const payloadRecord = asRecord(payload);
 
     if (!payload || typeof payload !== "object") {

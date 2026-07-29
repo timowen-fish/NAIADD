@@ -14,16 +14,17 @@ import {
 } from "../../components/ui";
 import {
   loadBundledReferenceData,
-  loadReferenceData,
+  loadReferenceDataResilient,
   makeSpeciesId,
   normalizeSpecies,
   replaceReferenceData,
 } from "../../services/referenceDataService";
 import type {
-  FishSpecies,
   GeneralReferenceData,
   ReferenceDataChangeSummary,
   ReferenceDataSnapshot,
+  ReferenceDataSource,
+  SpeciesRecord,
 } from "../../types/referenceData";
 import "./ReferenceDataManager.css";
 
@@ -176,10 +177,12 @@ export default function ReferenceDataManager({
   const [newValue, setNewValue] = useState("");
   const [editingValue, setEditingValue] = useState<string | null>(null);
   const [editingReplacement, setEditingReplacement] = useState("");
-  const [speciesEditor, setSpeciesEditor] = useState<FishSpecies | null>(null);
+  const [speciesEditor, setSpeciesEditor] = useState<SpeciesRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [dataSource, setDataSource] =
+    useState<ReferenceDataSource>("bundled");
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const generalKeys = useMemo(
@@ -266,7 +269,10 @@ export default function ReferenceDataManager({
     setLoading(true);
 
     try {
-      const loaded = await loadReferenceData();
+      const result = await loadReferenceDataResilient();
+      const loaded = result.snapshot;
+
+      setDataSource(result.source);
       setBaseline(cloneSnapshot(loaded));
       setDraft(cloneSnapshot(loaded));
 
@@ -303,6 +309,7 @@ export default function ReferenceDataManager({
 
     try {
       const loaded = await loadBundledReferenceData();
+      setDataSource("bundled");
       setDraft(cloneSnapshot(loaded));
       setSearch("");
       setSelected({ type: "species" });
@@ -481,7 +488,7 @@ export default function ReferenceDataManager({
       return;
     }
 
-    const cleaned: FishSpecies = {
+    const cleaned: SpeciesRecord = {
       ...speciesEditor,
       BOVA: speciesEditor.BOVA.trim(),
       CommonName: speciesEditor.CommonName.trim(),
@@ -522,7 +529,7 @@ export default function ReferenceDataManager({
     setSpeciesEditor(null);
   }
 
-  function deleteSpecies(species: FishSpecies): void {
+  function deleteSpecies(species: SpeciesRecord): void {
     if (!window.confirm(`Delete ${species.CommonName}?`)) {
       return;
     }
@@ -640,9 +647,9 @@ export default function ReferenceDataManager({
   return (
     <div className="reference-data-page">
       <PageHeader
-        eyebrow="VADMA Administration"
+        eyebrow="NAIADD Administration"
         title="Reference Data"
-        description="Maintain controlled lists and the fish species catalog used throughout the application."
+        description="Maintain controlled lists and the species catalog used throughout NAIADD data entry."
         actions={
           <div className="reference-header-actions">
             <SecondaryButton onClick={handleBack}>
@@ -667,6 +674,24 @@ export default function ReferenceDataManager({
           {toast.message}
         </div>
       )}
+
+      <div className="reference-source-row" aria-live="polite">
+        <StatusBadge
+          tone={
+            dataSource === "firestore"
+              ? "success"
+              : dataSource === "cache"
+                ? "info"
+                : "neutral"
+          }
+        >
+          {dataSource === "firestore"
+            ? "Live Firestore data"
+            : dataSource === "cache"
+              ? "Cached offline data"
+              : "Bundled defaults"}
+        </StatusBadge>
+      </div>
 
       <div className="reference-summary-row">
         <Card className="reference-summary-card">
@@ -708,7 +733,7 @@ export default function ReferenceDataManager({
               setSearch("");
             }}
           >
-            <span>🐟</span>
+            <span>◈</span>
             <span>
               <strong>Species Catalog</strong>
               <small>{draft.species.length} records</small>
@@ -801,7 +826,7 @@ export default function ReferenceDataManager({
                   <SecondaryButton
                     onClick={() =>
                       downloadJson(
-                        "fish_species.json",
+                        "species_list.json",
                         draft.species.map(
                           ({
                             BOVA,

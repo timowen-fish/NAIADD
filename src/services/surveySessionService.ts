@@ -24,7 +24,7 @@ export type SurveyDraftMetadata = {
   siteName: string;
   surveyDate: string;
   specimenFormType: SurveySession["specimenFormType"];
-  fishCount: number;
+  specimenCount: number;
   speciesCount: number;
   progressPercent: number;
   completedSteps: number;
@@ -297,16 +297,25 @@ function dispatchSessionEvent(
   );
 }
 
-function countFish(session: SurveySession): number {
+function countSpecimens(session: SurveySession): number {
   return session.specimens.reduce((total, specimen) => {
     const row = asRecord(specimen);
-    const commonName = textValue(
+    const speciesName = textValue(
       row,
-      ["CommonName", "commonName"],
+      [
+        "ScientificName",
+        "scientificName",
+        "Species",
+        "species",
+      ],
       "",
     );
 
-    if (!commonName || commonName === "NoFish") {
+    if (
+      !speciesName ||
+      speciesName === "NoSpecimen" ||
+      speciesName === "No Specimen"
+    ) {
       return total;
     }
 
@@ -324,14 +333,23 @@ function countSpecies(session: SurveySession): number {
 
   for (const specimen of session.specimens) {
     const row = asRecord(specimen);
-    const commonName = textValue(
+    const speciesName = textValue(
       row,
-      ["CommonName", "commonName"],
+      [
+        "ScientificName",
+        "scientificName",
+        "Species",
+        "species",
+      ],
       "",
     );
 
-    if (commonName && commonName !== "NoFish") {
-      species.add(commonName.toLowerCase());
+    if (
+      speciesName &&
+      speciesName !== "NoSpecimen" &&
+      speciesName !== "No Specimen"
+    ) {
+      species.add(speciesName.toLowerCase());
     }
   }
 
@@ -399,7 +417,7 @@ export function getSurveyDraftMetadata(
     "",
   );
 
-  const fishCount = countFish(normalized);
+  const specimenCount = countSpecimens(normalized);
   const speciesCount = countSpecies(normalized);
   const completedSteps = completedStepCount(normalized);
   const totalSteps = 4;
@@ -424,7 +442,7 @@ export function getSurveyDraftMetadata(
     ...normalized.specimens.map((specimen) =>
       textValue(
         asRecord(specimen),
-        ["CommonName", "commonName"],
+        ["ScientificName", "scientificName"],
         "",
       ),
     ),
@@ -440,7 +458,7 @@ export function getSurveyDraftMetadata(
     siteName,
     surveyDate,
     specimenFormType: normalized.specimenFormType,
-    fishCount,
+    specimenCount,
     speciesCount,
     progressPercent,
     completedSteps,

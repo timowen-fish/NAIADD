@@ -48,6 +48,28 @@ function cleanText(value: unknown): string {
     : String(value).trim();
 }
 
+function positiveQuantity(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function specimenRows(session: SurveySession): UnknownRecord[] {
+  return Array.isArray(session.specimens)
+    ? session.specimens
+        .map(asRecord)
+        .filter((row) => {
+          const scientificName = cleanText(
+            row.ScientificName ?? row.scientificName,
+          );
+
+          return (
+            scientificName !== "" &&
+            scientificName !== "No Specimen"
+          );
+        })
+    : [];
+}
+
 function collectionIdFromSession(session: SurveySession): string {
   return cleanText(session.collectionId);
 }
@@ -213,13 +235,65 @@ export function validateSubmissionSession(
       severity: "error",
       field: "specimens",
     });
-  } else if (session.specimens.length === 0) {
-    issues.push({
-      code: "no-specimens",
-      message:
-        "No specimen records are present. Confirm this is an intentional no-fish survey.",
-      severity: "warning",
-      field: "specimens",
+  } else {
+    const rows = specimenRows(session);
+
+    if (rows.length === 0) {
+      issues.push({
+        code: "no-specimens",
+        message:
+          "No mussel specimen records are present. Confirm that this survey intentionally contains no specimens.",
+        severity: "warning",
+        field: "specimens",
+      });
+    }
+
+    rows.forEach((row, index) => {
+      const rowNumber = index + 1;
+      const scientificName = cleanText(
+        row.ScientificName ?? row.scientificName,
+      );
+
+      if (!scientificName) {
+        issues.push({
+          code: "missing-scientific-name",
+          message: `Specimen row ${rowNumber} is missing a Scientific Name.`,
+          severity: "error",
+          field: `specimens.${index}.ScientificName`,
+        });
+      }
+
+      if (
+        row.Quantity !== undefined &&
+        row.Quantity !== null &&
+        row.Quantity !== "" &&
+        positiveQuantity(row.Quantity) === null
+      ) {
+        issues.push({
+          code: "invalid-quantity",
+          message: `Specimen row ${rowNumber} has an invalid Quantity.`,
+          severity: "error",
+          field: `specimens.${index}.Quantity`,
+        });
+      }
+
+      if (!cleanText(row.Condition)) {
+        issues.push({
+          code: "missing-condition",
+          message: `Specimen row ${rowNumber} does not include Condition.`,
+          severity: "warning",
+          field: `specimens.${index}.Condition`,
+        });
+      }
+
+      if (!cleanText(row.SexMaturity)) {
+        issues.push({
+          code: "missing-sex-maturity",
+          message: `Specimen row ${rowNumber} does not include Sex/Maturity.`,
+          severity: "warning",
+          field: `specimens.${index}.SexMaturity`,
+        });
+      }
     });
   }
 

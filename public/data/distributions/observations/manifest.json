@@ -1,0 +1,60 @@
+{
+  "version": 2,
+  "datasets": [
+    {
+      "dataset": "Ortmann Historic Dataset",
+      "sourceFile": "HistoricOrtmannData.rds",
+      "files": [
+        "historic-ortmann/part-0001.json"
+      ]
+    },
+    {
+      "dataset": "Alderman Dataset",
+      "sourceFile": "JMA_Dataset.rds",
+      "files": [
+        "jma-dataset/part-0001.json"
+      ]
+    },
+    {
+      "dataset": "Natural Heritage",
+      "sourceFile": "NaturalHeritage_Clean.rds",
+      "files": [
+        "natural-heritage/part-0001.json"
+      ]
+    },
+    {
+      "dataset": "Brian Release Database",
+      "sourceFile": "ReleaseOutput.rds",
+      "files": [
+        "release-output/part-0001.json"
+      ]
+    },
+    {
+      "dataset": "VAFWIS",
+      "sourceFile": "VAFWIS_LATLONG.rds",
+      "files": [
+        "vafwis-latlong/part-0001.json",
+        "vafwis-latlong/part-0002.json",
+        "vafwis-latlong/part-0003.json",
+        "vafwis-latlong/part-0004.json",
+        "vafwis-latlong/part-0005.json",
+        "vafwis-latlong/part-0006.json",
+        "vafwis-latlong/part-0007.json",
+        "vafwis-latlong/part-0008.json",
+        "vafwis-latlong/part-0009.json",
+        "vafwis-latlong/part-0010.json",
+        "vafwis-latlong/part-0011.json",
+        "vafwis-latlong/part-0012.json",
+        "vafwis-latlong/part-0013.json",
+        "vafwis-latlong/part-0014.json",
+        "vafwis-latlong/part-0015.json",
+        "vafwis-latlong/part-0016.json",
+        "vafwis-latlong/part-0017.json",
+        "vafwis-latlong/part-0018.json",
+        "vafwis-latlong/part-0019.json",
+        "vafwis-latlong/part-0020.json",
+        "vafwis-latlong/part-0021.json"
+      ]
+    }
+  ]
+}

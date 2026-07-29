@@ -1,4 +1,5 @@
 import type { SubmissionQueueRecord } from "./submissionQueueService";
+import { submissionPayload } from "./submissionQueueService";
 
 export const MERGE_PACKET_SCHEMA_VERSION = 1 as const;
 
@@ -8,6 +9,8 @@ export type MergePacketGenerator = {
   email: string;
 };
 
+type AnyRecord = Record<string, unknown>;
+
 export type MergePacket = {
   packetSchemaVersion: typeof MERGE_PACKET_SCHEMA_VERSION;
   packetId: string;
@@ -16,6 +19,7 @@ export type MergePacket = {
   source: "Firestore submissions";
   summary: {
     submissionCount: number;
+    rowCount: number;
     collectionIds: string[];
     submissionIds: string[];
     firestoreDocumentIds: string[];
@@ -24,6 +28,7 @@ export type MergePacket = {
     firestoreDocumentId: string;
     submission: SubmissionQueueRecord["submission"];
   }>;
+  rowsToAppend: AnyRecord[];
 };
 
 type BuildMergePacketInput = {
@@ -31,6 +36,12 @@ type BuildMergePacketInput = {
   generatedBy: MergePacketGenerator;
   now?: Date;
 };
+
+function asRecord(value: unknown): AnyRecord {
+  return value && typeof value === "object"
+    ? (value as AnyRecord)
+    : {};
+}
 
 function safeTimestamp(date: Date): string {
   const pad = (value: number) => String(value).padStart(2, "0");
@@ -44,6 +55,58 @@ function safeTimestamp(date: Date): string {
     pad(date.getMinutes()),
     pad(date.getSeconds()),
   ].join("");
+}
+
+function flattenSubmission(
+  record: SubmissionQueueRecord,
+): AnyRecord[] {
+  const submission = record.submission;
+  const payload = submissionPayload(submission);
+  const location = asRecord(payload.location);
+  const survey = asRecord(payload.survey);
+  const specimens = Array.isArray(payload.specimens)
+    ? payload.specimens.map(asRecord)
+    : [];
+
+  const base: AnyRecord = {
+    ...location,
+    ...survey,
+    SubmissionID: submission.metadata.submissionId,
+    CollectionID: submission.metadata.collectionId,
+    SubmissionDocumentID: record.documentId,
+    SubmittedByUID: submission.metadata.submittedByUid,
+    SubmittedByEmail: submission.metadata.submittedByEmail,
+    SubmittedByDisplayName:
+      submission.metadata.submittedByDisplayName,
+    SubmittedAt:
+      submission.processing.queuedAt ??
+      submission.metadata.createdAt,
+    SpecimenFormType:
+      submission.metadata.specimenFormType ?? "",
+    SubmissionSchemaVersion: submission.schemaVersion,
+  };
+
+  if (specimens.length === 0) {
+    return [
+      {
+        ...base,
+        SpecimenRowNumber: null,
+        ScientificName: null,
+        Quantity: 0,
+        NoSpecimensObserved: true,
+      },
+    ];
+  }
+
+  return specimens.map((specimen, index) => ({
+    ...base,
+    ...specimen,
+    SubmissionID: submission.metadata.submissionId,
+    CollectionID: submission.metadata.collectionId,
+    SubmissionDocumentID: record.documentId,
+    SpecimenRowNumber: index + 1,
+    NoSpecimensObserved: false,
+  }));
 }
 
 export function buildMergePacket({
@@ -69,6 +132,8 @@ export function buildMergePacket({
     seenDocumentIds.add(record.documentId);
   }
 
+  const rowsToAppend = records.flatMap(flattenSubmission);
+
   return {
     packetSchemaVersion: MERGE_PACKET_SCHEMA_VERSION,
     packetId: `MERGE_${safeTimestamp(now)}_${crypto.randomUUID()}`,
@@ -77,6 +142,7 @@ export function buildMergePacket({
     source: "Firestore submissions",
     summary: {
       submissionCount: records.length,
+      rowCount: rowsToAppend.length,
       collectionIds: records.map(
         ({ submission }) => submission.metadata.collectionId,
       ),
@@ -91,6 +157,7 @@ export function buildMergePacket({
       firestoreDocumentId: record.documentId,
       submission: record.submission,
     })),
+    rowsToAppend,
   };
 }
 

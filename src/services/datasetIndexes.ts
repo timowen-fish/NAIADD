@@ -52,7 +52,21 @@ const SPECIES_FIELDS = [
   "scientificName",
   "Species",
   "species",
+  "Taxon",
+  "taxon",
+  "AcceptedCommonName",
+  "acceptedCommonName",
+  "AcceptedScientificName",
+  "acceptedScientificName",
 ] as const;
+
+const EMPTY_SPECIES_VALUES = new Set([
+  "nofish",
+  "nospecimen",
+  "none",
+  "not observed",
+  "notobserved",
+]);
 
 function normalizeText(value: unknown): string {
   if (value === null || value === undefined) return "";
@@ -69,6 +83,21 @@ function firstText(
   }
 
   return "";
+}
+
+
+function speciesIndexValue(row: CurrentDatasetRow): string {
+  const value = firstText(row, SPECIES_FIELDS);
+
+  if (!value) {
+    return "";
+  }
+
+  const normalized = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+
+  return EMPTY_SPECIES_VALUES.has(normalized) ? "" : value;
 }
 
 function appendToIndex(
@@ -117,7 +146,7 @@ export function buildDatasetIndexes(
       firstText(row, WATERBODY_FIELDS),
       row,
     );
-    appendToIndex(bySpecies, firstText(row, SPECIES_FIELDS), row);
+    appendToIndex(bySpecies, speciesIndexValue(row), row);
   }
 
   const collectionIds = sortedKeys(byCollectionId);

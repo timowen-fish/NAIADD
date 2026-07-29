@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   Database,
-  Fish,
+  Shell,
   FolderKanban,
   LoaderCircle,
   Map as MapIcon,
@@ -39,8 +39,8 @@ import type { LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 import {
-  getCachedVadmaSnapshotMeta,
-  readCachedVadmaSnapshotRows,
+  getCachedSnapshotMetadata,
+  readSnapshotRows,
 } from "../services/snapshotService";
 import {
   deleteSavedQueryData,
@@ -62,6 +62,7 @@ type SnapshotRow = Record<string, unknown>;
 
 type CollectionMapPoint = {
   collectionID: string;
+  collectionIDs: string[];
   surveyDate: string;
   timestamp: number;
   latitude: number;
@@ -74,6 +75,11 @@ type CollectionMapPoint = {
   targetSpecies: string[];
   surveyTypes: string[];
   equipment: string[];
+};
+
+type InitialSiteMapPoint = CollectionMapPoint & {
+  siteKey: string;
+  collectionCount: number;
 };
 
 type MapLoadState = "idle" | "loading" | "ready" | "empty" | "error";
@@ -348,78 +354,23 @@ let lastFittedCollectionKey = "";
 
 const MAP_SNAPSHOT_COLUMNS = [
   "CollectionID",
-  "Collection_Id",
-  "Survey_Date",
-  "SampleDate",
-  "CollectionDate",
-  "Date",
-  "FinalDate",
-  "DownstreamLat",
-  "downstreamLat",
-  "DownstreamLatitude",
-  "Latitude",
-  "latitude",
-  "Lat",
-  "lat",
-  "Lat_Decimal_Degree",
-  "Y",
-  "y",
-  "DownstreamLong",
-  "downstreamLong",
-  "DownstreamLongitude",
-  "Longitude",
-  "longitude",
-  "Long",
-  "long",
-  "Lng",
-  "lng",
-  "Long_Decimal_Degree",
-  "X",
-  "x",
-  "SiteName",
-  "Locality",
-  "SiteID",
-  "Site_Id",
-  "Waterbody",
-  "Stream",
-  "CommonName",
-  "Species",
-  "SpeciesName",
+  "SurveyDate",
+  "Taxa",
   "ScientificName",
+  "Quantity",
+  "SamplingMethod",
+  "SiteID",
+  "SiteID_AccessDB",
+  "SiteID_Previous",
+  "SiteName",
+  "LocDescription",
+  "Waterbody",
+  "LatitudeDD",
+  "LongitudeDD",
+  "DownstreamLat",
+  "DownstreamLong",
   "Collectors",
-  "Surveyor",
-  "Surveyors",
-  "LeadBiologist",
-  "Lead_Biologist",
   "Project",
-  "ProjectName",
-  "TargetSpeciesNew",
-  "TargetSpecies_New",
-  "Target Species New",
-  "TargetSpecies",
-  "Target_Species",
-  "Target Species",
-  "TargetSpeciesName",
-  "Target_Species_Name",
-  "TargetSpeciesCommonName",
-  "Target_CommonName",
-  "Target",
-  "SampleType_Gear",
-  "SamplingMethod_Gear",
-  "SurveyType",
-  "Survey_Type",
-  "Survey Type",
-  "SurveyTypeName",
-  "Survey_Type_Name",
-  "Equip",
-  "Equipment",
-  "EquipmentUsed",
-  "Equipment_Used",
-  "SamplingEquipment",
-  "Sampling_Equipment",
-  "Gear",
-  "GearType",
-  "Gear_Type",
 ] as const;
 
 function formatMegabytes(bytes: number): string {
@@ -432,6 +383,25 @@ function getValue(
 ): unknown {
   for (const candidate of candidates) {
     const value = row[candidate];
+
+    if (
+      value !== undefined &&
+      value !== null &&
+      String(value).trim() !== ""
+    ) {
+      return value;
+    }
+  }
+
+  const keysByLowerCase = new Map(
+    Object.keys(row).map((key) => [key.toLowerCase(), key]),
+  );
+
+  for (const candidate of candidates) {
+    const actualKey = keysByLowerCase.get(candidate.toLowerCase());
+    if (!actualKey) continue;
+
+    const value = row[actualKey];
 
     if (
       value !== undefined &&
@@ -505,93 +475,159 @@ function splitValues(value: unknown): string[] {
     .filter(Boolean);
 }
 
+function buildInitialSitePoints(
+  rows: SnapshotRow[],
+): InitialSiteMapPoint[] {
+  const sites = new Map<string, InitialSiteMapPoint>();
+  const collectionsBySite = new Map<string, Set<string>>();
+
+  for (const row of rows) {
+    const latitude = toNumber(
+      row.LatitudeDD ?? row.DownstreamLat,
+    );
+    const longitude = toNumber(
+      row.LongitudeDD ?? row.DownstreamLong,
+    );
+
+    if (
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180 ||
+      latitude === 0 ||
+      longitude === 0
+    ) {
+      continue;
+    }
+
+    const siteName =
+      toText(
+        row.SiteName ??
+          row.LocDescription ??
+          row.SiteID ??
+          row.SiteID_AccessDB ??
+          row.SiteID_Previous,
+      ) || "Unnamed site";
+
+    const waterbody =
+      toText(row.Waterbody ?? row.SiteName ?? row.LocDescription) ||
+      "Unknown waterbody";
+
+    const siteKey = [
+      latitude.toFixed(6),
+      longitude.toFixed(6),
+      siteName,
+      waterbody,
+    ].join("|");
+
+    let point = sites.get(siteKey);
+
+    if (!point) {
+      point = {
+        siteKey,
+        collectionCount: 0,
+        collectionID: "",
+        collectionIDs: [],
+        surveyDate: "",
+        timestamp: 0,
+        latitude,
+        longitude,
+        siteName,
+        waterbody,
+        species: [],
+        surveyors: [],
+        projects: [],
+        targetSpecies: [],
+        surveyTypes: [],
+        equipment: [],
+      };
+
+      sites.set(siteKey, point);
+      collectionsBySite.set(siteKey, new Set<string>());
+    }
+
+    const collectionID = toText(row.CollectionID);
+    if (collectionID) {
+      const collectionIDs = collectionsBySite.get(siteKey)!;
+      collectionIDs.add(collectionID);
+      point.collectionCount = collectionIDs.size;
+      point.collectionIDs = [...collectionIDs];
+
+      if (!point.collectionID) {
+        point.collectionID = collectionID;
+      }
+    }
+  }
+
+  return [...sites.values()];
+}
+
+function nextPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => resolve());
+  });
+}
+
 function buildCollectionPoints(rows: SnapshotRow[]): CollectionMapPoint[] {
   const pointsByCollection = new Map<string, CollectionMapPoint>();
 
   for (const row of rows) {
-    const collectionID = toText(
-      getValue(row, ["CollectionID", "Collection_Id"]),
+    const collectionID = toText(getValue(row, ["CollectionID"]));
+    if (!collectionID) continue;
+
+    const latitude = toNumber(
+      getValue(row, ["LatitudeDD", "DownstreamLat"]),
+    );
+    const longitude = toNumber(
+      getValue(row, ["LongitudeDD", "DownstreamLong"]),
     );
 
-    if (!collectionID) continue;
+    const validCoordinates =
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude) &&
+      latitude >= -90 &&
+      latitude <= 90 &&
+      longitude >= -180 &&
+      longitude <= 180 &&
+      latitude !== 0 &&
+      longitude !== 0;
+
+    if (!validCoordinates) continue;
 
     let point = pointsByCollection.get(collectionID);
 
     if (!point) {
       const surveyDate = parseSurveyDate(
-        getValue(row, [
-          "Survey_Date",
-          "SampleDate",
-          "CollectionDate",
-          "Date",
-          "FinalDate",
-        ]),
+        getValue(row, ["SurveyDate"]),
       );
-
-      if (!surveyDate) continue;
-
-      const latitude = toNumber(
-        getValue(row, [
-          "DownstreamLat",
-          "downstreamLat",
-          "DownstreamLatitude",
-          "Latitude",
-          "latitude",
-          "Lat",
-          "lat",
-          "Lat_Decimal_Degree",
-          "Y",
-          "y",
-        ]),
-      );
-
-      const longitude = toNumber(
-        getValue(row, [
-          "DownstreamLong",
-          "downstreamLong",
-          "DownstreamLongitude",
-          "Longitude",
-          "longitude",
-          "Long",
-          "long",
-          "Lng",
-          "lng",
-          "Long_Decimal_Degree",
-          "X",
-          "x",
-        ]),
-      );
-
-      const validCoordinates =
-        Number.isFinite(latitude) &&
-        Number.isFinite(longitude) &&
-        latitude >= -90 &&
-        latitude <= 90 &&
-        longitude >= -180 &&
-        longitude <= 180 &&
-        latitude !== 0 &&
-        longitude !== 0;
-
-      if (!validCoordinates) continue;
 
       point = {
         collectionID,
-        surveyDate: toDateInputValue(surveyDate),
-        timestamp: surveyDate.getTime(),
+        collectionIDs: [collectionID],
+        surveyDate: surveyDate ? toDateInputValue(surveyDate) : "",
+        timestamp: surveyDate?.getTime() ?? 0,
         latitude,
         longitude,
         siteName:
           toText(
             getValue(row, [
               "SiteName",
-              "Locality",
+              "LocDescription",
               "SiteID",
-              "Site_Id",
+              "SiteID_AccessDB",
+              "SiteID_Previous",
             ]),
           ) || "Unnamed site",
         waterbody:
-          toText(getValue(row, ["Waterbody", "Stream"])) ||
-          "Unknown waterbody",
+          toText(
+            getValue(row, [
+              "Waterbody",
+              "SiteName",
+              "LocDescription",
+            ]),
+          ) || "Unknown waterbody",
         species: [],
         surveyors: [],
         projects: [],
@@ -603,11 +639,26 @@ function buildCollectionPoints(rows: SnapshotRow[]): CollectionMapPoint[] {
       pointsByCollection.set(collectionID, point);
     }
 
-    for (const config of CUSTOM_FILTER_OPTIONS) {
-      for (const value of splitValues(getValue(row, config.aliases))) {
-        addUniqueValue(point[config.pointKey], value);
-      }
+    addUniqueValue(
+      point.species,
+      toText(getValue(row, ["ScientificName", "Taxa"])),
+    );
+
+    for (const collector of splitValues(
+      getValue(row, ["Collectors"]),
+    )) {
+      addUniqueValue(point.surveyors, collector);
     }
+
+    addUniqueValue(
+      point.projects,
+      toText(getValue(row, ["Project"])),
+    );
+
+    addUniqueValue(
+      point.surveyTypes,
+      toText(getValue(row, ["SamplingMethod"])),
+    );
   }
 
   return [...pointsByCollection.values()];
@@ -650,6 +701,7 @@ type CustomFilterConfig = {
   field: QueryDataCustomFilterField;
   label: string;
   pointKey:
+    | "collectionIDs"
     | "species"
     | "surveyors"
     | "projects"
@@ -657,34 +709,37 @@ type CustomFilterConfig = {
     | "surveyTypes"
     | "equipment";
   aliases: readonly string[];
-  icon: "fish" | "user" | "project" | "target" | "survey" | "equipment";
+  icon:
+    | "collection"
+    | "species"
+    | "user"
+    | "project"
+    | "target"
+    | "survey"
+    | "equipment";
 };
 
 const CUSTOM_FILTER_OPTIONS: readonly CustomFilterConfig[] = [
   {
+    field: "collectionID",
+    label: "Collection ID",
+    pointKey: "collectionIDs",
+    icon: "collection",
+    aliases: ["CollectionID"],
+  },
+  {
     field: "species",
     label: "Species",
     pointKey: "species",
-    icon: "fish",
-    aliases: [
-      "CommonName",
-      "Species",
-      "SpeciesName",
-      "ScientificName",
-    ],
+    icon: "species",
+    aliases: ["ScientificName", "Taxa"],
   },
   {
     field: "surveyor",
-    label: "Surveyor",
+    label: "Collectors",
     pointKey: "surveyors",
     icon: "user",
-    aliases: [
-      "Collectors",
-      "Surveyors",
-      "Surveyor",
-      "LeadBiologist",
-      "Lead_Biologist",
-    ],
+    aliases: ["Collectors"],
   },
   {
     field: "project",
@@ -720,15 +775,7 @@ const CUSTOM_FILTER_OPTIONS: readonly CustomFilterConfig[] = [
     label: "Survey Type",
     pointKey: "surveyTypes",
     icon: "survey",
-    aliases: [
-      "SampleType_Gear",
-      "SamplingMethod_Gear",
-      "SurveyType",
-      "Survey_Type",
-      "Survey Type",
-      "SurveyTypeName",
-      "Survey_Type_Name",
-    ],
+    aliases: ["SamplingMethod"],
   },
   {
     field: "equipment",
@@ -775,8 +822,10 @@ function getCustomFilterIcon(field: QueryDataCustomFilterField) {
   const icon = getCustomFilterConfig(field).icon;
 
   switch (icon) {
-    case "fish":
-      return <Fish size={20} />;
+    case "collection":
+      return <ClipboardList size={20} />;
+    case "species":
+      return <Shell size={20} />;
     case "user":
       return <UserRound size={20} />;
     case "project":
@@ -913,7 +962,7 @@ function FitMapToPoints({
 }
 
 export default function QueryDataPage() {
-  const snapshotMeta = useMemo(() => getCachedVadmaSnapshotMeta(), []);
+  const snapshotMeta = useMemo(() => getCachedSnapshotMetadata(), []);
   const initialSession = useMemo(() => loadQueryDataSession(), []);
   const snapshotCacheKey = useMemo(
     () => JSON.stringify(snapshotMeta ?? null),
@@ -999,6 +1048,16 @@ export default function QueryDataPage() {
       ? cachedCollectionPoints ?? []
       : [],
   );
+  const [initialSitePoints, setInitialSitePoints] = useState<
+    InitialSiteMapPoint[]
+  >([]);
+  const [hasAppliedMapQuery, setHasAppliedMapQuery] = useState(false);
+  const [appliedMapPoints, setAppliedMapPoints] = useState<
+    CollectionMapPoint[]
+  >([]);
+  const [queryIndexReady, setQueryIndexReady] = useState(
+    hasReusableCollectionCache,
+  );
   const [mapLoadState, setMapLoadState] = useState<MapLoadState>(
     hasReusableCollectionCache ? "ready" : "idle",
   );
@@ -1008,8 +1067,7 @@ export default function QueryDataPage() {
       : "Waiting for the cached snapshot.",
   );
 
-  const snapshotAvailable =
-    Boolean(snapshotMeta) && Number(snapshotMeta?.sizeBytes ?? 0) > 0;
+  const snapshotAvailable = Boolean(snapshotMeta);
 
   const hasDateFilter = Boolean(startDate || endDate);
   const invalidDateRange =
@@ -1102,67 +1160,80 @@ export default function QueryDataPage() {
   useEffect(() => {
     let cancelled = false;
 
-    async function loadCollectionPoints() {
-      if (
-        cachedCollectionPoints !== null &&
-        cachedCollectionPointsKey === snapshotCacheKey
-      ) {
-        setCollectionPoints(cachedCollectionPoints);
-        setMapLoadState("ready");
-        setMapStatus(
-          `${cachedCollectionPoints.length.toLocaleString()} unique mapped collections restored.`,
-        );
-        return;
-      }
-
+    async function loadMapAndQueryData() {
       if (!snapshotAvailable) {
         setMapLoadState("empty");
-        setMapStatus("No cached production snapshot is available.");
+        setMapStatus("No cached NAIADD production snapshot is available.");
         return;
       }
 
       setMapLoadState("loading");
-      setMapStatus("Reading collection locations from the cached snapshot...");
+      setMapStatus("Reading mapped sites from the cached NAIADD snapshot...");
 
       try {
-        const rows = await readCachedVadmaSnapshotRows({
+        const rows = await readSnapshotRows({
           columns: [...MAP_SNAPSHOT_COLUMNS],
         });
 
         if (cancelled) return;
 
-        const points = buildCollectionPoints(rows);
-        cachedCollectionPoints = points;
-        cachedCollectionPointsKey = snapshotCacheKey;
-        setCollectionPoints(points);
+        const sites = buildInitialSitePoints(rows);
+        setInitialSitePoints(sites);
 
-        if (points.length === 0) {
+        if (sites.length === 0) {
           setMapLoadState("empty");
           setMapStatus(
-            "No collections with valid dates and coordinates were found.",
+            "No rows with valid LatitudeDD/LongitudeDD or downstream coordinates were found.",
           );
           return;
         }
 
         setMapLoadState("ready");
         setMapStatus(
-          `${points.length.toLocaleString()} unique mapped collections loaded.`,
+          `${sites.length.toLocaleString()} mapped sites loaded.`,
         );
+
+        // Let the lightweight site map render before building the full
+        // collection/filter index.
+        await nextPaint();
+        await nextPaint();
+
+        if (cancelled) return;
+
+        if (
+          cachedCollectionPoints !== null &&
+          cachedCollectionPointsKey === snapshotCacheKey
+        ) {
+          setCollectionPoints(cachedCollectionPoints);
+          setQueryIndexReady(true);
+          return;
+        }
+
+        const points = buildCollectionPoints(rows);
+
+        if (cancelled) return;
+
+        cachedCollectionPoints = points;
+        cachedCollectionPointsKey = snapshotCacheKey;
+        setCollectionPoints(points);
+        setQueryIndexReady(true);
       } catch (error) {
         if (cancelled) return;
 
         console.error("Unable to load Query Data map points.", error);
+        setInitialSitePoints([]);
         setCollectionPoints([]);
+        setQueryIndexReady(false);
         setMapLoadState("error");
         setMapStatus(
           error instanceof Error
             ? error.message
-            : "Unable to read collection locations from the snapshot.",
+            : "Unable to read mapped sites from the cached NAIADD snapshot.",
         );
       }
     }
 
-    void loadCollectionPoints();
+    void loadMapAndQueryData();
 
     return () => {
       cancelled = true;
@@ -1180,12 +1251,19 @@ export default function QueryDataPage() {
       ? new Date(`${deferredEndDate}T23:59:59.999`).getTime()
       : Number.POSITIVE_INFINITY;
 
-    return collectionPoints.filter(
-      (point) =>
-        point.timestamp >= startTimestamp &&
-        point.timestamp <= endTimestamp &&
-        isPointInsidePolygon(point, deferredAreaPolygon),
-    );
+    return collectionPoints.filter((point) => {
+      const dateMatches =
+        !deferredStartDate && !deferredEndDate
+          ? true
+          : point.timestamp > 0 &&
+            point.timestamp >= startTimestamp &&
+            point.timestamp <= endTimestamp;
+
+      return (
+        dateMatches &&
+        isPointInsidePolygon(point, deferredAreaPolygon)
+      );
+    });
   }, [
     collectionPoints,
     deferredAreaPolygon,
@@ -1328,9 +1406,9 @@ export default function QueryDataPage() {
     });
   }, [activeCustomFilterFields, availableCustomValues]);
 
-  const appliedFilteredPoints = useMemo(() => {
-    const session = appliedQuerySession;
-
+  function filterCollectionPoints(
+    session: QueryDataSession,
+  ): CollectionMapPoint[] {
     if (
       session.startDate &&
       session.endDate &&
@@ -1349,9 +1427,15 @@ export default function QueryDataPage() {
     const selectedWaterbodiesSet = new Set(session.selectedWaterbodies);
 
     return collectionPoints.filter((point) => {
+      const dateMatches =
+        !session.startDate && !session.endDate
+          ? true
+          : point.timestamp > 0 &&
+            point.timestamp >= startTimestamp &&
+            point.timestamp <= endTimestamp;
+
       if (
-        point.timestamp < startTimestamp ||
-        point.timestamp > endTimestamp ||
+        !dateMatches ||
         !isPointInsidePolygon(point, session.areaPolygon)
       ) {
         return false;
@@ -1379,16 +1463,30 @@ export default function QueryDataPage() {
         return selected.some((value) => pointValues.includes(value));
       });
     });
-  }, [appliedQuerySession, collectionPoints]);
+  }
+
+  const appliedFilteredPoints = appliedMapPoints;
+
+  const displayedMapPoints = hasAppliedMapQuery
+    ? appliedFilteredPoints
+    : initialSitePoints;
+
+  const shouldFitDisplayedPoints =
+    hasAppliedMapQuery ? shouldFitAppliedPoints : false;
 
   useEffect(() => {
-    if (mapLoadState !== "ready") return;
+    if (mapLoadState !== "ready" || !hasAppliedMapQuery) return;
 
     saveAppliedQueryData(
       appliedQuerySession,
       appliedFilteredPoints.map((point) => point.collectionID),
     );
-  }, [appliedFilteredPoints, appliedQuerySession, mapLoadState]);
+  }, [
+    appliedFilteredPoints,
+    appliedQuerySession,
+    hasAppliedMapQuery,
+    mapLoadState,
+  ]);
 
   const currentQuerySession = getCurrentQuerySession();
   const queryHasUnappliedChanges =
@@ -1491,9 +1589,20 @@ export default function QueryDataPage() {
   }
 
   function applyQueryToMap() {
-    if (invalidDateRange || !snapshotAvailable) return;
+    if (
+      invalidDateRange ||
+      !snapshotAvailable ||
+      !queryIndexReady
+    ) {
+      return;
+    }
 
-    setAppliedQuerySession(getCurrentQuerySession());
+    const nextSession = getCurrentQuerySession();
+    const nextPoints = filterCollectionPoints(nextSession);
+
+    setAppliedQuerySession(nextSession);
+    setAppliedMapPoints(nextPoints);
+    setHasAppliedMapQuery(true);
     setShouldFitAppliedPoints(true);
   }
 
@@ -1680,7 +1789,7 @@ export default function QueryDataPage() {
           <span className="query-data-eyebrow">Reports</span>
           <h1>Query Data</h1>
           <p>
-            Build and review queries against the cached VADMA production
+            Build and review queries against the cached NAIADD production
             snapshot.
           </p>
         </div>
@@ -1697,11 +1806,11 @@ export default function QueryDataPage() {
         </div>
 
         <div className="query-data-snapshot-copy">
-          <span>VADMA Production Database</span>
+          <span>NAIADD Production Database</span>
           <strong>
             {snapshotAvailable
               ? "Cached production snapshot is available."
-              : "No cached production snapshot is available."}
+              : "No cached NAIADD production snapshot is available."}
           </strong>
         </div>
 
@@ -1780,7 +1889,7 @@ export default function QueryDataPage() {
                         setSavedQueryName(event.target.value);
                         setSavedQueryNotice("");
                       }}
-                      placeholder="Example: James River bass surveys"
+                      placeholder="Example: Clinch River mussel surveys"
                       maxLength={80}
                     />
                   </label>
@@ -1873,8 +1982,8 @@ export default function QueryDataPage() {
               }`}
             >
               {queryHasUnappliedChanges
-                ? "Filter changes are staged and have not changed the map yet."
-                : "The map reflects the current query filters."}
+                ? "Filter changes are staged. The current map has not changed."
+                : "Filter changes are staged. The map changes only after Apply Query to Map is selected."}
             </span>
           </section>
 
@@ -2665,11 +2774,15 @@ export default function QueryDataPage() {
 
               <div className="query-data-map-count">
               <MapPin size={16} aria-hidden="true" />
-              <strong>{appliedFilteredPoints.length.toLocaleString()}</strong>
+              <strong>{displayedMapPoints.length.toLocaleString()}</strong>
               <span>
-                {appliedFilteredPoints.length === 1
-                  ? "collection"
-                  : "collections"}
+                {hasAppliedMapQuery
+                  ? displayedMapPoints.length === 1
+                    ? "collection"
+                    : "collections"
+                  : displayedMapPoints.length === 1
+                    ? "site"
+                    : "sites"}
               </span>
               </div>
             </div>
@@ -2730,8 +2843,8 @@ export default function QueryDataPage() {
                 />
 
                 <FitMapToPoints
-                  points={appliedFilteredPoints}
-                  disabled={isDrawingArea || !shouldFitAppliedPoints}
+                  points={displayedMapPoints}
+                  disabled={isDrawingArea || !shouldFitDisplayedPoints}
                 />
 
                 <AreaDrawingController
@@ -2756,9 +2869,13 @@ export default function QueryDataPage() {
                   />
                 )}
 
-                {appliedFilteredPoints.map((point) => (
+                {displayedMapPoints.map((point) => (
                   <CircleMarker
-                    key={point.collectionID}
+                    key={
+                      "siteKey" in point
+                        ? point.siteKey
+                        : point.collectionID
+                    }
                     center={[point.latitude, point.longitude]}
                     radius={4}
                     pathOptions={{
@@ -2772,8 +2889,24 @@ export default function QueryDataPage() {
                       <div className="query-data-map-popup">
                         <strong>{point.siteName}</strong>
                         <span>{point.waterbody}</span>
-                        <span>{point.surveyDate}</span>
-                        <small>{point.collectionID}</small>
+                        {hasAppliedMapQuery ? (
+                          <>
+                            {point.surveyDate && (
+                              <span>{point.surveyDate}</span>
+                            )}
+                            <small>{point.collectionID}</small>
+                          </>
+                        ) : (
+                          <small>
+                            {"collectionCount" in point
+                              ? `${point.collectionCount.toLocaleString()} ${
+                                  point.collectionCount === 1
+                                    ? "collection"
+                                    : "collections"
+                                }`
+                              : "Mapped site"}
+                          </small>
+                        )}
                       </div>
                     </Popup>
                   </CircleMarker>
@@ -2783,6 +2916,7 @@ export default function QueryDataPage() {
 
             {mapLoadState === "ready" &&
               !isDrawingArea &&
+              hasAppliedMapQuery &&
               appliedFilteredPoints.length === 0 && (
                 <div className="query-data-map-empty-overlay">
                   <MapPin size={28} aria-hidden="true" />
@@ -2797,7 +2931,11 @@ export default function QueryDataPage() {
 
           <p className="query-data-map-status" aria-live="polite">
             {mapLoadState === "ready"
-              ? `${appliedFilteredPoints.length.toLocaleString()} of ${collectionPoints.length.toLocaleString()} unique mapped collections shown.`
+              ? hasAppliedMapQuery
+                ? `${appliedFilteredPoints.length.toLocaleString()} of ${collectionPoints.length.toLocaleString()} mapped collections shown.`
+                : queryIndexReady
+                  ? `${initialSitePoints.length.toLocaleString()} mapped sites shown. Build filters, then select Apply Query to Map.`
+                  : `${initialSitePoints.length.toLocaleString()} mapped sites shown. Preparing query filters in the background...`
               : mapStatus}
           </p>
         </section>
@@ -2811,7 +2949,9 @@ export default function QueryDataPage() {
         <span>
           {queryHasUnappliedChanges
             ? "Filter changes are ready to apply."
-            : `${appliedFilteredPoints.length.toLocaleString()} collections shown.`}
+            : hasAppliedMapQuery
+              ? `${appliedFilteredPoints.length.toLocaleString()} collections shown.`
+              : `${initialSitePoints.length.toLocaleString()} sites shown.`}
         </span>
 
         <button
@@ -2821,7 +2961,8 @@ export default function QueryDataPage() {
           disabled={
             !snapshotAvailable ||
             invalidDateRange ||
-            mapLoadState !== "ready"
+            mapLoadState !== "ready" ||
+            !queryIndexReady
           }
         >
           <Play size={19} fill="currentColor" />

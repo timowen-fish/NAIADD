@@ -13,9 +13,9 @@ import {
   type AppliedQueryData,
 } from "../services/queryDataSessionService";
 import {
-  getCachedVadmaCollectionIndex,
-  readCachedVadmaSnapshotCollectionRows,
-  readCachedVadmaSnapshotColumnNames,
+  getCachedVadmaCollectionIndex as getCachedNaiaddCollectionIndex,
+  readCachedVadmaSnapshotCollectionRows as readCachedNaiaddSnapshotCollectionRows,
+  readCachedVadmaSnapshotColumnNames as readCachedNaiaddSnapshotColumnNames,
   type CollectionIndexRecord,
 } from "../services/snapshotService";
 import "../styles/RawDataPage.css";
@@ -124,6 +124,7 @@ export default function RawDataPage() {
   >([]);
   const [selectedCollectionIndex, setSelectedCollectionIndex] = useState(0);
   const [rows, setRows] = useState<DataRow[]>([]);
+  const [snapshotColumns, setSnapshotColumns] = useState<string[]>([]);
   const [loadingIndex, setLoadingIndex] = useState(true);
   const [loadingRows, setLoadingRows] = useState(false);
   const [error, setError] = useState("");
@@ -149,10 +150,14 @@ export default function RawDataPage() {
         setLoadingIndex(true);
         setError("");
 
-        const cachedIndex = await getCachedVadmaCollectionIndex();
+        const [cachedIndex, cachedColumns] = await Promise.all([
+          getCachedNaiaddCollectionIndex(),
+          readCachedNaiaddSnapshotColumnNames(),
+        ]);
+
         if (!cachedIndex) {
           throw new Error(
-            "The cached collection index is unavailable. Refresh the snapshot from the dashboard once, then return here.",
+            "The cached collection index is unavailable. Refresh the NAIADD production snapshot from the dashboard, then return here.",
           );
         }
 
@@ -163,6 +168,7 @@ export default function RawDataPage() {
 
         if (!cancelled) {
           setMatchingCollections(matches);
+          setSnapshotColumns(cachedColumns);
           setSelectedCollectionIndex(0);
         }
       } catch (loadError) {
@@ -202,7 +208,7 @@ export default function RawDataPage() {
         setError("");
         setPage(1);
 
-        const collectionRows = await readCachedVadmaSnapshotCollectionRows(
+        const collectionRows = await readCachedNaiaddSnapshotCollectionRows(
           selectedCollection.CollectionID,
         );
 
@@ -231,8 +237,8 @@ export default function RawDataPage() {
   }, [selectedCollection]);
 
   const columns = useMemo(() => {
-    const names: string[] = [];
-    const found = new Set<string>();
+    const names = [...snapshotColumns];
+    const found = new Set(names);
 
     for (const row of rows) {
       for (const column of Object.keys(row)) {
@@ -244,7 +250,7 @@ export default function RawDataPage() {
     }
 
     return names;
-  }, [rows]);
+  }, [rows, snapshotColumns]);
 
   const pageCount = Math.max(1, Math.ceil(rows.length / ROWS_PER_PAGE));
   const safePage = Math.min(page, pageCount);
@@ -291,14 +297,19 @@ export default function RawDataPage() {
     cancelExportRef.current = false;
 
     try {
-      const snapshotColumns = await readCachedVadmaSnapshotColumnNames();
-      const exportColumns = snapshotColumns.length > 0 ? snapshotColumns : columns;
+      const exportColumns =
+        snapshotColumns.length > 0
+          ? snapshotColumns
+          : await readCachedNaiaddSnapshotColumnNames();
 
-      if (exportColumns.length === 0) {
+      const resolvedExportColumns =
+        exportColumns.length > 0 ? exportColumns : columns;
+
+      if (resolvedExportColumns.length === 0) {
         throw new Error("No snapshot columns were available for export.");
       }
 
-      const header = `${exportColumns.map(escapeCsvValue).join(",")}\r\n`;
+      const header = `${resolvedExportColumns.map(escapeCsvValue).join(",")}\r\n`;
       const dateStamp = new Date().toISOString().slice(0, 10);
 
       if (exportLayout === "single") {
@@ -315,16 +326,16 @@ export default function RawDataPage() {
           const collectionRows =
             target.CollectionID === selectedCollection?.CollectionID && rows.length > 0
               ? rows
-              : await readCachedVadmaSnapshotCollectionRows(target.CollectionID);
+              : await readCachedNaiaddSnapshotCollectionRows(target.CollectionID);
 
-          chunks.push(...rowsToCsvChunks(collectionRows, exportColumns));
+          chunks.push(...rowsToCsvChunks(collectionRows, resolvedExportColumns));
           await new Promise<void>((resolve) => window.setTimeout(resolve, 0));
         }
 
         downloadCsv(
           exportScope === "selected"
             ? `${sanitizeFilePart(targets[0].CollectionID)}_${dateStamp}.csv`
-            : `VADMA_Query_Export_${dateStamp}.csv`,
+            : `NAIADD_Query_Export_${dateStamp}.csv`,
           chunks,
         );
       } else {
@@ -339,11 +350,11 @@ export default function RawDataPage() {
           const collectionRows =
             target.CollectionID === selectedCollection?.CollectionID && rows.length > 0
               ? rows
-              : await readCachedVadmaSnapshotCollectionRows(target.CollectionID);
+              : await readCachedNaiaddSnapshotCollectionRows(target.CollectionID);
 
           downloadCsv(
             `${sanitizeFilePart(target.CollectionID)}_${dateStamp}.csv`,
-            [header, ...rowsToCsvChunks(collectionRows, exportColumns)],
+            [header, ...rowsToCsvChunks(collectionRows, resolvedExportColumns)],
           );
           await new Promise<void>((resolve) => window.setTimeout(resolve, 180));
         }

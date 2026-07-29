@@ -12,7 +12,7 @@ import { readSnapshotRows } from "./snapshotService";
 
 const SITES_COLLECTION = "sites";
 const CURRENT_LOCATION_KEY = "naiadd.currentLocation";
-const SITE_CACHE_KEY = "naiadd.sites.cache.v2";
+const SITE_CACHE_KEY = "naiadd.sites.cache.v3";
 
 const SNAPSHOT_SITE_COLUMNS = [
   "SiteID",
@@ -516,13 +516,17 @@ export async function refreshSites(): Promise<LocationRecord[]> {
 }
 
 export async function listSites(): Promise<LocationRecord[]> {
-  const cached = getCachedSites();
+  try {
+    return await refreshSites();
+  } catch (error) {
+    const cached = getCachedSites();
 
-  if (cached.length > 0) {
-    return cached;
+    if (cached.length > 0) {
+      return cached;
+    }
+
+    throw error;
   }
-
-  return refreshSites();
 }
 
 export async function createSite(

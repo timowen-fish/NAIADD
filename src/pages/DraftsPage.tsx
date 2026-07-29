@@ -426,8 +426,8 @@ function DraftCard({
 
       <div className="draft-card-counts">
         <div>
-          <strong>{draft.metadata.fishCount}</strong>
-          <span>Fish</span>
+          <strong>{draft.metadata.specimenCount}</strong>
+          <span>Specimens</span>
         </div>
 
         <div>

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import FishEntryModal, { type FishRow } from "./FishEntryModal";
+import MusselModalStandard, {
+  type MusselStandardRow,
+} from "./MusselModal_Standard";
 import type { SpecimenFormType } from "../../types/surveySession";
 import "../../styles/SpecimenStandardStep.css";
 
@@ -10,50 +12,19 @@ export type MusselObservationTable = {
   Run_Number?: number;
   RunEffort?: number | null;
   SamplePass?: number;
-  LengthType?: "Fork Length" | "Total Length";
-  LengthUnit?: "Millimeter" | "Centimeter Class";
-  WeightUnit?: "Grams" | "Kilograms";
-  CommonName?: string;
+  BOVA?: string;
   ScientificName?: string;
-  Quantity?: number | null;
-  Length?: number | null;
-  ForkLength?: number | null;
-  Weight?: number | null;
-  Sex?: string;
-  Anomaly?: string;
   Condition?: string;
-  Maturity?: string;
-  WildPropagated?: string;
-  Disposition?: string;
-  MinLength?: number | null;
-  MaxLength?: number | null;
-  MinWeight?: number | null;
-  MaxWeight?: number | null;
-  TotalWeight?: number | null;
-  PrimaryTagType?: string;
-  PrimaryTagNumber?: string;
-  Tag1MarkRecap?: string;
-  SecondaryTagType?: string;
-  SecondaryTagNumber?: string;
-  Tag2MarkRecap?: string;
-  TissueSampleID?: string;
-  TissueResults?: string;
-  OtolithID?: string;
-  OtolithAgeResults?: number | null;
-  SpecimenComments?: string;
-  Comments?: string;
+  Quantity?: number | null;
+  Size?: string;
+  SexMaturity?: string;
+  QualAbundance?: string;
+  SpecimenNotes?: string;
 };
-
-// Compatibility alias for existing workflow code during the NAIADD migration.
-export type FishObservationTable = MusselObservationTable;
-
-type LengthType = "Fork Length" | "Total Length";
-type LengthUnit = "Millimeter" | "Centimeter Class";
-type WeightUnit = "Grams" | "Kilograms";
 
 type PassData = {
   effort: number | null;
-  fish: FishRow[];
+  mussels: MusselStandardRow[];
 };
 
 type RunData = {
@@ -65,209 +36,17 @@ type Props = {
   processingType?: SpecimenFormType;
   siteID?: string;
   onBack: () => void;
-  onContinueToSaveDraft?: (rows: FishObservationTable[]) => void;
-  draftFishRows?: FishObservationTable[];
+  onContinueToSaveDraft?: (rows: MusselObservationTable[]) => void;
+  draftMusselRows?: MusselObservationTable[];
 };
 
-type FinalRow = FishRow & {
+type FinalRow = MusselStandardRow & {
   CustomRunName: string;
   RunN: number;
   Run_Number: number;
   RunEffort: number | null;
   SamplePass: number;
-  LengthType: LengthType;
-  LengthUnit: LengthUnit;
-  WeightUnit: WeightUnit;
 };
-
-type OptionalColumn = {
-  key: keyof FishRow;
-  label: string;
-};
-
-function createEmptyFishRow(): FishRow {
-  return {
-    CommonName: "",
-    ScientificName: "",
-    Quantity: null,
-    Length: null,
-    Weight: null,
-  };
-}
-
-function clamp(value: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function passHasData(pass: PassData) {
-  return pass.fish.some((fish) => fish.CommonName.trim() !== "");
-}
-
-function optionalValuePresent(value: unknown) {
-  return value !== undefined && value !== null && String(value).trim() !== "";
-}
-
-function fishHasOptionalData(row: FishRow, field: keyof FishRow) {
-  return optionalValuePresent(row[field]);
-}
-
-
-
-function isLengthType(value: unknown): value is LengthType {
-  return value === "Fork Length" || value === "Total Length";
-}
-
-function isLengthUnit(value: unknown): value is LengthUnit {
-  return value === "Millimeter" || value === "Centimeter Class";
-}
-
-function isWeightUnit(value: unknown): value is WeightUnit {
-  return value === "Grams" || value === "Kilograms";
-}
-
-function buildDraftFishSignature(rows: FishObservationTable[]) {
-  return JSON.stringify(
-    rows.map((row) => ({
-      CustomRunName: row.CustomRunName ?? "",
-      RunN: (row as any).RunN ?? "",
-      Run_Number: (row as any).Run_Number ?? "",
-      RunEffort: (row as any).RunEffort ?? null,
-      SamplePass: row.SamplePass ?? "",
-      CommonName: row.CommonName ?? "",
-      ScientificName: row.ScientificName ?? "",
-      Quantity: row.Quantity ?? null,
-      Length: row.Length ?? null,
-      Weight: row.Weight ?? null,
-      LengthType: row.LengthType ?? "",
-      LengthUnit: row.LengthUnit ?? "",
-      WeightUnit: row.WeightUnit ?? "",
-    })),
-  );
-}
-
-function fishRowFromDraftRow(row: FishObservationTable): FishRow {
-  return {
-    CommonName: row.CommonName || "",
-    ScientificName: row.ScientificName || "",
-    Quantity: row.Quantity ?? null,
-    Length: row.Length ?? null,
-    Weight: row.Weight ?? null,
-    Sex: typeof row.Sex === "string" ? row.Sex : "",
-    Anomaly: typeof row.Anomaly === "string" ? row.Anomaly : "",
-    Condition: typeof row.Condition === "string" ? row.Condition : "",
-    Maturity: typeof row.Maturity === "string" ? row.Maturity : "",
-    WildPropagated:
-      typeof row.WildPropagated === "string" ? row.WildPropagated : "",
-    Disposition: typeof row.Disposition === "string" ? row.Disposition : "",
-    MinLength: row.MinLength ?? null,
-    MaxLength: row.MaxLength ?? null,
-    MinWeight: row.MinWeight ?? null,
-    MaxWeight: row.MaxWeight ?? null,
-    TotalWeight: row.TotalWeight ?? null,
-    PrimaryTagType:
-      typeof row.PrimaryTagType === "string" ? row.PrimaryTagType : "",
-    PrimaryTagNumber:
-      typeof row.PrimaryTagNumber === "string" ? row.PrimaryTagNumber : "",
-    Tag1MarkRecap:
-      typeof row.Tag1MarkRecap === "string" ? row.Tag1MarkRecap : "",
-    SecondaryTagType:
-      typeof row.SecondaryTagType === "string" ? row.SecondaryTagType : "",
-    SecondaryTagNumber:
-      typeof row.SecondaryTagNumber === "string" ? row.SecondaryTagNumber : "",
-    Tag2MarkRecap:
-      typeof row.Tag2MarkRecap === "string" ? row.Tag2MarkRecap : "",
-    TissueSampleID:
-      typeof row.TissueSampleID === "string" ? row.TissueSampleID : "",
-    TissueResults:
-      typeof row.TissueResults === "string" ? row.TissueResults : "",
-    OtolithID: typeof row.OtolithID === "string" ? row.OtolithID : "",
-    OtolithAgeResults: row.OtolithAgeResults ?? null,
-    Comments:
-      typeof (row as any).SpecimenComments === "string"
-        ? (row as any).SpecimenComments
-        : typeof row.Comments === "string"
-          ? row.Comments
-          : "",
-  };
-}
-
-function hydrateRunsFromDraftRows(rows: FishObservationTable[]): RunData[] {
-  if (!rows || rows.length === 0) {
-    return [{ customRunName: "1", passes: [{ effort: null, fish: [] }] }];
-  }
-
-  const runMap = new Map<string, Map<number, { effort: number | null; fish: FishRow[] }>>();
-
-  rows.forEach((row) => {
-    const runName = String(row.CustomRunName || "1");
-    const rawPassNumber = Number(row.SamplePass || 1);
-    const passNumber = Number.isFinite(rawPassNumber)
-      ? Math.max(1, rawPassNumber)
-      : 1;
-
-    if (!runMap.has(runName)) {
-      runMap.set(runName, new Map<number, { effort: number | null; fish: FishRow[] }>());
-    }
-
-    const passMap = runMap.get(runName)!;
-
-    if (!passMap.has(passNumber)) {
-      passMap.set(passNumber, {
-        effort:
-          typeof (row as any).RunEffort === "number" && Number.isFinite((row as any).RunEffort)
-            ? (row as any).RunEffort
-            : null,
-        fish: [],
-      });
-    }
-
-    if (row.CommonName && row.CommonName !== "NoFish") {
-      passMap.get(passNumber)!.fish.push(fishRowFromDraftRow(row));
-    }
-  });
-
-  if (runMap.size === 0) {
-    return [{ customRunName: "1", passes: [{ effort: null, fish: [] }] }];
-  }
-
-  return Array.from(runMap.entries()).map(([customRunName, passMap]) => {
-    const passNumbers = Array.from(passMap.keys());
-    const maxPass = Math.max(...passNumbers, 1);
-
-    return {
-      customRunName,
-      passes: Array.from({ length: maxPass }, (_, index) => ({
-        effort: passMap.get(index + 1)?.effort ?? null,
-        fish: passMap.get(index + 1)?.fish || [],
-      })),
-    };
-  });
-}
-
-const allOptionalColumns: OptionalColumn[] = [
-  { key: "Sex", label: "Sex" },
-  { key: "Anomaly", label: "Anomaly" },
-  { key: "Condition", label: "Condition" },
-  { key: "Maturity", label: "Maturity" },
-  { key: "WildPropagated", label: "WildPropagated" },
-  { key: "Disposition", label: "Disposition" },
-  { key: "MinLength", label: "MinLength" },
-  { key: "MaxLength", label: "MaxLength" },
-  { key: "MinWeight", label: "MinWeight" },
-  { key: "MaxWeight", label: "MaxWeight" },
-  { key: "TotalWeight", label: "TotalWeight" },
-  { key: "PrimaryTagType", label: "PrimaryTagType" },
-  { key: "PrimaryTagNumber", label: "PrimaryTagNumber" },
-  { key: "Tag1MarkRecap", label: "Tag1MarkRecap" },
-  { key: "SecondaryTagType", label: "SecondaryTagType" },
-  { key: "SecondaryTagNumber", label: "SecondaryTagNumber" },
-  { key: "Tag2MarkRecap", label: "Tag2MarkRecap" },
-  { key: "TissueSampleID", label: "TissueSampleID" },
-  { key: "TissueResults", label: "TissueResults" },
-  { key: "OtolithID", label: "OtolithID" },
-  { key: "OtolithAgeResults", label: "OtolithAgeResults" },
-  { key: "Comments", label: "Comments" },
-];
 
 type ProcessingConfiguration = {
   title: string;
@@ -277,132 +56,299 @@ type ProcessingConfiguration = {
   intro: string;
 };
 
-const PROCESSING_CONFIG: Record<SpecimenFormType, ProcessingConfiguration> = {
+const PROCESSING_CONFIG: Record<
+  SpecimenFormType,
+  ProcessingConfiguration
+> = {
   standard_mussel: {
     title: "Standard Mussel Processing",
     icon: "◒",
     sampleGroupLabel: "Sample Group",
     subsampleLabel: "Pass",
-    intro: "Enter mussel observations by sample group and pass.",
+    intro:
+      "Enter standard NAIADD mussel observations by sample group and pass.",
   },
   quads: {
     title: "Quads",
     icon: "▦",
     sampleGroupLabel: "Quad",
     subsampleLabel: "Replicate",
-    intro: "Enter quadrat observations using the standard mussel-processing form.",
+    intro:
+      "Enter quadrat observations using the standard mussel fields.",
   },
   musselrama: {
     title: "Musselrama",
     icon: "◉",
     sampleGroupLabel: "Station",
     subsampleLabel: "Pass",
-    intro: "Enter Musselrama observations using the standard mussel-processing form.",
+    intro:
+      "Enter Musselrama observations using the standard mussel fields.",
   },
 };
+
+function createEmptyMusselRow(): MusselStandardRow {
+  return {
+    BOVA: "",
+    ScientificName: "",
+    Quantity: null,
+    Size: "",
+    SexMaturity: "",
+    Condition: "",
+    QualAbundance: "",
+    SpecimenNotes: "",
+  };
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function passHasData(pass: PassData) {
+  return pass.mussels.some(
+    (row) => row.ScientificName.trim() !== "",
+  );
+}
+
+function buildDraftSignature(rows: MusselObservationTable[]) {
+  return JSON.stringify(
+    rows.map((row) => ({
+      CustomRunName: row.CustomRunName ?? "",
+      RunN: row.RunN ?? "",
+      Run_Number: row.Run_Number ?? "",
+      RunEffort: row.RunEffort ?? null,
+      SamplePass: row.SamplePass ?? "",
+      BOVA: row.BOVA ?? "",
+      ScientificName: row.ScientificName ?? "",
+      Condition: row.Condition ?? "",
+      Quantity: row.Quantity ?? null,
+      Size: row.Size ?? "",
+      SexMaturity: row.SexMaturity ?? "",
+      QualAbundance: row.QualAbundance ?? "",
+      SpecimenNotes: row.SpecimenNotes ?? "",
+    })),
+  );
+}
+
+function rowFromDraft(
+  row: MusselObservationTable,
+): MusselStandardRow {
+  return {
+    BOVA: String(row.BOVA || ""),
+    ScientificName: String(row.ScientificName || ""),
+    Condition: String(row.Condition || ""),
+    Quantity: row.Quantity ?? null,
+    Size: String(row.Size || ""),
+    SexMaturity: String(row.SexMaturity || ""),
+    QualAbundance: String(row.QualAbundance || ""),
+    SpecimenNotes: String(row.SpecimenNotes || ""),
+  };
+}
+
+function hydrateRunsFromDraftRows(
+  rows: MusselObservationTable[],
+): RunData[] {
+  if (!rows.length) {
+    return [
+      {
+        customRunName: "1",
+        passes: [{ effort: null, mussels: [] }],
+      },
+    ];
+  }
+
+  const runMap = new Map<
+    string,
+    Map<
+      number,
+      {
+        effort: number | null;
+        mussels: MusselStandardRow[];
+      }
+    >
+  >();
+
+  rows.forEach((row) => {
+    const scientificName = String(
+      row.ScientificName || "",
+    ).trim();
+
+    const runName = String(row.CustomRunName || "1");
+    const rawPass = Number(row.SamplePass || 1);
+    const passNumber = Number.isFinite(rawPass)
+      ? Math.max(1, rawPass)
+      : 1;
+
+    if (!runMap.has(runName)) {
+      runMap.set(runName, new Map());
+    }
+
+    const passMap = runMap.get(runName)!;
+
+    if (!passMap.has(passNumber)) {
+      passMap.set(passNumber, {
+        effort:
+          typeof row.RunEffort === "number" &&
+          Number.isFinite(row.RunEffort)
+            ? row.RunEffort
+            : null,
+        mussels: [],
+      });
+    }
+
+    if (
+      scientificName &&
+      scientificName !== "No Specimen" &&
+      scientificName !== "NoFish"
+    ) {
+      passMap
+        .get(passNumber)!
+        .mussels.push(rowFromDraft(row));
+    }
+  });
+
+  if (!runMap.size) {
+    return [
+      {
+        customRunName: "1",
+        passes: [{ effort: null, mussels: [] }],
+      },
+    ];
+  }
+
+  return Array.from(runMap.entries()).map(
+    ([customRunName, passMap]) => {
+      const maxPass = Math.max(
+        ...Array.from(passMap.keys()),
+        1,
+      );
+
+      return {
+        customRunName,
+        passes: Array.from(
+          { length: maxPass },
+          (_, index) => ({
+            effort:
+              passMap.get(index + 1)?.effort ?? null,
+            mussels:
+              passMap.get(index + 1)?.mussels || [],
+          }),
+        ),
+      };
+    },
+  );
+}
 
 export default function SpecimenStandardStep({
   processingType = "standard_mussel",
   siteID,
   onBack,
   onContinueToSaveDraft,
-  draftFishRows = [],
+  draftMusselRows = [],
 }: Props) {
-  const processingConfig = PROCESSING_CONFIG[processingType];
+  const processingConfig =
+    PROCESSING_CONFIG[processingType];
+
   const [runsCount, setRunsCount] = useState(1);
   const [passesCount, setPassesCount] = useState(1);
-
-  const [lengthType, setLengthType] = useState<LengthType>("Total Length");
-  const [lengthUnit, setLengthUnit] = useState<LengthUnit>("Millimeter");
-  const [weightUnit, setWeightUnit] = useState<WeightUnit>("Grams");
-
   const [runs, setRuns] = useState<RunData[]>([
-    { customRunName: "1", passes: [{ effort: null, fish: [] }] },
+    {
+      customRunName: "1",
+      passes: [{ effort: null, mussels: [] }],
+    },
   ]);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [activeRun, setActiveRun] = useState(0);
   const [activePass, setActivePass] = useState(0);
-  const [modalRows, setModalRows] = useState<FishRow[]>([]);
+  const [modalRows, setModalRows] = useState<
+    MusselStandardRow[]
+  >([]);
 
-  const hydratedDraftSignatureRef = useRef<string>("");
+  const hydratedDraftSignatureRef = useRef("");
 
   useEffect(() => {
-    if (!draftFishRows || draftFishRows.length === 0) return;
+    if (!draftMusselRows.length) return;
 
-    const signature = buildDraftFishSignature(draftFishRows);
+    const signature =
+      buildDraftSignature(draftMusselRows);
 
-    if (signature === hydratedDraftSignatureRef.current) return;
+    if (
+      signature === hydratedDraftSignatureRef.current
+    ) {
+      return;
+    }
 
-    const hydratedRuns = hydrateRunsFromDraftRows(draftFishRows);
-    const firstDraftRowWithUnits = draftFishRows.find(
-      (row) => row.LengthType || row.LengthUnit || row.WeightUnit,
-    );
+    const hydrated =
+      hydrateRunsFromDraftRows(draftMusselRows);
 
-    setRuns(hydratedRuns);
-    setRunsCount(hydratedRuns.length);
+    setRuns(hydrated);
+    setRunsCount(hydrated.length);
     setPassesCount(
-      Math.max(...hydratedRuns.map((run) => run.passes.length), 1),
+      Math.max(
+        ...hydrated.map((run) => run.passes.length),
+        1,
+      ),
     );
-
-    if (firstDraftRowWithUnits?.LengthType && isLengthType(firstDraftRowWithUnits.LengthType)) {
-      setLengthType(firstDraftRowWithUnits.LengthType);
-    }
-
-    if (firstDraftRowWithUnits?.LengthUnit && isLengthUnit(firstDraftRowWithUnits.LengthUnit)) {
-      setLengthUnit(firstDraftRowWithUnits.LengthUnit);
-    }
-
-    if (firstDraftRowWithUnits?.WeightUnit && isWeightUnit(firstDraftRowWithUnits.WeightUnit)) {
-      setWeightUnit(firstDraftRowWithUnits.WeightUnit);
-    }
 
     hydratedDraftSignatureRef.current = signature;
-  }, [draftFishRows]);
+  }, [draftMusselRows]);
 
-  function reductionWouldClearData(newRuns: number, newPasses: number) {
+  function reductionWouldClearData(
+    newRuns: number,
+    newPasses: number,
+  ) {
     return runs.some((run, runIndex) => {
       if (runIndex >= newRuns) {
         return run.passes.some(passHasData);
       }
 
       return run.passes.some((pass, passIndex) => {
-        return passIndex >= newPasses && passHasData(pass);
+        return (
+          passIndex >= newPasses && passHasData(pass)
+        );
       });
     });
   }
 
-  function syncStructure(newRuns: number, newPasses: number) {
+  function syncStructure(
+    newRuns: number,
+    newPasses: number,
+  ) {
     const safeRuns = clamp(newRuns, 1, 20);
     const safePasses = clamp(newPasses, 1, 20);
 
     if (
-      (safeRuns < runsCount || safePasses < passesCount) &&
-      reductionWouldClearData(safeRuns, safePasses)
+      (safeRuns < runsCount ||
+        safePasses < passesCount) &&
+      reductionWouldClearData(safeRuns, safePasses) &&
+      !window.confirm(
+        "Reducing the number of groups or passes will remove saved mussel observations. Continue?",
+      )
     ) {
-      const confirmed = window.confirm(
-        "Are you sure? Reducing the number of runs or passes will clear mussel data from removed tables.",
-      );
-
-      if (!confirmed) return false;
+      return false;
     }
 
-    setRuns((prev) => {
-      const updated = prev.map((run) => ({
+    setRuns((current) => {
+      const updated = current.map((run) => ({
         ...run,
         passes: run.passes.map((pass) => ({
           ...pass,
-          fish: pass.fish.map((fish) => ({ ...fish })),
+          mussels: pass.mussels.map((row) => ({
+            ...row,
+          })),
         })),
       }));
 
       while (updated.length < safeRuns) {
         updated.push({
           customRunName: String(updated.length + 1),
-          passes: Array.from({ length: safePasses }, () => ({
-            effort: null,
-            fish: [],
-          })),
+          passes: Array.from(
+            { length: safePasses },
+            () => ({
+              effort: null,
+              mussels: [],
+            }),
+          ),
         });
       }
 
@@ -410,7 +356,10 @@ export default function SpecimenStandardStep({
 
       updated.forEach((run) => {
         while (run.passes.length < safePasses) {
-          run.passes.push({ effort: null, fish: [] });
+          run.passes.push({
+            effort: null,
+            mussels: [],
+          });
         }
 
         run.passes.length = safePasses;
@@ -421,316 +370,281 @@ export default function SpecimenStandardStep({
 
     setRunsCount(safeRuns);
     setPassesCount(safePasses);
-
     return true;
   }
 
-  function changeRuns(delta: number) {
-    const next = clamp(runsCount + delta, 1, 20);
-    syncStructure(next, passesCount);
-  }
-
-  function changePasses(delta: number) {
-    const next = clamp(passesCount + delta, 1, 20);
-    syncStructure(runsCount, next);
-  }
-
-  function openModal(runIndex: number, passIndex: number) {
-    const existing = runs[runIndex].passes[passIndex].fish;
+  function openModal(
+    runIndex: number,
+    passIndex: number,
+  ) {
+    const existing =
+      runs[runIndex].passes[passIndex].mussels;
 
     setActiveRun(runIndex);
     setActivePass(passIndex);
-
     setModalRows(
-      existing.length > 0
+      existing.length
         ? existing.map((row) => ({ ...row }))
-        : [createEmptyFishRow()],
+        : [createEmptyMusselRow()],
     );
-
     setModalOpen(true);
   }
 
   function saveModal() {
-    setRuns((prev) => {
-      const cleaned = modalRows.filter((row) => row.CommonName.trim() !== "");
+    const cleaned = modalRows.filter(
+      (row) => row.ScientificName.trim() !== "",
+    );
 
-      return prev.map((run, runIndex) => {
+    setRuns((current) =>
+      current.map((run, runIndex) => {
         if (runIndex !== activeRun) return run;
 
         return {
           ...run,
-          passes: run.passes.map((pass, passIndex) =>
-            passIndex === activePass ? { ...pass, fish: cleaned } : pass,
+          passes: run.passes.map(
+            (pass, passIndex) =>
+              passIndex === activePass
+                ? { ...pass, mussels: cleaned }
+                : pass,
           ),
         };
-      });
-    });
+      }),
+    );
 
     setModalOpen(false);
   }
 
-  const finalRows: FinalRow[] = useMemo(() => {
-    const rows: FinalRow[] = [];
+  const finalRows = useMemo<FinalRow[]>(() => {
+    const output: FinalRow[] = [];
 
     runs.forEach((run, runIndex) => {
       run.passes.forEach((pass, passIndex) => {
-        if (pass.fish.length === 0) {
-          rows.push({
+        if (!pass.mussels.length) {
+          output.push({
             CustomRunName: run.customRunName,
             RunN: runIndex + 1,
             Run_Number: runIndex + 1,
             RunEffort: pass.effort,
             SamplePass: passIndex + 1,
-            LengthType: lengthType,
-            LengthUnit: lengthUnit,
-            WeightUnit: weightUnit,
-            CommonName: "NoFish",
-            ScientificName: "",
+            ...createEmptyMusselRow(),
+            ScientificName: "No Specimen",
             Quantity: 0,
-            Length: null,
-            Weight: null,
           });
-        } else {
-          pass.fish.forEach((fish) => {
-            rows.push({
-              CustomRunName: run.customRunName,
-              RunN: runIndex + 1,
-              Run_Number: runIndex + 1,
-              RunEffort: pass.effort,
-              SamplePass: passIndex + 1,
-              LengthType: lengthType,
-              LengthUnit: lengthUnit,
-              WeightUnit: weightUnit,
-              ...fish,
-            });
-          });
+          return;
         }
+
+        pass.mussels.forEach((row) => {
+          output.push({
+            CustomRunName: run.customRunName,
+            RunN: runIndex + 1,
+            Run_Number: runIndex + 1,
+            RunEffort: pass.effort,
+            SamplePass: passIndex + 1,
+            ...row,
+          });
+        });
       });
     });
 
-    return rows;
-  }, [runs, lengthType, lengthUnit, weightUnit]);
+    return output;
+  }, [runs]);
 
-  const fishObservationTable: FishObservationTable[] = useMemo(() => {
-    return finalRows.map((row) => ({
-      SiteID: siteID,
-      CustomRunName: row.CustomRunName,
-      RunN: row.RunN,
-      Run_Number: row.Run_Number,
-      RunEffort: row.RunEffort,
-      SamplePass: row.SamplePass,
-      LengthType: row.LengthType,
-      LengthUnit: row.LengthUnit,
-      WeightUnit: row.WeightUnit,
-      CommonName: row.CommonName,
-      ScientificName: row.ScientificName || "",
-      Quantity: row.Quantity ?? null,
-      Length: row.Length ?? null,
-      Weight: row.Weight ?? null,
-      Sex: row.Sex || "",
-      Anomaly: row.Anomaly || "",
-      Condition: row.Condition || "",
-      Maturity: row.Maturity || "",
-      WildPropagated: row.WildPropagated || "",
-      Disposition: row.Disposition || "",
-      MinLength: row.MinLength ?? null,
-      MaxLength: row.MaxLength ?? null,
-      MinWeight: row.MinWeight ?? null,
-      MaxWeight: row.MaxWeight ?? null,
-      TotalWeight: row.TotalWeight ?? null,
-      PrimaryTagType: row.PrimaryTagType || "",
-      PrimaryTagNumber: row.PrimaryTagNumber || "",
-      Tag1MarkRecap: row.Tag1MarkRecap || "",
-      SecondaryTagType: row.SecondaryTagType || "",
-      SecondaryTagNumber: row.SecondaryTagNumber || "",
-      Tag2MarkRecap: row.Tag2MarkRecap || "",
-      TissueSampleID: row.TissueSampleID || "",
-      TissueResults: row.TissueResults || "",
-      OtolithID: row.OtolithID || "",
-      OtolithAgeResults: row.OtolithAgeResults ?? null,
-      SpecimenComments: row.Comments || "",
-    })) as FishObservationTable[];
-  }, [finalRows, siteID]);
+  const musselObservationTable =
+    useMemo<MusselObservationTable[]>(
+      () =>
+        finalRows.map((row) => ({
+          SiteID: siteID,
+          CustomRunName: row.CustomRunName,
+          RunN: row.RunN,
+          Run_Number: row.Run_Number,
+          RunEffort: row.RunEffort,
+          SamplePass: row.SamplePass,
+          BOVA: row.BOVA,
+          ScientificName: row.ScientificName,
+          Condition: row.Condition,
+          Quantity: row.Quantity,
+          Size: row.Size,
+          SexMaturity: row.SexMaturity,
+          QualAbundance: row.QualAbundance,
+          SpecimenNotes: row.SpecimenNotes,
+        })),
+      [finalRows, siteID],
+    );
 
-  const realFishRows = finalRows.filter(
-    (row) => row.CommonName && row.CommonName !== "NoFish",
+  const realRows = finalRows.filter(
+    (row) =>
+      row.ScientificName &&
+      row.ScientificName !== "No Specimen",
   );
 
   const speciesSummary = useMemo(() => {
-    const summary: Record<string, number> = {};
+    const summary = new Map<string, number>();
 
-    realFishRows.forEach((row) => {
-      const name = row.CommonName;
-      const quantity = Number(row.Quantity ?? 0);
-      summary[name] = (summary[name] || 0) + quantity;
+    realRows.forEach((row) => {
+      const name = row.ScientificName;
+      summary.set(
+        name,
+        (summary.get(name) || 0) +
+          Number(row.Quantity || 0),
+      );
     });
 
-    return Object.entries(summary)
-      .map(([CommonName, Quantity]) => ({ CommonName, Quantity }))
+    return Array.from(summary.entries())
+      .map(([ScientificName, Quantity]) => ({
+        ScientificName,
+        Quantity,
+      }))
       .sort((a, b) => b.Quantity - a.Quantity);
-  }, [realFishRows]);
-
-  const largestSpecimen = useMemo(() => {
-    const withLengths = realFishRows.filter(
-      (row) => typeof row.Length === "number",
-    );
-
-    if (withLengths.length === 0) return null;
-
-    return withLengths.reduce((largest, row) =>
-      Number(row.Length) > Number(largest.Length) ? row : largest,
-    );
-  }, [realFishRows]);
-
-  const smallestSpecimen = useMemo(() => {
-    const withLengths = realFishRows.filter(
-      (row) => typeof row.Length === "number",
-    );
-
-    if (withLengths.length === 0) return null;
-
-    return withLengths.reduce((smallest, row) =>
-      Number(row.Length) < Number(smallest.Length) ? row : smallest,
-    );
-  }, [realFishRows]);
-
-  const optionalColumns = useMemo(() => {
-    return allOptionalColumns.filter((column) =>
-      finalRows.some((row) => fishHasOptionalData(row, column.key)),
-    );
-  }, [finalRows]);
+  }, [realRows]);
 
   return (
     <main className="app specimenStandardStep">
-      <button className="backButton" onClick={onBack}>
+      <button
+        type="button"
+        className="backButton"
+        onClick={onBack}
+      >
         ← Back
       </button>
 
       <section className="standardHero">
-        <div className="standardHeroIcon">{processingConfig.icon}</div>
-
+        <div className="standardHeroIcon">
+          {processingConfig.icon}
+        </div>
         <div className="standardHeroText">
-          <p className="stepKicker">Step 3 — Biological Observations</p>
+          <p className="stepKicker">
+            Step 3 — Biological Observations
+          </p>
           <h1>{processingConfig.title}</h1>
           <p>{processingConfig.intro}</p>
         </div>
       </section>
 
       <section className="sampleControlCard">
-        {draftFishRows.length > 0 && (
+        {draftMusselRows.length > 0 && (
           <div className="importedDraftNotice">
-            <strong>Draft mussel data loaded.</strong> Existing mussel observations
-            were imported from the active draft. Open any saved pass below to
-            edit, add, or remove records in the mussel modal.
+            <strong>Draft mussel data loaded.</strong>{" "}
+            Existing observations were imported from the
+            active draft.
           </div>
         )}
 
         <div className="sampleControlHeader">
           <h2>Sample Details</h2>
           <p>
-            Set the number of sample groups, subsamples, and measurement units for this
-            survey event.
+            Set the number of sample groups and
+            subsamples for this survey event.
           </p>
         </div>
 
         <div className="counterGrid">
           <div className="counterBox">
-            <span>Number of {processingConfig.sampleGroupLabel}s</span>
-
+            <span>
+              Number of{" "}
+              {processingConfig.sampleGroupLabel}s
+            </span>
             <div className="counterControls">
-              <button type="button" onClick={() => changeRuns(-1)}>
+              <button
+                type="button"
+                onClick={() =>
+                  syncStructure(
+                    runsCount - 1,
+                    passesCount,
+                  )
+                }
+              >
                 ↓
               </button>
-
               <strong>{runsCount}</strong>
-
-              <button type="button" onClick={() => changeRuns(1)}>
+              <button
+                type="button"
+                onClick={() =>
+                  syncStructure(
+                    runsCount + 1,
+                    passesCount,
+                  )
+                }
+              >
                 ↑
               </button>
             </div>
           </div>
 
           <div className="counterBox">
-            <span>Number of {processingConfig.subsampleLabel}s</span>
-
+            <span>
+              Number of{" "}
+              {processingConfig.subsampleLabel}s
+            </span>
             <div className="counterControls">
-              <button type="button" onClick={() => changePasses(-1)}>
+              <button
+                type="button"
+                onClick={() =>
+                  syncStructure(
+                    runsCount,
+                    passesCount - 1,
+                  )
+                }
+              >
                 ↓
               </button>
-
               <strong>{passesCount}</strong>
-
-              <button type="button" onClick={() => changePasses(1)}>
+              <button
+                type="button"
+                onClick={() =>
+                  syncStructure(
+                    runsCount,
+                    passesCount + 1,
+                  )
+                }
+              >
                 ↑
               </button>
             </div>
           </div>
-
-          <label className="counterBox">
-            <span>Length Type</span>
-            <select
-              className="input"
-              value={lengthType}
-              onChange={(e) => setLengthType(e.target.value as LengthType)}
-            >
-              <option value="Total Length">Total Length</option>
-              <option value="Fork Length">Fork Length</option>
-            </select>
-          </label>
-
-          <label className="counterBox">
-            <span>Length Unit</span>
-            <select
-              className="input"
-              value={lengthUnit}
-              onChange={(e) => setLengthUnit(e.target.value as LengthUnit)}
-            >
-              <option value="Millimeter">Millimeter</option>
-              <option value="Centimeter Class">Centimeter Class</option>
-            </select>
-          </label>
-
-          <label className="counterBox">
-            <span>Weight Unit</span>
-            <select
-              className="input"
-              value={weightUnit}
-              onChange={(e) => setWeightUnit(e.target.value as WeightUnit)}
-            >
-              <option value="Grams">Grams</option>
-              <option value="Kilograms">Kilograms</option>
-            </select>
-          </label>
         </div>
       </section>
 
       <section className="runsShell">
         <div className="sectionTitleBlock">
-          <h2>{processingConfig.sampleGroupLabel}s &amp; {processingConfig.subsampleLabel}s</h2>
-          <p>Open each {processingConfig.subsampleLabel.toLowerCase()} to enter mussel observations.</p>
+          <h2>
+            {processingConfig.sampleGroupLabel}s &amp;{" "}
+            {processingConfig.subsampleLabel}s
+          </h2>
+          <p>
+            Open each{" "}
+            {processingConfig.subsampleLabel.toLowerCase()}{" "}
+            to enter mussel observations.
+          </p>
         </div>
 
         <div className="runsStack">
           {runs.map((run, runIndex) => (
-            <section key={runIndex} className="runGroup">
+            <section
+              key={runIndex}
+              className="runGroup"
+            >
               <div className="runGroupHeader">
                 <div className="runGroupTitle">
-                  <span className="runBadge">{processingConfig.sampleGroupLabel} {runIndex + 1}</span>
-                  <p>All {processingConfig.subsampleLabel.toLowerCase()}s below belong to this {processingConfig.sampleGroupLabel.toLowerCase()}.</p>
+                  <span className="runBadge">
+                    {processingConfig.sampleGroupLabel}{" "}
+                    {runIndex + 1}
+                  </span>
                 </div>
 
                 <label className="runNBox">
                   {processingConfig.sampleGroupLabel} Name
                   <input
                     value={run.customRunName}
-                    onChange={(e) => {
-                      const value = e.target.value;
-
-                      setRuns((prev) =>
-                        prev.map((existingRun, index) =>
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setRuns((current) =>
+                        current.map((existing, index) =>
                           index === runIndex
-                            ? { ...existingRun, customRunName: value }
-                            : existingRun,
+                            ? {
+                                ...existing,
+                                customRunName: value,
+                              }
+                            : existing,
                         ),
                       );
                     }}
@@ -739,67 +653,98 @@ export default function SpecimenStandardStep({
               </div>
 
               <div className="passesGrouped">
-                {run.passes.map((pass, passIndex) => (
-                  <article key={passIndex} className="passPanel">
-                    <div className="passPanelHeader">
-                      <h3>{processingConfig.subsampleLabel} {passIndex + 1}</h3>
+                {run.passes.map(
+                  (pass, passIndex) => (
+                    <article
+                      key={passIndex}
+                      className="passPanel"
+                    >
+                      <div className="passPanelHeader">
+                        <h3>
+                          {
+                            processingConfig.subsampleLabel
+                          }{" "}
+                          {passIndex + 1}
+                        </h3>
+                        <span
+                          className={
+                            pass.mussels.length
+                              ? "savedPill"
+                              : "emptyPill"
+                          }
+                        >
+                          {pass.mussels.length
+                            ? `${pass.mussels.length} saved`
+                            : "No data"}
+                        </span>
+                      </div>
 
-                      <span
-                        className={
-                          pass.fish.length > 0 ? "savedPill" : "emptyPill"
+                      <label className="passEffortBox">
+                        Run Effort
+                        <input
+                          className="input"
+                          type="number"
+                          inputMode="decimal"
+                          placeholder="Optional"
+                          value={pass.effort ?? ""}
+                          onChange={(event) => {
+                            const value =
+                              event.target.value === ""
+                                ? null
+                                : Number(
+                                    event.target.value,
+                                  );
+
+                            setRuns((current) =>
+                              current.map(
+                                (
+                                  existingRun,
+                                  existingRunIndex,
+                                ) => {
+                                  if (
+                                    existingRunIndex !==
+                                    runIndex
+                                  ) {
+                                    return existingRun;
+                                  }
+
+                                  return {
+                                    ...existingRun,
+                                    passes:
+                                      existingRun.passes.map(
+                                        (
+                                          existingPass,
+                                          existingPassIndex,
+                                        ) =>
+                                          existingPassIndex ===
+                                          passIndex
+                                            ? {
+                                                ...existingPass,
+                                                effort: value,
+                                              }
+                                            : existingPass,
+                                      ),
+                                  };
+                                },
+                              ),
+                            );
+                          }}
+                        />
+                      </label>
+
+                      <button
+                        type="button"
+                        className="modernAddMusselButton"
+                        onClick={() =>
+                          openModal(runIndex, passIndex)
                         }
                       >
-                        {pass.fish.length > 0
-                          ? `${pass.fish.length} saved`
-                          : "No data"}
-                      </span>
-                    </div>
-
-                    <label className="passEffortBox">
-                      Run Effort
-                      <input
-                        className="input"
-                        type="number"
-                        inputMode="decimal"
-                        placeholder="Optional"
-                        value={pass.effort ?? ""}
-                        onChange={(e) => {
-                          const value =
-                            e.target.value === ""
-                              ? null
-                              : Number(e.target.value);
-
-                          setRuns((prev) =>
-                            prev.map((existingRun, existingRunIndex) => {
-                              if (existingRunIndex !== runIndex) {
-                                return existingRun;
-                              }
-
-                              return {
-                                ...existingRun,
-                                passes: existingRun.passes.map(
-                                  (existingPass, existingPassIndex) =>
-                                    existingPassIndex === passIndex
-                                      ? { ...existingPass, effort: value }
-                                      : existingPass,
-                                ),
-                              };
-                            }),
-                          );
-                        }}
-                      />
-                    </label>
-
-                    <button
-                      type="button"
-                      className="modernAddFishButton"
-                      onClick={() => openModal(runIndex, passIndex)}
-                    >
-                      <span>◒</span>
-                      Add Mussels
-                    </button>
-                  </article>
-                ))}
+                        <span>◒</span>
+                        Add Mussels
+                      </button>
+                    </article>
+                  ),
+                )}
               </div>
             </section>
           ))}
@@ -816,34 +761,33 @@ export default function SpecimenStandardStep({
           </div>
 
           <div className="summaryCard">
-            <span>Largest Specimen</span>
+            <span>Total Quantity</span>
             <strong>
-              {largestSpecimen
-                ? `${largestSpecimen.CommonName} — ${largestSpecimen.Length} ${lengthUnit}`
-                : "—"}
+              {realRows.reduce(
+                (sum, row) =>
+                  sum + Number(row.Quantity || 0),
+                0,
+              )}
             </strong>
           </div>
 
           <div className="summaryCard">
-            <span>Smallest Specimen</span>
-            <strong>
-              {smallestSpecimen
-                ? `${smallestSpecimen.CommonName} — ${smallestSpecimen.Length} ${lengthUnit}`
-                : "—"}
-            </strong>
+            <span>Observation Records</span>
+            <strong>{realRows.length}</strong>
           </div>
         </div>
 
         <div className="speciesQuantitySummary">
-          <h3>Mussel Quantity by Species</h3>
+          <h3>Mussel Quantity by Scientific Name</h3>
 
-          {speciesSummary.length === 0 ? (
+          {!speciesSummary.length ? (
             <p>No mussels entered yet.</p>
           ) : (
             <div className="speciesSummaryPills">
               {speciesSummary.map((species) => (
-                <span key={species.CommonName}>
-                  {species.CommonName}: <strong>{species.Quantity}</strong>
+                <span key={species.ScientificName}>
+                  <em>{species.ScientificName}</em>:{" "}
+                  <strong>{species.Quantity}</strong>
                 </span>
               ))}
             </div>
@@ -857,18 +801,14 @@ export default function SpecimenStandardStep({
                 <th>SiteID</th>
                 <th>CustomRunName</th>
                 <th>Pass</th>
-                <th>Common</th>
-                <th>Scientific</th>
-                <th>Qty</th>
-                <th>Length Type</th>
-                <th>Length Unit</th>
-                <th>Length</th>
-                <th>Weight Unit</th>
-                <th>Weight</th>
-
-                {optionalColumns.map((column) => (
-                  <th key={column.key}>{column.label}</th>
-                ))}
+                <th>BOVA</th>
+                <th>ScientificName</th>
+                <th>Condition</th>
+                <th>Quantity</th>
+                <th>Size</th>
+                <th>SexMaturity</th>
+                <th>QualAbundance</th>
+                <th>SpecimenNotes</th>
               </tr>
             </thead>
 
@@ -878,18 +818,16 @@ export default function SpecimenStandardStep({
                   <td>{siteID || ""}</td>
                   <td>{row.CustomRunName}</td>
                   <td>{row.SamplePass}</td>
-                  <td>{row.CommonName}</td>
-                  <td>{row.ScientificName || ""}</td>
+                  <td>{row.BOVA}</td>
+                  <td>
+                    <em>{row.ScientificName}</em>
+                  </td>
+                  <td>{row.Condition}</td>
                   <td>{row.Quantity ?? ""}</td>
-                  <td>{row.LengthType}</td>
-                  <td>{row.LengthUnit}</td>
-                  <td>{row.Length ?? ""}</td>
-                  <td>{row.WeightUnit}</td>
-                  <td>{row.Weight ?? ""}</td>
-
-                  {optionalColumns.map((column) => (
-                    <td key={column.key}>{row[column.key] ?? ""}</td>
-                  ))}
+                  <td>{row.Size}</td>
+                  <td>{row.SexMaturity}</td>
+                  <td>{row.QualAbundance}</td>
+                  <td>{row.SpecimenNotes}</td>
                 </tr>
               ))}
             </tbody>
@@ -898,15 +836,19 @@ export default function SpecimenStandardStep({
 
         <button
           type="button"
-          className="modernAddFishButton"
-          onClick={() => onContinueToSaveDraft?.(fishObservationTable)}
+          className="modernAddMusselButton"
+          onClick={() =>
+            onContinueToSaveDraft?.(
+              musselObservationTable,
+            )
+          }
         >
           Continue to Save Draft
         </button>
       </section>
 
       {modalOpen && (
-        <FishEntryModal
+        <MusselModalStandard
           activeRun={activeRun}
           activePass={activePass}
           rows={modalRows}

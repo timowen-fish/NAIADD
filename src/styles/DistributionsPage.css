@@ -1,0 +1,433 @@
+.distributions-page {
+  max-width: 1680px;
+}
+
+.distribution-layout {
+  display: grid;
+  grid-template-columns: minmax(310px, 355px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.distribution-controls {
+  position: sticky;
+  top: 18px;
+  display: grid;
+  gap: 0;
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  padding: 0;
+}
+
+.distribution-controls section,
+.distribution-controls details {
+  border-bottom: 1px solid var(--ui-border);
+  padding: 18px 20px;
+}
+
+.distribution-controls details:last-of-type {
+  border-bottom: 0;
+}
+
+.distribution-controls h2,
+.distribution-map-heading h2 {
+  margin: 0;
+  color: var(--ui-text);
+  font-size: 1rem;
+}
+
+.distribution-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.distribution-section-heading small {
+  display: block;
+  margin-top: 4px;
+  color: var(--ui-muted);
+}
+
+.distribution-clear-species {
+  border: 0;
+  padding: 3px 0;
+  color: var(--vadma-accent, #d97706);
+  background: transparent;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.distribution-controls label {
+  display: grid;
+  gap: 7px;
+  margin-top: 11px;
+  color: var(--ui-text);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.distribution-controls input[type="search"],
+.distribution-controls input[type="date"] {
+  width: 100%;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-small);
+  padding: 11px 12px;
+  color: var(--ui-text);
+  background: var(--ui-panel);
+  font: inherit;
+  outline: none;
+}
+
+.distribution-controls input[type="search"]:focus,
+.distribution-controls input[type="date"]:focus {
+  border-color: var(--vadma-accent, #d97706);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--vadma-accent, #d97706) 18%, transparent);
+}
+
+.distribution-species-results {
+  display: grid;
+  gap: 6px;
+  max-height: 235px;
+  margin-top: 10px;
+  overflow: auto;
+  padding-right: 3px;
+}
+
+.distribution-species-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 10px 11px;
+  color: var(--ui-text);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.distribution-species-option:hover {
+  border-color: var(--ui-border);
+  background: var(--ui-hover);
+}
+
+.distribution-species-option.active {
+  border-color: color-mix(in srgb, var(--vadma-accent, #d97706) 55%, var(--ui-border));
+  background: color-mix(in srgb, var(--vadma-accent, #d97706) 14%, var(--ui-card));
+}
+
+.distribution-species-option span {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.distribution-species-option strong {
+  overflow: hidden;
+  color: var(--ui-text);
+  font-size: 0.84rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.distribution-species-option small {
+  color: var(--ui-muted);
+  font-size: 0.7rem;
+}
+
+.distribution-species-option em {
+  flex: 0 0 auto;
+  color: var(--vadma-accent, #d97706);
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.distribution-species-message {
+  border: 1px dashed var(--ui-border);
+  border-radius: 10px;
+  padding: 16px;
+  color: var(--ui-muted);
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.distribution-controls summary {
+  cursor: pointer;
+  color: var(--ui-text);
+  font-weight: 900;
+}
+
+.distribution-check-list {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.distribution-check-list label,
+.distribution-inline-check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  border-radius: 9px;
+  padding: 7px 8px;
+  font-weight: 700;
+}
+
+.distribution-check-list label:hover {
+  background: var(--ui-hover);
+}
+
+.distribution-color-dot {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  border: 1px solid rgba(15, 23, 42, 0.65);
+  border-radius: 50%;
+}
+
+.distribution-date-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.distribution-controls small,
+.distribution-map-heading p {
+  color: var(--ui-muted);
+}
+
+.distribution-controls section > small {
+  display: block;
+  margin-top: 9px;
+  line-height: 1.45;
+}
+
+.distribution-controls input[type="range"] {
+  width: 100%;
+}
+
+.distribution-action-dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--ui-border);
+  padding: 14px 20px;
+  background: color-mix(in srgb, var(--ui-card) 94%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.distribution-apply {
+  width: 100%;
+}
+
+.distribution-no-match {
+  margin: 0;
+  color: #b45309;
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.distribution-counts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 0 20px 18px;
+}
+
+.distribution-counts span {
+  display: grid;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-small);
+  padding: 10px;
+  color: var(--ui-muted);
+  background: var(--ui-subtle);
+  font-size: 0.72rem;
+}
+
+.distribution-counts strong {
+  color: var(--ui-text);
+  font-size: 1rem;
+}
+
+.distribution-map-column {
+  min-width: 0;
+  display: grid;
+  gap: 20px;
+}
+
+.distribution-map-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.distribution-map-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+}
+
+.distribution-map-heading p {
+  margin: 5px 0 0;
+  font-size: 0.82rem;
+}
+
+.distribution-map-wrap {
+  position: relative;
+  min-height: 650px;
+  border-top: 1px solid var(--ui-border);
+}
+
+.distribution-map-wrap .leaflet-container {
+  width: 100%;
+  height: 72vh;
+  min-height: 650px;
+  background: var(--ui-subtle);
+}
+
+.distribution-map-loading,
+.distribution-map-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+  color: var(--ui-text);
+  background: color-mix(in srgb, var(--ui-card) 86%, transparent);
+  pointer-events: none;
+}
+
+.distribution-map-empty {
+  inset: auto 18px 18px 18px;
+  min-height: 90px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-medium);
+  background: color-mix(in srgb, var(--ui-card) 94%, transparent);
+  box-shadow: var(--ui-shadow);
+}
+
+.distribution-map-loading small,
+.distribution-map-empty small {
+  color: var(--ui-muted);
+}
+
+.distribution-spinner {
+  width: 34px;
+  height: 34px;
+  border: 3px solid var(--ui-border);
+  border-top-color: var(--vadma-accent, #d97706);
+  border-radius: 50%;
+  animation: distribution-spin 0.85s linear infinite;
+}
+
+@keyframes distribution-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.distribution-record-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.distribution-record-grid span {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-small);
+  padding: 12px;
+  background: var(--ui-subtle);
+}
+
+.distribution-record-grid small {
+  color: var(--ui-muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.distribution-record-grid strong {
+  overflow-wrap: anywhere;
+  color: var(--ui-text);
+  font-size: 0.84rem;
+}
+
+.distribution-record-empty {
+  border: 1px dashed var(--ui-border);
+  border-radius: var(--ui-radius-small);
+  padding: 22px;
+  color: var(--ui-muted);
+  text-align: center;
+}
+
+.distribution-error {
+  margin-bottom: 18px;
+  border: 1px solid rgba(220, 38, 38, 0.32);
+  border-radius: var(--ui-radius-medium);
+  padding: 13px 15px;
+  color: #991b1b;
+  background: #fef2f2;
+  font-weight: 750;
+}
+
+@media (max-width: 1100px) {
+  .distribution-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .distribution-controls {
+    position: static;
+    max-height: none;
+  }
+
+  .distribution-action-dock {
+    position: static;
+  }
+}
+
+@media (max-width: 700px) {
+  .distribution-map-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .distribution-map-wrap,
+  .distribution-map-wrap .leaflet-container {
+    min-height: 520px;
+    height: 64vh;
+  }
+
+  .distribution-record-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .distribution-date-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .distribution-record-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -103,9 +103,13 @@ function formatDateTime(value: string | null | undefined): string {
 function specimenTypeLabel(
   type: SurveySession["specimenFormType"],
 ): string {
-  if (type === "gillnet") return "Gill Net Survey";
-  if (type === "cm_tally") return "Centimeter Tally";
-  if (type === "standard") return "Standard Fish Processing";
+  if (type === "standard_mussel") {
+    return "Standard Mussel Processing";
+  }
+
+  if (type === "quads") return "Quads";
+  if (type === "musselrama") return "Musselrama";
+
   return "Not selected";
 }
 
@@ -148,17 +152,23 @@ export default function SubmitStep({
   const realRows = useMemo(
     () =>
       rows.filter((row) => {
-        const commonName = display(
-          firstValue(row, ["CommonName", "commonName"]),
+        const scientificName = display(
+          firstValue(row, [
+            "ScientificName",
+            "scientificName",
+          ]),
           "",
         );
 
-        return commonName !== "" && commonName !== "NoFish";
+        return (
+          scientificName !== "" &&
+          scientificName !== "No Specimen"
+        );
       }),
     [rows],
   );
 
-  const totalFish = useMemo(
+  const totalSpecimens = useMemo(
     () =>
       realRows.reduce(
         (sum, row) =>
@@ -177,7 +187,10 @@ export default function SubmitStep({
         realRows
           .map((row) =>
             display(
-              firstValue(row, ["CommonName", "commonName"]),
+              firstValue(row, [
+                "ScientificName",
+                "scientificName",
+              ]),
               "",
             ),
           )
@@ -332,7 +345,7 @@ export default function SubmitStep({
           <p className="submitKicker">Submit to DBA</p>
           <h2>Preparing survey submission</h2>
           <p>
-            Keep this page open while VADMA validates the survey and
+            Keep this page open while NAIADD validates the survey and
             adds it to the secure Firestore queue.
           </p>
 
@@ -378,7 +391,7 @@ export default function SubmitStep({
           <p className="submitKicker">Submission Complete</p>
           <h2>Survey queued successfully</h2>
           <p>
-            The completed survey is now stored in VADMA&apos;s secure
+            The completed survey is now stored in NAIADD&apos;s secure
             Firestore submission queue and is ready for DBA
             processing.
           </p>
@@ -396,7 +409,7 @@ export default function SubmitStep({
             />
             <ResultRow label="Waterbody" value={waterbody} />
             <ResultRow label="Site" value={siteName} />
-            <ResultRow label="Fish" value={String(totalFish)} />
+            <ResultRow label="Specimens" value={String(totalSpecimens)} />
             <ResultRow
               label="Species"
               value={String(speciesCount)}
@@ -497,7 +510,7 @@ export default function SubmitStep({
           </p>
           <h2>No survey data was lost</h2>
           <p>
-            VADMA kept the survey saved locally. Correct any listed
+            NAIADD kept the survey saved locally. Correct any listed
             issues, retry, or return to the review page.
           </p>
 
@@ -591,8 +604,8 @@ export default function SubmitStep({
             value={surveyType}
           />
           <SummaryItem
-            label="Fish"
-            value={String(totalFish)}
+            label="Specimens"
+            value={String(totalSpecimens)}
           />
           <SummaryItem
             label="Species"

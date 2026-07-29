@@ -129,9 +129,13 @@ function formatDateTime(value: unknown): string {
 function specimenTypeLabel(
   value: SurveySubmission["metadata"]["specimenFormType"],
 ): string {
-  if (value === "standard") return "Standard";
-  if (value === "gillnet") return "Gill Net";
-  if (value === "cm_tally") return "CM Tally";
+  if (value === "standard_mussel") {
+    return "Standard Mussel Processing";
+  }
+
+  if (value === "quads") return "Quads";
+  if (value === "musselrama") return "Musselrama";
+
   return "Unknown";
 }
 
@@ -152,15 +156,21 @@ function queueSummary(record: SubmissionQueueRecord) {
     : [];
 
   const realSpecimens = specimens.filter((row) => {
-    const commonName = display(
-      firstValue(row, ["CommonName", "commonName"]),
+    const scientificName = display(
+      firstValue(row, [
+        "ScientificName",
+        "scientificName",
+      ]),
       "",
     );
 
-    return commonName !== "" && commonName !== "NoFish";
+    return (
+      scientificName !== "" &&
+      scientificName !== "No Specimen"
+    );
   });
 
-  const fishCount = realSpecimens.reduce(
+  const specimenCount = realSpecimens.reduce(
     (sum, row) =>
       sum +
       (numeric(firstValue(row, ["Quantity", "quantity"])) ?? 1),
@@ -171,7 +181,10 @@ function queueSummary(record: SubmissionQueueRecord) {
     realSpecimens
       .map((row) =>
         display(
-          firstValue(row, ["CommonName", "commonName"]),
+          firstValue(row, [
+            "ScientificName",
+            "scientificName",
+          ]),
           "",
         ),
       )
@@ -209,12 +222,12 @@ function queueSummary(record: SubmissionQueueRecord) {
     ),
     samplingMethod: display(
       firstValue(survey, [
-        "Geartype",
         "SamplingMethod",
         "Sampling_Method",
+        "samplingMethod",
       ]),
     ),
-    fishCount,
+    specimenCount,
     speciesCount,
   };
 }
@@ -683,7 +696,7 @@ export default function DBAMergePortal({
     }
 
     const confirmed = window.confirm(
-      `Publish ${selectedRecords.length} approved submission${selectedRecords.length === 1 ? "" : "s"} to the active VADMA dataset? This will create a published delta and mark the selected submissions as Merged.`,
+      `Publish ${selectedRecords.length} approved submission${selectedRecords.length === 1 ? "" : "s"} to the active NAIADD dataset? This will create a published delta and mark the selected submissions as Merged.`,
     );
 
     if (!confirmed) return;
@@ -730,11 +743,11 @@ export default function DBAMergePortal({
 
       <section className="dba-hero">
         <div>
-          <p>VADMA Administration</p>
+          <p>NAIADD Administration</p>
           <h1>DBA Merge Portal</h1>
           <span>
             Review, approve, reject, archive, and publish Firestore
-            submissions to the active VADMA dataset.
+            submissions to the active NAIADD dataset.
           </span>
         </div>
 
@@ -988,8 +1001,8 @@ export default function DBAMergePortal({
                         )}
                       />
                       <Metadata
-                        label="Fish"
-                        value={String(summary.fishCount)}
+                        label="Specimens"
+                        value={String(summary.specimenCount)}
                       />
                       <Metadata
                         label="Species"
@@ -1136,11 +1149,10 @@ function SubmissionViewer({
     | "history";
   type SpecimenSort =
     | "original"
-    | "commonName"
     | "scientificName"
     | "quantityHigh"
-    | "lengthHigh"
-    | "weightHigh";
+    | "condition"
+    | "size";
 
   const [activeTab, setActiveTab] =
     useState<ReviewTab>("summary");
@@ -1215,7 +1227,10 @@ function SubmissionViewer({
         summary.specimens
           .map((row) =>
             display(
-              firstValue(row, ["CommonName", "commonName"]),
+              firstValue(row, [
+                "ScientificName",
+                "scientificName",
+              ]),
               "",
             ),
           )
@@ -1233,10 +1248,6 @@ function SubmissionViewer({
         originalIndex,
       }))
       .filter(({ row }) => {
-        const commonName = display(
-          firstValue(row, ["CommonName", "commonName"]),
-          "",
-        );
         const scientificName = display(
           firstValue(row, [
             "ScientificName",
@@ -1244,26 +1255,34 @@ function SubmissionViewer({
           ]),
           "",
         );
-        const run = display(
-          firstValue(row, [
-            "CustomRunName",
-            "NetNumber",
-            "RunN",
-          ]),
+        const bova = display(
+          firstValue(row, ["BOVA", "bova"]),
           "",
         );
-        const pass = display(
-          firstValue(row, ["SamplePass", "Pass"]),
+        const condition = display(
+          firstValue(row, ["Condition", "condition"]),
+          "",
+        );
+        const sexMaturity = display(
+          firstValue(row, [
+            "SexMaturity",
+            "sexMaturity",
+          ]),
           "",
         );
 
         const matchesSpecies =
           speciesFilter === "All" ||
-          commonName === speciesFilter;
+          scientificName === speciesFilter;
 
         const matchesSearch =
           normalizedSearch === "" ||
-          [commonName, scientificName, run, pass]
+          [
+            scientificName,
+            bova,
+            condition,
+            sexMaturity,
+          ]
             .join(" ")
             .toLowerCase()
             .includes(normalizedSearch);
@@ -1274,21 +1293,6 @@ function SubmissionViewer({
     return filtered.sort((left, right) => {
       const leftRow = left.row;
       const rightRow = right.row;
-
-      if (specimenSort === "commonName") {
-        return display(
-          firstValue(leftRow, ["CommonName", "commonName"]),
-          "",
-        ).localeCompare(
-          display(
-            firstValue(rightRow, [
-              "CommonName",
-              "commonName",
-            ]),
-            "",
-          ),
-        );
-      }
 
       if (specimenSort === "scientificName") {
         return display(
@@ -1319,33 +1323,27 @@ function SubmissionViewer({
         );
       }
 
-      if (specimenSort === "lengthHigh") {
-        return (
-          (numeric(
-            firstValue(rightRow, [
-              "Length",
-              "length",
-              "ForkLength",
-            ]),
-          ) ?? 0) -
-          (numeric(
-            firstValue(leftRow, [
-              "Length",
-              "length",
-              "ForkLength",
-            ]),
-          ) ?? 0)
+      if (specimenSort === "condition") {
+        return display(
+          firstValue(leftRow, ["Condition", "condition"]),
+          "",
+        ).localeCompare(
+          display(
+            firstValue(rightRow, ["Condition", "condition"]),
+            "",
+          ),
         );
       }
 
-      if (specimenSort === "weightHigh") {
-        return (
-          (numeric(
-            firstValue(rightRow, ["Weight", "weight"]),
-          ) ?? 0) -
-          (numeric(
-            firstValue(leftRow, ["Weight", "weight"]),
-          ) ?? 0)
+      if (specimenSort === "size") {
+        return display(
+          firstValue(leftRow, ["Size", "size"]),
+          "",
+        ).localeCompare(
+          display(
+            firstValue(rightRow, ["Size", "size"]),
+            "",
+          ),
         );
       }
 
@@ -1530,6 +1528,8 @@ function SubmissionViewer({
                     label="Latitude"
                     value={display(
                       firstValue(summary.location, [
+                        "LatitudeDD",
+                        "DownstreamLat",
                         "Latitude",
                         "latitude",
                         "Lat",
@@ -1541,6 +1541,8 @@ function SubmissionViewer({
                     label="Longitude"
                     value={display(
                       firstValue(summary.location, [
+                        "LongitudeDD",
+                        "DownstreamLong",
                         "Longitude",
                         "longitude",
                         "Lon",
@@ -1578,21 +1580,20 @@ function SubmissionViewer({
                     )}
                   />
                   <Metadata
-                    label="Lead Biologist"
+                    label="Identified By"
                     value={display(
                       firstValue(summary.survey, [
-                        "Lead_Collector",
-                        "LeadBiologist",
-                        "Lead_Biologist",
+                        "IdentifiedBy",
+                        "identifiedBy",
                       ]),
                     )}
                   />
                   <Metadata
-                    label="Surveyors"
+                    label="Collectors"
                     value={display(
                       firstValue(summary.survey, [
-                        "Surveyors",
-                        "surveyors",
+                        "Collectors",
+                        "collectors",
                       ]),
                     )}
                   />
@@ -1745,7 +1746,7 @@ function SubmissionViewer({
                   <input
                     type="search"
                     value={specimenSearch}
-                    placeholder="Species, run, net, or pass"
+                    placeholder="Scientific name, BOVA, condition, or sex/maturity"
                     onChange={(event) =>
                       setSpecimenSearch(event.target.value)
                     }
@@ -1782,20 +1783,17 @@ function SubmissionViewer({
                     <option value="original">
                       Original order
                     </option>
-                    <option value="commonName">
-                      Common name
-                    </option>
                     <option value="scientificName">
                       Scientific name
                     </option>
                     <option value="quantityHigh">
                       Quantity: high to low
                     </option>
-                    <option value="lengthHigh">
-                      Length: high to low
+                    <option value="condition">
+                      Condition
                     </option>
-                    <option value="weightHigh">
-                      Weight: high to low
+                    <option value="size">
+                      Size
                     </option>
                   </select>
                 </label>
@@ -1811,14 +1809,14 @@ function SubmissionViewer({
                   <table>
                     <thead>
                       <tr>
-                        <th>Run / Net</th>
-                        <th>Pass / Panel</th>
-                        <th>Common Name</th>
                         <th>Scientific Name</th>
+                        <th>BOVA</th>
                         <th>Quantity</th>
-                        <th>Length</th>
-                        <th>Weight</th>
-                        <th>Sex</th>
+                        <th>Size</th>
+                        <th>Sex / Maturity</th>
+                        <th>Condition</th>
+                        <th>Qualitative Abundance</th>
+                        <th>Specimen Notes</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1826,36 +1824,18 @@ function SubmissionViewer({
                         ({ row, originalIndex }) => (
                           <tr key={originalIndex}>
                             <td>
-                              {display(
-                                firstValue(row, [
-                                  "CustomRunName",
-                                  "NetNumber",
-                                  "RunN",
-                                ]),
-                              )}
+                              <em>
+                                {display(
+                                  firstValue(row, [
+                                    "ScientificName",
+                                    "scientificName",
+                                  ]),
+                                )}
+                              </em>
                             </td>
                             <td>
                               {display(
-                                firstValue(row, [
-                                  "SamplePass",
-                                  "Pass",
-                                ]),
-                              )}
-                            </td>
-                            <td>
-                              {display(
-                                firstValue(row, [
-                                  "CommonName",
-                                  "commonName",
-                                ]),
-                              )}
-                            </td>
-                            <td>
-                              {display(
-                                firstValue(row, [
-                                  "ScientificName",
-                                  "scientificName",
-                                ]),
+                                firstValue(row, ["BOVA", "bova"]),
                               )}
                             </td>
                             <td>
@@ -1868,24 +1848,39 @@ function SubmissionViewer({
                             </td>
                             <td>
                               {display(
+                                firstValue(row, ["Size", "size"]),
+                              )}
+                            </td>
+                            <td>
+                              {display(
                                 firstValue(row, [
-                                  "Length",
-                                  "length",
-                                  "ForkLength",
+                                  "SexMaturity",
+                                  "sexMaturity",
                                 ]),
                               )}
                             </td>
                             <td>
                               {display(
                                 firstValue(row, [
-                                  "Weight",
-                                  "weight",
+                                  "Condition",
+                                  "condition",
                                 ]),
                               )}
                             </td>
                             <td>
                               {display(
-                                firstValue(row, ["Sex", "sex"]),
+                                firstValue(row, [
+                                  "QualAbundance",
+                                  "qualAbundance",
+                                ]),
+                              )}
+                            </td>
+                            <td>
+                              {display(
+                                firstValue(row, [
+                                  "SpecimenNotes",
+                                  "specimenNotes",
+                                ]),
                               )}
                             </td>
                           </tr>

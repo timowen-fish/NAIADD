@@ -1,0 +1,997 @@
+[
+  {
+    "BOVA": "60032",
+    "CommonName": "Acornshell Mussel",
+    "ScientificName": "Epioblasma haysiana"
+  },
+  {
+    "BOVA": "60100",
+    "CommonName": "Adam Pea Clam",
+    "ScientificName": "Pisidium adamsi"
+  },
+  {
+    "BOVA": "60157",
+    "CommonName": "Alewife Floater",
+    "ScientificName": "Utterbackiana implicata"
+  },
+  {
+    "BOVA": "60125",
+    "CommonName": "Appalachian Monkeyface",
+    "ScientificName": "Theliderma sparsa"
+  },
+  {
+    "BOVA": "60010",
+    "CommonName": "Appalachian Rocksnail",
+    "ScientificName": "Leptoxis subglobosa"
+  },
+  {
+    "BOVA": "60063",
+    "CommonName": "Ash Gyro Snail",
+    "ScientificName": "Gyraulus parvus"
+  },
+  {
+    "BOVA": "60173",
+    "CommonName": "Atlantic Pigtoe",
+    "ScientificName": "Fusconaia masoni"
+  },
+  {
+    "BOVA": "60127",
+    "CommonName": "Atlantic Rangia Clam",
+    "ScientificName": "Rangia cuneata"
+  },
+  {
+    "BOVA": "60176",
+    "CommonName": "Atlantic Spike",
+    "ScientificName": "Elliptio producta"
+  },
+  {
+    "BOVA": "60151",
+    "CommonName": "Banded Mysterysnail",
+    "ScientificName": "Callinina georgianus"
+  },
+  {
+    "BOVA": "60206",
+    "CommonName": "Bayou Physa Snail",
+    "ScientificName": "Physella hendersoni hendersoni"
+  },
+  {
+    "BOVA": "60126",
+    "CommonName": "Big-Eared Radix Snail",
+    "ScientificName": "Radix auricularia"
+  },
+  {
+    "BOVA": "60020",
+    "CommonName": "Birdwing Pearlymussel",
+    "ScientificName": "Lemiox rimosus"
+  },
+  {
+    "BOVA": "60086",
+    "CommonName": "Black Sandshell",
+    "ScientificName": "Ligumia recta"
+  },
+  {
+    "BOVA": "60247",
+    "CommonName": "Blue Mussel",
+    "ScientificName": "Mytilus edulis"
+  },
+  {
+    "BOVA": "60199",
+    "CommonName": "Blue Ridge Elimia",
+    "ScientificName": "Elimia shenandoa"
+  },
+  {
+    "BOVA": "60180",
+    "CommonName": "Blue Ridge Springsnail",
+    "ScientificName": "Fontigens orolibas"
+  },
+  {
+    "BOVA": "60208",
+    "CommonName": "Boreal Marstonia",
+    "ScientificName": "Marstonia lustrica"
+  },
+  {
+    "BOVA": "60209",
+    "CommonName": "Bottle Hornsnail",
+    "ScientificName": "Pleurocera gradata"
+  },
+  {
+    "BOVA": "60248",
+    "CommonName": "Box Spike",
+    "ScientificName": "Elliptio cistellaeformis"
+  },
+  {
+    "BOVA": "60006",
+    "CommonName": "Brook Floater",
+    "ScientificName": "Alasmidonta varicosa"
+  },
+  {
+    "BOVA": "60115",
+    "CommonName": "Brown Walker Snail",
+    "ScientificName": "Pomatiopsis cincinnatiensis"
+  },
+  {
+    "BOVA": "60054",
+    "CommonName": "Buffalo Pebblesnail",
+    "ScientificName": "Gillia altilis"
+  },
+  {
+    "BOVA": "60092",
+    "CommonName": "Bugle Sprite",
+    "ScientificName": "Menetus dilatatus"
+  },
+  {
+    "BOVA": "60159",
+    "CommonName": "Carolina Lance",
+    "ScientificName": "Elliptio angustata"
+  },
+  {
+    "BOVA": "60026",
+    "CommonName": "Carolina Slabshell Mussel",
+    "ScientificName": "Elliptio congaraea"
+  },
+  {
+    "BOVA": "60177",
+    "CommonName": "Chinese Basket Clam",
+    "ScientificName": "Corbicula fluminea"
+  },
+  {
+    "BOVA": "60231",
+    "CommonName": "Chinese Mysterysnail",
+    "ScientificName": "Cipangopaludina chinensis"
+  },
+  {
+    "BOVA": "60057",
+    "CommonName": "Club Elimia Snail",
+    "ScientificName": "Elimia clavaeformis"
+  },
+  {
+    "BOVA": "60230",
+    "CommonName": "Coal Elimia",
+    "ScientificName": "Elimia aterina"
+  },
+  {
+    "BOVA": "60239",
+    "CommonName": "Common Atlantic Slippersnail",
+    "ScientificName": "Crepidula fornicata"
+  },
+  {
+    "BOVA": "60238",
+    "CommonName": "Convex Slippersnail",
+    "ScientificName": "Crepidula convexa"
+  },
+  {
+    "BOVA": "60082",
+    "CommonName": "Cracking Pearlymussel",
+    "ScientificName": "Hemistena lata"
+  },
+  {
+    "BOVA": "60137",
+    "CommonName": "Creeper",
+    "ScientificName": "Strophitus undulatus"
+  },
+  {
+    "BOVA": "60039",
+    "CommonName": "Creeping Ancylid Limpet",
+    "ScientificName": "Ferrissia rivularis"
+  },
+  {
+    "BOVA": "60134",
+    "CommonName": "Crested Mudalia Snail",
+    "ScientificName": "Leptoxis carinata"
+  },
+  {
+    "BOVA": "60160",
+    "CommonName": "Cumberland Leafshell",
+    "ScientificName": "Epioblasma stewardsonii"
+  },
+  {
+    "BOVA": "60090",
+    "CommonName": "Cumberland Moccasinshell Mussel",
+    "ScientificName": "Medionidus conradicus"
+  },
+  {
+    "BOVA": "60123",
+    "CommonName": "Cumberland Monkeyface",
+    "ScientificName": "Theliderma intermedia"
+  },
+  {
+    "BOVA": "60030",
+    "CommonName": "Cumberlandian Combshell",
+    "ScientificName": "Epioblasma brevidens"
+  },
+  {
+    "BOVA": "60205",
+    "CommonName": "Cymbal Ancylid Snail",
+    "ScientificName": "Laevapex diaphanus"
+  },
+  {
+    "BOVA": "60245",
+    "CommonName": "Dark Falsemussel",
+    "ScientificName": "Mytilopsis leucophaeata"
+  },
+  {
+    "BOVA": "60168",
+    "CommonName": "Deertoe",
+    "ScientificName": "Truncilla truncata"
+  },
+  {
+    "BOVA": "60091",
+    "CommonName": "Disc Sprite Snail",
+    "ScientificName": "Dilatata brogniartiana"
+  },
+  {
+    "BOVA": "60024",
+    "CommonName": "Dromedary Pearlymussel",
+    "ScientificName": "Dromus dromas"
+  },
+  {
+    "BOVA": "60070",
+    "CommonName": "Dusky Ancylid Snail",
+    "ScientificName": "Laevapex fuscus"
+  },
+  {
+    "BOVA": "60049",
+    "CommonName": "Dusky Fossaria",
+    "ScientificName": "Galba dalli"
+  },
+  {
+    "BOVA": "60244",
+    "CommonName": "Dwarf Surfclam",
+    "ScientificName": "Mulinia lateralis"
+  },
+  {
+    "BOVA": "60003",
+    "CommonName": "Dwarf Wedgemussel",
+    "ScientificName": "Alasmidonta heterodon"
+  },
+  {
+    "BOVA": "60025",
+    "CommonName": "Eastern Elliptio Mussel",
+    "ScientificName": "Elliptio complanata"
+  },
+  {
+    "BOVA": "60012",
+    "CommonName": "Eastern Floater",
+    "ScientificName": "Pyganodon cataracta"
+  },
+  {
+    "BOVA": "60076",
+    "CommonName": "Eastern Lampmussel",
+    "ScientificName": "Lampsilis radiata"
+  },
+  {
+    "BOVA": "60242",
+    "CommonName": "Eastern Oyster",
+    "ScientificName": "Crassostrea virginica"
+  },
+  {
+    "BOVA": "60085",
+    "CommonName": "Eastern Pond Mussel",
+    "ScientificName": "Ligumia nasuta"
+  },
+  {
+    "BOVA": "60141",
+    "CommonName": "Eastern Pondhorn",
+    "ScientificName": "Uniomerus carolinianus"
+  },
+  {
+    "BOVA": "60233",
+    "CommonName": "Ebony Elimia",
+    "ScientificName": "Elimia ebenum"
+  },
+  {
+    "BOVA": "60234",
+    "CommonName": "Eccentric Ancylid",
+    "ScientificName": "Hebetancylus excentircus"
+  },
+  {
+    "BOVA": "60027",
+    "CommonName": "Elephantear",
+    "ScientificName": "Elliptio crassidens"
+  },
+  {
+    "BOVA": "60004",
+    "CommonName": "Elktoe",
+    "ScientificName": "Alasmidonta marginata"
+  },
+  {
+    "BOVA": "60223",
+    "CommonName": "Elliptio complex",
+    "ScientificName": "Elliptio spp."
+  },
+  {
+    "BOVA": "60023",
+    "CommonName": "Fanshell",
+    "ScientificName": "Cyprogenia stegaria"
+  },
+  {
+    "BOVA": "60243",
+    "CommonName": "Fatmucket",
+    "ScientificName": "Lampsilis siliquoidea"
+  },
+  {
+    "BOVA": "60051",
+    "CommonName": "Finerayed Pigtoe",
+    "ScientificName": "Fusconaia cuneolus"
+  },
+  {
+    "BOVA": "60062",
+    "CommonName": "Flexed Gyro Snail",
+    "ScientificName": "Gyraulus deflectus"
+  },
+  {
+    "BOVA": "60121",
+    "CommonName": "Fluted Kidneyshell",
+    "ScientificName": "Ptychobranchus subtentus"
+  },
+  {
+    "BOVA": "60079",
+    "CommonName": "Flutedshell",
+    "ScientificName": "Lasmigona costata"
+  },
+  {
+    "BOVA": "60037",
+    "CommonName": "Fragile Ancylid Limpet",
+    "ScientificName": "Ferrissia californica"
+  },
+  {
+    "BOVA": "60163",
+    "CommonName": "Fragile Papershell",
+    "ScientificName": "Potamilus fragilis"
+  },
+  {
+    "BOVA": "60156",
+    "CommonName": "Giant Floater",
+    "ScientificName": "Pyganodon grandis"
+  },
+  {
+    "BOVA": "60046",
+    "CommonName": "Golden Fossaria",
+    "ScientificName": "Galba obrussa"
+  },
+  {
+    "BOVA": "60236",
+    "CommonName": "Golden Riffleshell",
+    "ScientificName": "Epioblasma aureola"
+  },
+  {
+    "BOVA": "60203",
+    "CommonName": "Graceful Fossaria",
+    "ScientificName": "Galba exigua"
+  },
+  {
+    "BOVA": "60194",
+    "CommonName": "Gravel Elimia Snail",
+    "ScientificName": "Elimia catenaria"
+  },
+  {
+    "BOVA": "60104",
+    "CommonName": "Greater Eastern Pea Clam",
+    "ScientificName": "Pisidium dubium"
+  },
+  {
+    "BOVA": "60034",
+    "CommonName": "Green Blossom",
+    "ScientificName": "Epioblasma gubernaculum"
+  },
+  {
+    "BOVA": "60081",
+    "CommonName": "Green Floater",
+    "ScientificName": "Lasmigona subviridis"
+  },
+  {
+    "BOVA": "60133",
+    "CommonName": "Grooved Fingernail Clam",
+    "ScientificName": "Sphaerium simile"
+  },
+  {
+    "BOVA": "60088",
+    "CommonName": "Henscomb Hydrobe Snail",
+    "ScientificName": "Littoridinops tenuipes"
+  },
+  {
+    "BOVA": "60130",
+    "CommonName": "Herrington Fingernail Clam",
+    "ScientificName": "Sphaerium occidentale"
+  },
+  {
+    "BOVA": "60241",
+    "CommonName": "Hooked Mussel",
+    "ScientificName": "Ischadium recurvum"
+  },
+  {
+    "BOVA": "60017",
+    "CommonName": "James Spinymussel",
+    "ScientificName": "Parvaspina collina"
+  },
+  {
+    "BOVA": "60232",
+    "CommonName": "Japanese Mysterysnail",
+    "ScientificName": "Cipangopaludina japonicus"
+  },
+  {
+    "BOVA": "60120",
+    "CommonName": "Kidneyshell Mussel",
+    "ScientificName": "Ptychobranchus fasciolaris"
+  },
+  {
+    "BOVA": "60129",
+    "CommonName": "Lake Fingernail Clam",
+    "ScientificName": "Musculium lacustre"
+  },
+  {
+    "BOVA": "60014",
+    "CommonName": "Lance Aplexa",
+    "ScientificName": "Sibirenauta elongata"
+  },
+  {
+    "BOVA": "60224",
+    "CommonName": "Lanceolate Elliptio",
+    "ScientificName": "Elliptio spp."
+  },
+  {
+    "BOVA": "60197",
+    "CommonName": "Lapped Elimia Snail",
+    "ScientificName": "Elimia dislocata"
+  },
+  {
+    "BOVA": "60094",
+    "CommonName": "Littlewing Pearlymussel",
+    "ScientificName": "Pegias fabula"
+  },
+  {
+    "BOVA": "60187",
+    "CommonName": "Long Fingernail Clam",
+    "ScientificName": "Musculium transversum"
+  },
+  {
+    "BOVA": "60053",
+    "CommonName": "Longsolid",
+    "ScientificName": "Fusconaia subrotunda"
+  },
+  {
+    "BOVA": "60044",
+    "CommonName": "Marsh Fossaria",
+    "ScientificName": "Galba humulis"
+  },
+  {
+    "BOVA": "60065",
+    "CommonName": "Marsh Rams-Horn Snail",
+    "ScientificName": "Planorbella trivolvis"
+  },
+  {
+    "BOVA": "60119",
+    "CommonName": "Mimic Lymnaea Snail",
+    "ScientificName": "Pseudosuccinea columella"
+  },
+  {
+    "BOVA": "60202",
+    "CommonName": "Morrison's Springsnail",
+    "ScientificName": "Fontigens morrisoni"
+  },
+  {
+    "BOVA": "60161",
+    "CommonName": "Mountain Creekshell",
+    "ScientificName": "Leaunio vanuxemensis"
+  },
+  {
+    "BOVA": "60001",
+    "CommonName": "Mucket",
+    "ScientificName": "Actinonaias ligamentina"
+  },
+  {
+    "BOVA": "60009",
+    "CommonName": "Mud Amnicola Snail",
+    "ScientificName": "Amnicola limosus"
+  },
+  {
+    "BOVA": "60015",
+    "CommonName": "Mud Bithynia Snail",
+    "ScientificName": "Bithynia tentaculata"
+  },
+  {
+    "BOVA": "60000",
+    "CommonName": "Mussel spp",
+    "ScientificName": "Mussel spp"
+  },
+  {
+    "BOVA": "60184",
+    "CommonName": "Northern Lance Mussel",
+    "ScientificName": "Elliptio fisheriana"
+  },
+  {
+    "BOVA": "60145",
+    "CommonName": "Notched Rainbow",
+    "ScientificName": "Venustaconcha constricta"
+  },
+  {
+    "BOVA": "60038",
+    "CommonName": "Oblong Ancylid Limpet",
+    "ScientificName": "Ferrissia parallelus"
+  },
+  {
+    "BOVA": "60172",
+    "CommonName": "Ohio Pigtoe",
+    "ScientificName": "Pleurobema cordatum"
+  },
+  {
+    "BOVA": "60249",
+    "CommonName": "Organ Cavesnail",
+    "ScientificName": "Fontigens tartarea"
+  },
+  {
+    "BOVA": "60031",
+    "CommonName": "Oyster Mussel",
+    "ScientificName": "Epioblasma capsaeformis"
+  },
+  {
+    "BOVA": "60060",
+    "CommonName": "Pagoda Hornsnail",
+    "ScientificName": "Pleurocera uncialis"
+  },
+  {
+    "BOVA": "60019",
+    "CommonName": "Panhandle Pebblesnail",
+    "ScientificName": "Somatogyrus virginicus"
+  },
+  {
+    "BOVA": "60013",
+    "CommonName": "Paper Pondshell Mussel",
+    "ScientificName": "Utterbackia imbecillis"
+  },
+  {
+    "BOVA": "60099",
+    "CommonName": "Pewter Physa Snail",
+    "ScientificName": "Physella heterostropha"
+  },
+  {
+    "BOVA": "60212",
+    "CommonName": "Pewter Physa Snail",
+    "ScientificName": "Physella heterostropha heterostropha"
+  },
+  {
+    "BOVA": "60002",
+    "CommonName": "Pheasantshell Mussel",
+    "ScientificName": "Actinonaias pectorosa"
+  },
+  {
+    "BOVA": "60061",
+    "CommonName": "Piedmont Elimia Snail",
+    "ScientificName": "Elimia virginica"
+  },
+  {
+    "BOVA": "60195",
+    "CommonName": "Piedmont Pondsnail",
+    "ScientificName": "Ladislavella neopalustris"
+  },
+  {
+    "BOVA": "60124",
+    "CommonName": "Pimpleback",
+    "ScientificName": "Cyclonaias pustulosa"
+  },
+  {
+    "BOVA": "60166",
+    "CommonName": "Pink Heelsplitter Mussel",
+    "ScientificName": "Potamilus alatus"
+  },
+  {
+    "BOVA": "60152",
+    "CommonName": "Pink Mucket (Pearlymussel)",
+    "ScientificName": "Lampsilis abrupta"
+  },
+  {
+    "BOVA": "60140",
+    "CommonName": "Pistolgrip",
+    "ScientificName": "Tritogonia verrucosa"
+  },
+  {
+    "BOVA": "60077",
+    "CommonName": "Plain Pocketbook Mussel",
+    "ScientificName": "Lampsilis cardium"
+  },
+  {
+    "BOVA": "60075",
+    "CommonName": "Pocketbook Mussel",
+    "ScientificName": "Lampsilis ovata"
+  },
+  {
+    "BOVA": "60016",
+    "CommonName": "Pointed Campeloma",
+    "ScientificName": "Campeloma decisum"
+  },
+  {
+    "BOVA": "60132",
+    "CommonName": "Pond Fingernail Clam",
+    "ScientificName": "Musculium securis"
+  },
+  {
+    "BOVA": "60142",
+    "CommonName": "Pondhorn",
+    "ScientificName": "Uniomerus tetralasmus"
+  },
+  {
+    "BOVA": "60201",
+    "CommonName": "Potomac Springsnail",
+    "ScientificName": "Fontigens bottimeri"
+  },
+  {
+    "BOVA": "60096",
+    "CommonName": "Pumpkin Physa Snail",
+    "ScientificName": "Physella ancillaria"
+  },
+  {
+    "BOVA": "60147",
+    "CommonName": "Purple Bean",
+    "ScientificName": "Villosa perpurpurea"
+  },
+  {
+    "BOVA": "60139",
+    "CommonName": "Purple Lilliput",
+    "ScientificName": "Toxolasma lividum"
+  },
+  {
+    "BOVA": "60022",
+    "CommonName": "Purple Wartyback Mussel",
+    "ScientificName": "Cyclonaias tuberculata"
+  },
+  {
+    "BOVA": "60048",
+    "CommonName": "Pygmy Fossaria",
+    "ScientificName": "Galba parva"
+  },
+  {
+    "BOVA": "60174",
+    "CommonName": "Pyramid Pigtoe",
+    "ScientificName": "Pleurobema rubrum"
+  },
+  {
+    "BOVA": "60148",
+    "CommonName": "Rainbow",
+    "ScientificName": "Cambarunio iris"
+  },
+  {
+    "BOVA": "60146",
+    "CommonName": "Rayed Bean",
+    "ScientificName": "Paetulunio fabalis"
+  },
+  {
+    "BOVA": "60240",
+    "CommonName": "Ribbed Mussel",
+    "ScientificName": "Geukensia demissa"
+  },
+  {
+    "BOVA": "60103",
+    "CommonName": "Ridgebeak Pea Clam",
+    "ScientificName": "Pisidium compressum"
+  },
+  {
+    "BOVA": "60087",
+    "CommonName": "Rigid Lioplax",
+    "ScientificName": "Lioplax subcarinata"
+  },
+  {
+    "BOVA": "60128",
+    "CommonName": "River Fingernail Clam",
+    "ScientificName": "Sphaerium fabale"
+  },
+  {
+    "BOVA": "60178",
+    "CommonName": "River Snail",
+    "ScientificName": "Elimia spp."
+  },
+  {
+    "BOVA": "60175",
+    "CommonName": "Roanoke Slabshell",
+    "ScientificName": "Elliptio roanokensis"
+  },
+  {
+    "BOVA": "60171",
+    "CommonName": "Rough Pigtoe",
+    "ScientificName": "Pleurobema plenum"
+  },
+  {
+    "BOVA": "60122",
+    "CommonName": "Rough Rabbitsfoot",
+    "ScientificName": "Theliderma cylindrica"
+  },
+  {
+    "BOVA": "60101",
+    "CommonName": "Round Pea Clam",
+    "ScientificName": "Pisidium equilaterale"
+  },
+  {
+    "BOVA": "60111",
+    "CommonName": "Round Pigtoe Mussel",
+    "ScientificName": "Pleurobema sintoxia"
+  },
+  {
+    "BOVA": "60135",
+    "CommonName": "Seep Mudalia Snail",
+    "ScientificName": "Leptoxis dilatata"
+  },
+  {
+    "BOVA": "60207",
+    "CommonName": "Shale Pebblesnail",
+    "ScientificName": "Somatogyrus pennsylvanicus"
+  },
+  {
+    "BOVA": "60118",
+    "CommonName": "Sharp Sprite Snail",
+    "ScientificName": "Promenetus exacuous"
+  },
+  {
+    "BOVA": "60056",
+    "CommonName": "Sharp-Crest Elimia",
+    "ScientificName": "Elimia carinifera"
+  },
+  {
+    "BOVA": "60110",
+    "CommonName": "Sheepnose Mussel",
+    "ScientificName": "Plethobasus cyphyus"
+  },
+  {
+    "BOVA": "60105",
+    "CommonName": "Shiny Pea Clam",
+    "ScientificName": "Pisidium nitidum"
+  },
+  {
+    "BOVA": "60052",
+    "CommonName": "Shiny Pigtoe",
+    "ScientificName": "Fusconaia cor"
+  },
+  {
+    "BOVA": "60114",
+    "CommonName": "Silty Hornsnail",
+    "ScientificName": "Pleurocera canaliculata"
+  },
+  {
+    "BOVA": "60204",
+    "CommonName": "Skyline Caverns Snail",
+    "ScientificName": "Holsingeria sp. 1"
+  },
+  {
+    "BOVA": "60083",
+    "CommonName": "Slabside Pearlymussel",
+    "ScientificName": "Pleuronaia dolabelloides"
+  },
+  {
+    "BOVA": "60116",
+    "CommonName": "Slender Walker Snail",
+    "ScientificName": "Pomatiopsis lapidaria"
+  },
+  {
+    "BOVA": "60007",
+    "CommonName": "Slippershell Mussel",
+    "ScientificName": "Alasmidonta viridis"
+  },
+  {
+    "BOVA": "60058",
+    "CommonName": "Smooth Elimia Snail",
+    "ScientificName": "Elimia simplex"
+  },
+  {
+    "BOVA": "60251",
+    "CommonName": "Smooth Mudalia",
+    "ScientificName": "Leptoxis virgata"
+  },
+  {
+    "BOVA": "60068",
+    "CommonName": "Snail",
+    "ScientificName": "Hydrobia Truncata"
+  },
+  {
+    "BOVA": "60035",
+    "CommonName": "Snuffbox Mussel",
+    "ScientificName": "Epioblasma triquetra"
+  },
+  {
+    "BOVA": "60246",
+    "CommonName": "Softshell Clam",
+    "ScientificName": "Mya arenaria"
+  },
+  {
+    "BOVA": "60021",
+    "CommonName": "Spectaclecase",
+    "ScientificName": "Cumberlandia monodonta"
+  },
+  {
+    "BOVA": "60055",
+    "CommonName": "Spider Elimia",
+    "ScientificName": "Elimia arachnoidea"
+  },
+  {
+    "BOVA": "60028",
+    "CommonName": "Spike Mussel",
+    "ScientificName": "Eurynia dilatata"
+  },
+  {
+    "BOVA": "60069",
+    "CommonName": "Spiny Riversnail",
+    "ScientificName": "Io fluvialis"
+  },
+  {
+    "BOVA": "60198",
+    "CommonName": "Sprite Elimia Snail",
+    "ScientificName": "Elimia proxima"
+  },
+  {
+    "BOVA": "60089",
+    "CommonName": "Squat Duskysnail",
+    "ScientificName": "Lyogyrus granum"
+  },
+  {
+    "BOVA": "60106",
+    "CommonName": "Striate Pea Clam",
+    "ScientificName": "Pisidium punctiferum"
+  },
+  {
+    "BOVA": "60188",
+    "CommonName": "Striated Fingernail Clam",
+    "ScientificName": "Sphaerium striatinum"
+  },
+  {
+    "BOVA": "60131",
+    "CommonName": "Swamp Fingernail Clam",
+    "ScientificName": "Musculium partumeium"
+  },
+  {
+    "BOVA": "60200",
+    "CommonName": "Symmetrical Elimia Snail",
+    "ScientificName": "Elimia symmetrica"
+  },
+  {
+    "BOVA": "60097",
+    "CommonName": "Tadpole Physa Snail",
+    "ScientificName": "Physella gyrina"
+  },
+  {
+    "BOVA": "60036",
+    "CommonName": "Tan Riffleshell",
+    "ScientificName": "Epioblasma florentina walkeri"
+  },
+  {
+    "BOVA": "60169",
+    "CommonName": "Tennessee Bean",
+    "ScientificName": "Venustaconcha trabalis"
+  },
+  {
+    "BOVA": "60112",
+    "CommonName": "Tennessee Clubshell",
+    "ScientificName": "Pleurobema oviforme"
+  },
+  {
+    "BOVA": "60080",
+    "CommonName": "Tennessee Heelsplitter",
+    "ScientificName": "Lasmigona holstonia"
+  },
+  {
+    "BOVA": "60050",
+    "CommonName": "Tennessee Pigtoe",
+    "ScientificName": "Pleuronaia barnesiana"
+  },
+  {
+    "BOVA": "60170",
+    "CommonName": "Thankless Ghostsnail",
+    "ScientificName": "Holsingeria unthanksensis"
+  },
+  {
+    "BOVA": "60108",
+    "CommonName": "Thicklip Rams-Horn Snail",
+    "ScientificName": "Planorbula armigera"
+  },
+  {
+    "BOVA": "60008",
+    "CommonName": "Threeridge",
+    "ScientificName": "Amblema plicata"
+  },
+  {
+    "BOVA": "60143",
+    "CommonName": "Threeridge Valvata Snail",
+    "ScientificName": "Valvata tricarinata"
+  },
+  {
+    "BOVA": "60074",
+    "CommonName": "Tidewater Mucket",
+    "ScientificName": "Atlanticoncha ochracea"
+  },
+  {
+    "BOVA": "60005",
+    "CommonName": "Triangle Floater Mussel",
+    "ScientificName": "Alasmidonta undulata"
+  },
+  {
+    "BOVA": "60235",
+    "CommonName": "Triangular Peaclam",
+    "ScientificName": "Pisidium variabile"
+  },
+  {
+    "BOVA": "60064",
+    "CommonName": "Two-Ridge Rams-Horn Snail",
+    "ScientificName": "Helisoma anceps"
+  },
+  {
+    "BOVA": "60193",
+    "CommonName": "Two-Ridge Valvata Snail",
+    "ScientificName": "Valvata bicarinata"
+  },
+  {
+    "BOVA": "60102",
+    "CommonName": "Ubiquitous Pea Clam",
+    "ScientificName": "Pisidium casertanum"
+  },
+  {
+    "BOVA": "60227",
+    "CommonName": "Unknown Fingernail Clam - Musculium",
+    "ScientificName": "Musculium spp."
+  },
+  {
+    "BOVA": "60225",
+    "CommonName": "Unknown Fingernail Clam - Sphaerium",
+    "ScientificName": "Sphaerium spp."
+  },
+  {
+    "BOVA": "60229",
+    "CommonName": "Unknown Limpet - Ferrissia",
+    "ScientificName": "Ferrissia spp."
+  },
+  {
+    "BOVA": "60226",
+    "CommonName": "Unknown Pea Clam - Pisidium",
+    "ScientificName": "Pisidium spp."
+  },
+  {
+    "BOVA": "60228",
+    "CommonName": "Unknown Physa - Physella",
+    "ScientificName": "Physella spp."
+  },
+  {
+    "BOVA": "60217",
+    "CommonName": "Variable Spike",
+    "ScientificName": "Elliptio icterina"
+  },
+  {
+    "BOVA": "60189",
+    "CommonName": "Variable Spike",
+    "ScientificName": "Elliptio raveneli"
+  },
+  {
+    "BOVA": "60084",
+    "CommonName": "Virginia Pigtoe",
+    "ScientificName": "Lexingtonia subplana"
+  },
+  {
+    "BOVA": "60107",
+    "CommonName": "Walker Pea Clam",
+    "ScientificName": "Pisidium walkeri"
+  },
+  {
+    "BOVA": "60095",
+    "CommonName": "Wandering Physa",
+    "ScientificName": "Physella acuta"
+  },
+  {
+    "BOVA": "60041",
+    "CommonName": "Watercress Snail",
+    "ScientificName": "Fontigens nickliniana"
+  },
+  {
+    "BOVA": "60073",
+    "CommonName": "Wavyrayed Lamp Mussel",
+    "ScientificName": "Lampsilis fasciola"
+  },
+  {
+    "BOVA": "60136",
+    "CommonName": "Wrinkled Marshsnail",
+    "ScientificName": "Hinkleyia caperata"
+  },
+  {
+    "BOVA": "60071",
+    "CommonName": "Yellow Lampmussel",
+    "ScientificName": "Lampsilis cariosa"
+  },
+  {
+    "BOVA": "60029",
+    "CommonName": "Yellow Lance",
+    "ScientificName": "Elliptio lanceolata"
+  }
+]
