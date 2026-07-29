@@ -18,7 +18,7 @@ import {
 import type { LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-import naiaddShield from "../assets/vadma-shield.png";
+import naiaddShield from "../assets/naiadd-shield.png";
 import type { UserProfile } from "../types/user";
 import { USER_ROLE_LABELS } from "../types/user";
 import { getDisplayName } from "../utils/displayName";
