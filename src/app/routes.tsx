@@ -47,6 +47,15 @@ export const APP_ROUTES: readonly AppRoute[] = [
     showInNavigation: true,
   },
   {
+    id: "distributions",
+    label: "Distributions",
+    icon: "◉",
+    description: "Map current and historical aquatic invertebrate occurrences",
+    permission: "viewReports",
+    render: () => <DistributionsPage />,
+    showInNavigation: true,
+  },
+  {
     id: "data-entry",
     label: "Data Entry",
     icon: "✎",
@@ -80,15 +89,6 @@ export const APP_ROUTES: readonly AppRoute[] = [
     description: "Weather, radar, tides, flow, and mapping",
     permission: "viewDashboard",
     render: () => <SiteConditionsPage />,
-    showInNavigation: true,
-  },
-  {
-    id: "distributions",
-    label: "Distributions",
-    icon: "◉",
-    description: "Map current and historical aquatic invertebrate occurrences",
-    permission: "viewReports",
-    render: () => <DistributionsPage />,
     showInNavigation: true,
   },
   {

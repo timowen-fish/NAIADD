@@ -4,7 +4,7 @@
 
 .distribution-layout {
   display: grid;
-  grid-template-columns: minmax(310px, 355px) minmax(0, 1fr);
+  grid-template-columns: minmax(320px, 370px) minmax(0, 1fr);
   gap: 20px;
   align-items: start;
 }
@@ -25,10 +25,6 @@
   padding: 18px 20px;
 }
 
-.distribution-controls details:last-of-type {
-  border-bottom: 0;
-}
-
 .distribution-controls h2,
 .distribution-map-heading h2 {
   margin: 0;
@@ -36,7 +32,8 @@
   font-size: 1rem;
 }
 
-.distribution-section-heading {
+.distribution-section-heading,
+.distribution-point-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -44,7 +41,8 @@
   margin-bottom: 12px;
 }
 
-.distribution-section-heading small {
+.distribution-section-heading small,
+.distribution-point-heading small {
   display: block;
   margin-top: 4px;
   color: var(--ui-muted);
@@ -59,15 +57,6 @@
   font-size: 0.76rem;
   font-weight: 900;
   cursor: pointer;
-}
-
-.distribution-controls label {
-  display: grid;
-  gap: 7px;
-  margin-top: 11px;
-  color: var(--ui-text);
-  font-size: 0.82rem;
-  font-weight: 800;
 }
 
 .distribution-controls input[type="search"],
@@ -104,7 +93,7 @@
   justify-content: space-between;
   gap: 12px;
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: 11px;
   padding: 10px 11px;
   color: var(--ui-text);
   background: transparent;
@@ -142,7 +131,6 @@
 }
 
 .distribution-species-option em {
-  flex: 0 0 auto;
   color: var(--vadma-accent, #d97706);
   font-size: 0.66rem;
   font-style: normal;
@@ -159,39 +147,166 @@
   font-size: 0.8rem;
 }
 
-.distribution-controls summary {
+.distribution-filter-group > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   cursor: pointer;
   color: var(--ui-text);
   font-weight: 900;
+  list-style: none;
 }
 
-.distribution-check-list {
+.distribution-filter-group > summary::-webkit-details-marker {
+  display: none;
+}
+
+.distribution-filter-group > summary::before {
+  content: "▾";
+  margin-right: 7px;
+  color: var(--vadma-accent, #d97706);
+  transition: transform 160ms ease;
+}
+
+.distribution-filter-group:not([open]) > summary::before {
+  transform: rotate(-90deg);
+}
+
+.distribution-filter-group > summary > span {
+  margin-right: auto;
+}
+
+.distribution-filter-group > summary small {
+  border-radius: 999px;
+  padding: 5px 8px;
+  color: var(--ui-muted);
+  background: var(--ui-subtle);
+  font-size: 0.66rem;
+  font-weight: 850;
+}
+
+.distribution-option-grid {
   display: grid;
-  gap: 7px;
-  margin-top: 12px;
+  gap: 8px;
+  margin-top: 13px;
 }
 
-.distribution-check-list label,
-.distribution-inline-check {
-  display: flex;
+.distribution-option-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 9px;
-  margin: 0;
-  border-radius: 9px;
-  padding: 7px 8px;
-  font-weight: 700;
+  gap: 10px;
+  border: 1px solid var(--ui-border);
+  border-radius: 12px;
+  padding: 10px 11px;
+  color: var(--ui-text);
+  background: color-mix(in srgb, var(--ui-card) 88%, transparent);
+  cursor: pointer;
+  transition: border-color 140ms ease, background 140ms ease, transform 140ms ease;
 }
 
-.distribution-check-list label:hover {
+.distribution-option-card:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--vadma-accent, #d97706) 35%, var(--ui-border));
   background: var(--ui-hover);
 }
 
+.distribution-option-card.active {
+  border-color: color-mix(in srgb, var(--vadma-accent, #d97706) 40%, var(--ui-border));
+  background: color-mix(in srgb, var(--vadma-accent, #d97706) 8%, var(--ui-card));
+}
+
+.distribution-option-card input,
+.distribution-condition-chip input,
+.distribution-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .distribution-color-dot {
-  width: 10px;
-  height: 10px;
-  flex: 0 0 10px;
+  width: 11px;
+  height: 11px;
   border: 1px solid rgba(15, 23, 42, 0.65);
   border-radius: 50%;
+}
+
+.distribution-option-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.distribution-option-copy strong {
+  color: var(--ui-text);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.distribution-option-copy small {
+  color: var(--ui-muted);
+  font-size: 0.66rem;
+}
+
+.distribution-check-indicator {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ui-border);
+  border-radius: 7px;
+  color: var(--vadma-accent-contrast, #111827);
+  background: var(--ui-panel);
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.distribution-option-card.active .distribution-check-indicator {
+  border-color: transparent;
+  background: var(--vadma-accent, #d97706);
+}
+
+.distribution-condition-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.distribution-condition-chip {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--ui-border);
+  border-radius: 11px;
+  padding: 10px 11px;
+  color: var(--ui-muted);
+  background: var(--ui-panel);
+  cursor: pointer;
+}
+
+.distribution-condition-chip span {
+  font-size: 0.75rem;
+  font-weight: 850;
+}
+
+.distribution-condition-chip small {
+  border-radius: 999px;
+  padding: 3px 6px;
+  color: var(--ui-muted);
+  background: var(--ui-subtle);
+  font-size: 0.62rem;
+  font-weight: 850;
+}
+
+.distribution-condition-chip.active {
+  border-color: color-mix(in srgb, var(--vadma-accent, #d97706) 42%, var(--ui-border));
+  color: var(--ui-text);
+  background: color-mix(in srgb, var(--vadma-accent, #d97706) 10%, var(--ui-card));
 }
 
 .distribution-date-grid {
@@ -200,50 +315,116 @@
   gap: 10px;
 }
 
-.distribution-controls small,
-.distribution-map-heading p {
-  color: var(--ui-muted);
+.distribution-date-grid label {
+  display: grid;
+  gap: 7px;
+  color: var(--ui-text);
+  font-size: 0.75rem;
+  font-weight: 850;
 }
 
 .distribution-controls section > small {
   display: block;
   margin-top: 9px;
+  color: var(--ui-muted);
   line-height: 1.45;
 }
 
-.distribution-controls input[type="range"] {
-  width: 100%;
-}
-
-.distribution-action-dock {
-  position: sticky;
-  bottom: 0;
-  z-index: 5;
+.distribution-point-section {
   display: grid;
+  gap: 13px;
+}
+
+.distribution-point-heading {
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.distribution-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
-  border-top: 1px solid var(--ui-border);
-  padding: 14px 20px;
-  background: color-mix(in srgb, var(--ui-card) 94%, transparent);
-  backdrop-filter: blur(10px);
+  cursor: pointer;
 }
 
-.distribution-apply {
+.distribution-switch > span {
+  width: 38px;
+  height: 22px;
+  position: relative;
+  border-radius: 999px;
+  background: var(--ui-subtle);
+  box-shadow: inset 0 0 0 1px var(--ui-border);
+  transition: background 150ms ease;
+}
+
+.distribution-switch > span::after {
+  content: "";
+  width: 16px;
+  height: 16px;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  border-radius: 50%;
+  background: var(--ui-card);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .25);
+  transition: transform 150ms ease;
+}
+
+.distribution-switch input:checked + span {
+  background: var(--vadma-accent, #d97706);
+}
+
+.distribution-switch input:checked + span::after {
+  transform: translateX(16px);
+}
+
+.distribution-switch em {
+  color: var(--ui-muted);
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.distribution-range-control {
+  display: grid;
+  gap: 9px;
+  border: 1px solid var(--ui-border);
+  border-radius: 12px;
+  padding: 11px 12px;
+  background: var(--ui-panel);
+}
+
+.distribution-range-control > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.distribution-range-control strong {
+  color: var(--ui-text);
+  font-size: 0.76rem;
+}
+
+.distribution-range-control b {
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: var(--vadma-accent, #d97706);
+  background: var(--ui-subtle);
+  font-size: 0.68rem;
+}
+
+.distribution-range-control input[type="range"] {
   width: 100%;
-}
-
-.distribution-no-match {
-  margin: 0;
-  color: #b45309;
-  font-size: 0.74rem;
-  font-weight: 800;
-  text-align: center;
+  accent-color: var(--vadma-accent, #d97706);
 }
 
 .distribution-counts {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  padding: 0 20px 18px;
+  padding: 14px 20px 18px;
 }
 
 .distribution-counts span {
@@ -253,7 +434,7 @@
   padding: 10px;
   color: var(--ui-muted);
   background: var(--ui-subtle);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
 }
 
 .distribution-counts strong {
@@ -282,6 +463,7 @@
 
 .distribution-map-heading p {
   margin: 5px 0 0;
+  color: var(--ui-muted);
   font-size: 0.82rem;
 }
 
@@ -399,10 +581,6 @@
     position: static;
     max-height: none;
   }
-
-  .distribution-action-dock {
-    position: static;
-  }
 }
 
 @media (max-width: 700px) {
@@ -421,7 +599,8 @@
     grid-template-columns: 1fr 1fr;
   }
 
-  .distribution-date-grid {
+  .distribution-date-grid,
+  .distribution-condition-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -430,4 +609,1186 @@
   .distribution-record-grid {
     grid-template-columns: 1fr;
   }
+}
+
+
+/* R Shiny-compatible distribution symbology */
+.distribution-point-icon {
+  border: 0;
+  background: transparent;
+}
+
+.distribution-point-icon svg {
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.28));
+}
+
+.distribution-map-legend {
+  position: absolute;
+  z-index: 700;
+  left: 14px;
+  top: 14px;
+  width: min(250px, calc(100% - 28px));
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  border-radius: 12px;
+  padding: 11px 12px;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.16);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+
+.distribution-map-legend > strong {
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.distribution-legend-counties,
+.distribution-legend-datasets,
+.distribution-legend-shapes {
+  display: grid;
+  gap: 4px;
+}
+
+.distribution-legend-counties span,
+.distribution-legend-datasets span,
+.distribution-legend-shapes span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.68rem;
+  line-height: 1.2;
+}
+
+.distribution-legend-datasets i {
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border: 1px solid #111827;
+  border-radius: 50%;
+}
+
+.legend-shape {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  flex: 0 0 10px;
+  display: inline-grid;
+  place-items: center;
+  color: #111827;
+  font-size: 0.82rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.legend-shape.circle {
+  border-radius: 50%;
+  background: #111827;
+}
+
+.legend-shape.square {
+  background: #111827;
+}
+
+.legend-shape.triangle {
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 9px solid #111827;
+}
+
+.legend-shape.plus,
+.legend-shape.star {
+  width: 12px;
+  height: 12px;
+  flex-basis: 12px;
+}
+
+@media (max-width: 700px) {
+  .distribution-map-legend {
+    left: 10px;
+    top: 10px;
+    width: min(220px, calc(100% - 20px));
+    max-height: 190px;
+    overflow: auto;
+  }
+}
+
+
+/* County presence detection */
+.distribution-polygon-section {
+  display: grid;
+  gap: 12px;
+}
+
+.distribution-county-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.distribution-county-summary span {
+  display: grid;
+  gap: 2px;
+  border: 1px solid var(--ui-border);
+  border-radius: 11px;
+  padding: 10px;
+  color: var(--ui-muted);
+  background: var(--ui-panel);
+  font-size: 0.66rem;
+}
+
+.distribution-county-summary strong {
+  color: var(--ui-text);
+  font-size: 0.92rem;
+}
+
+.distribution-county-error {
+  margin: 0;
+  border-radius: 10px;
+  padding: 9px 10px;
+  color: #991b1b;
+  background: #fef2f2;
+  font-size: 0.68rem;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.distribution-legend-counties {
+  display: grid;
+  gap: 4px;
+}
+
+.distribution-legend-counties i.county {
+  width: 14px;
+  height: 10px;
+  flex: 0 0 14px;
+  border: 1px solid #334155;
+  border-radius: 2px;
+}
+
+.distribution-legend-counties i.county.present {
+  background: #b5a174;
+}
+
+.distribution-legend-counties i.county.absent {
+  background: #d8cfb5;
+  opacity: 0.72;
+}
+
+.distribution-map-wrap .leaflet-overlay-pane svg {
+  overflow: visible;
+}
+
+
+/* Refined species picker */
+.distribution-species-section {
+  overflow: visible;
+}
+
+.distribution-species-picker {
+  position: relative;
+  z-index: 1200;
+}
+
+.distribution-species-picker > input[type="search"] {
+  min-height: 46px;
+  padding-left: 40px;
+  padding-right: 36px;
+  border-radius: 13px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ui-panel) 95%, white 2%),
+      var(--ui-panel)
+    );
+}
+
+.distribution-species-search-icon,
+.distribution-species-chevron {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  transform: translateY(-50%);
+  color: var(--ui-muted);
+  pointer-events: none;
+}
+
+.distribution-species-search-icon {
+  left: 14px;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.distribution-species-chevron {
+  right: 14px;
+  font-size: 0.78rem;
+}
+
+.distribution-species-dropdown {
+  position: absolute;
+  z-index: 1400;
+  top: calc(100% + 7px);
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 4px;
+  max-height: 330px;
+  overflow: auto;
+  border: 1px solid var(--ui-border);
+  border-radius: 14px;
+  padding: 7px;
+  background: var(--ui-card);
+  box-shadow:
+    0 22px 48px rgba(0, 0, 0, 0.34),
+    inset 0 0 0 1px color-mix(in srgb, var(--vadma-accent, #d97706) 8%, transparent);
+}
+
+.distribution-species-dropdown .distribution-species-option {
+  min-height: 48px;
+  border-radius: 10px;
+  padding: 9px 10px;
+}
+
+.distribution-species-dropdown .distribution-species-option strong {
+  font-style: italic;
+  white-space: normal;
+}
+
+.distribution-species-dropdown .distribution-species-option em {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--vadma-accent-contrast, #111827);
+  background: var(--vadma-accent, #d97706);
+}
+
+.distribution-selected-species {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin-top: 11px;
+  border: 1px solid
+    color-mix(in srgb, var(--vadma-accent, #d97706) 38%, var(--ui-border));
+  border-radius: 13px;
+  padding: 11px 12px;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--vadma-accent, #d97706) 10%, transparent),
+      transparent
+    ),
+    var(--ui-panel);
+}
+
+.distribution-selected-species-mark {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--vadma-accent-contrast, #111827);
+  background: var(--vadma-accent, #d97706);
+  font-size: 0.78rem;
+}
+
+.distribution-selected-species > span:last-child {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.distribution-selected-species strong {
+  overflow: hidden;
+  color: var(--ui-text);
+  font-size: 0.84rem;
+  font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.distribution-selected-species small {
+  color: var(--ui-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.distribution-species-helper {
+  margin: 10px 2px 0;
+  color: var(--ui-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+
+/* Correct locked dataset colors */
+.distribution-map-legend .distribution-legend-dot[data-dataset="naiadd"] {
+  background: #ff0000;
+}
+
+.distribution-map-legend .distribution-legend-dot[data-dataset="ortmann"] {
+  background: #ffff00;
+}
+
+.distribution-species-section > .distribution-species-results {
+  display: none;
+}
+
+
+/* Simplified branded species combobox */
+.distribution-species-combobox {
+  position: relative;
+  z-index: 1400;
+}
+
+.distribution-species-combobox > input[type="search"] {
+  min-height: 48px;
+  padding: 11px 42px;
+  border-radius: 14px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--ui-panel) 96%, white 2%),
+      var(--ui-panel)
+    );
+  font-weight: 750;
+}
+
+.distribution-species-combobox.open > input[type="search"] {
+  border-color: var(--vadma-accent, #d97706);
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--vadma-accent, #d97706) 16%, transparent);
+}
+
+.distribution-species-reset {
+  position: absolute;
+  z-index: 3;
+  top: 50%;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 9px;
+  color: var(--ui-muted);
+  background: var(--ui-subtle);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.distribution-species-reset:hover {
+  color: var(--ui-text);
+  background: var(--ui-hover);
+}
+
+.distribution-species-dropdown-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 8px 8px;
+  color: var(--ui-text);
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.distribution-species-dropdown-heading small {
+  color: var(--ui-muted);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.distribution-species-dropdown .distribution-species-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  justify-content: initial;
+  gap: 10px;
+}
+
+.distribution-species-option-mark {
+  width: 24px;
+  height: 24px;
+  display: grid !important;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--ui-muted);
+  background: var(--ui-subtle);
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.distribution-species-option.active .distribution-species-option-mark {
+  color: var(--vadma-accent-contrast, #111827);
+  background: var(--vadma-accent, #d97706);
+}
+
+.distribution-species-option-copy {
+  min-width: 0;
+  display: grid !important;
+  gap: 3px;
+}
+
+.distribution-species-current {
+  display: grid;
+  gap: 3px;
+  margin-top: 10px;
+  border-left: 3px solid var(--vadma-accent, #d97706);
+  border-radius: 0 11px 11px 0;
+  padding: 9px 11px;
+  background: var(--ui-subtle);
+}
+
+.distribution-species-current > span {
+  color: var(--ui-muted);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.distribution-species-current strong {
+  overflow: hidden;
+  color: var(--ui-text);
+  font-size: 0.82rem;
+  font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.distribution-species-current small {
+  color: var(--ui-muted);
+  font-size: 0.67rem;
+  font-weight: 800;
+}
+
+/* Keep county background lightly tinted, matching the Shiny map */
+.distribution-map-legend .county.absent {
+  background: #d8cfb5;
+  opacity: 0.72;
+}
+
+
+/* Final species selector */
+.distribution-species-control {
+  position: relative;
+  z-index: 1600;
+}
+
+.distribution-species-trigger {
+  width: 100%;
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid var(--ui-border);
+  border-radius: 14px;
+  padding: 10px 12px;
+  color: var(--ui-text);
+  background: var(--ui-panel);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 1px transparent;
+}
+
+.distribution-species-trigger:hover,
+.distribution-species-trigger[aria-expanded="true"] {
+  border-color: color-mix(
+    in srgb,
+    var(--vadma-accent, #d97706) 45%,
+    var(--ui-border)
+  );
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--vadma-accent, #d97706) 10%, transparent);
+}
+
+.distribution-species-trigger.selected {
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--vadma-accent, #d97706) 8%, transparent),
+      transparent
+    ),
+    var(--ui-panel);
+}
+
+.distribution-species-trigger-icon {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--vadma-accent, #d97706);
+  background: var(--ui-subtle);
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+
+.distribution-species-trigger-copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.distribution-species-trigger-copy strong {
+  overflow: hidden;
+  color: var(--ui-text);
+  font-size: 0.84rem;
+  font-style: italic;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.distribution-species-trigger:not(.selected)
+  .distribution-species-trigger-copy strong {
+  font-style: normal;
+}
+
+.distribution-species-trigger-copy small {
+  color: var(--ui-muted);
+  font-size: 0.67rem;
+  font-weight: 750;
+}
+
+.distribution-species-trigger-chevron {
+  color: var(--ui-muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.distribution-species-dropdown {
+  position: absolute;
+  z-index: 1800;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--ui-border);
+  border-radius: 15px;
+  padding: 9px;
+  background: var(--ui-card);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.38);
+}
+
+.distribution-species-search-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--ui-border);
+  border-radius: 11px;
+  padding: 0 10px;
+  color: var(--ui-muted);
+  background: var(--ui-panel);
+}
+
+.distribution-species-search-row input {
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  padding: 0;
+  color: var(--ui-text);
+  background: transparent;
+  font: inherit;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.distribution-species-search-row button {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ui-muted);
+  background: var(--ui-subtle);
+  font: inherit;
+  cursor: pointer;
+}
+
+.distribution-species-dropdown-list {
+  display: grid;
+  gap: 4px;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.distribution-species-dropdown .distribution-species-option {
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 26px;
+  align-items: center;
+  gap: 10px;
+  border-radius: 10px;
+  padding: 9px 10px;
+}
+
+.distribution-species-option-check {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  color: var(--vadma-accent-contrast, #111827);
+  background: transparent;
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+.distribution-species-option.active
+  .distribution-species-option-check {
+  background: var(--vadma-accent, #d97706);
+}
+
+.distribution-species-clear-button {
+  min-height: 36px;
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
+  color: var(--ui-muted);
+  background: var(--ui-panel);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.distribution-species-clear-button:hover {
+  color: var(--ui-text);
+  background: var(--ui-hover);
+}
+
+/* Clean, consistently aligned dataset controls */
+.distribution-dataset-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 13px;
+}
+
+.distribution-dataset-row {
+  position: relative;
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) 38px;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  padding: 8px 10px;
+  color: var(--ui-text);
+  background: transparent;
+  cursor: pointer;
+}
+
+.distribution-dataset-row:hover {
+  border-color: var(--ui-border);
+  background: var(--ui-hover);
+}
+
+.distribution-dataset-row.active {
+  border-color: color-mix(
+    in srgb,
+    var(--vadma-accent, #d97706) 30%,
+    var(--ui-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--vadma-accent, #d97706) 6%,
+    var(--ui-card)
+  );
+}
+
+.distribution-dataset-row > input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.distribution-dataset-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.distribution-dataset-copy strong {
+  color: var(--ui-text);
+  font-size: 0.76rem;
+  line-height: 1.2;
+}
+
+.distribution-dataset-copy small {
+  color: var(--ui-muted);
+  font-size: 0.65rem;
+}
+
+.distribution-dataset-toggle {
+  width: 36px;
+  height: 21px;
+  position: relative;
+  justify-self: end;
+  border-radius: 999px;
+  background: var(--ui-subtle);
+  box-shadow: inset 0 0 0 1px var(--ui-border);
+}
+
+.distribution-dataset-toggle > span {
+  width: 15px;
+  height: 15px;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  border-radius: 50%;
+  background: var(--ui-card);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .25);
+  transition: transform 150ms ease;
+}
+
+.distribution-dataset-row.active .distribution-dataset-toggle {
+  background: var(--vadma-accent, #d97706);
+}
+
+.distribution-dataset-row.active .distribution-dataset-toggle > span {
+  transform: translateX(15px);
+}
+
+/* County fragments sharing the same county name now receive the same fill */
+.distribution-map-wrap .leaflet-interactive {
+  transition: fill-opacity 120ms ease, fill 120ms ease;
+}
+
+
+/* Final inline species picker: one scrollbar only */
+.distribution-species-control,
+.distribution-species-dropdown {
+  display: none !important;
+}
+
+.distribution-species-inline-picker {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  border: 1px solid var(--ui-border);
+  border-radius: 14px;
+  padding: 9px;
+  background: var(--ui-panel);
+}
+
+.distribution-species-inline-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 3px;
+  color: var(--ui-text);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.distribution-species-inline-meta small {
+  color: var(--ui-muted);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.distribution-species-inline-list {
+  display: grid;
+  gap: 4px;
+}
+
+.distribution-species-inline-list .distribution-species-option {
+  min-height: 46px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 10px;
+  border-radius: 10px;
+  padding: 8px 9px;
+}
+
+.distribution-species-inline-list .distribution-species-option strong {
+  white-space: normal;
+}
+
+/* County geometry should no longer lose legitimate features due to row index filtering */
+.distribution-map-wrap .leaflet-overlay-pane path {
+  vector-effect: non-scaling-stroke;
+}
+
+
+/* VDCR Hydrounits (HUC10 NWDB) */
+.distribution-huc-section {
+  display: grid;
+  gap: 12px;
+}
+
+.distribution-huc-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.distribution-huc-option {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--ui-border);
+  border-radius: 12px;
+  padding: 10px;
+  color: var(--ui-text);
+  background: var(--ui-panel);
+  cursor: pointer;
+}
+
+.distribution-huc-option:hover {
+  background: var(--ui-hover);
+}
+
+.distribution-huc-option.active {
+  border-color: color-mix(
+    in srgb,
+    var(--vadma-accent, #d97706) 35%,
+    var(--ui-border)
+  );
+}
+
+.distribution-huc-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.distribution-huc-swatch {
+  width: 18px;
+  height: 13px;
+  border: 1px solid #1f2937;
+  border-radius: 3px;
+}
+
+.distribution-huc-option.known .distribution-huc-swatch {
+  background: #ffebaf;
+}
+
+.distribution-huc-option.historic .distribution-huc-swatch {
+  border-style: dashed;
+  border-width: 2px;
+  background: #ffbebe;
+}
+
+.distribution-huc-option > span:nth-of-type(2) {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.distribution-huc-option strong {
+  color: var(--ui-text);
+  font-size: 0.75rem;
+}
+
+.distribution-huc-option small {
+  color: var(--ui-muted);
+  font-size: 0.63rem;
+}
+
+.distribution-huc-option em {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ui-border);
+  border-radius: 7px;
+  color: var(--vadma-accent-contrast, #111827);
+  background: var(--ui-subtle);
+  font-size: 0.7rem;
+  font-style: normal;
+  font-weight: 950;
+}
+
+.distribution-huc-option.active em {
+  border-color: transparent;
+  background: var(--vadma-accent, #d97706);
+}
+
+.distribution-legend-counties i.huc10 {
+  width: 14px;
+  height: 10px;
+  flex: 0 0 14px;
+  border: 1px solid #1f2937;
+  border-radius: 2px;
+}
+
+.distribution-legend-counties i.huc10.known {
+  background: #ffebaf;
+}
+
+.distribution-legend-counties i.huc10.historic {
+  border-style: dashed;
+  border-width: 2px;
+  background: #ffbebe;
+}
+
+@media (max-width: 700px) {
+  .distribution-huc-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* HUC12 symbology */
+.distribution-legend-counties i.huc12 {
+  width: 14px;
+  height: 10px;
+  flex: 0 0 14px;
+  border: 1px solid #1f2937;
+  border-radius: 2px;
+}
+
+.distribution-legend-counties i.huc12.known {
+  background: #d9f6cf;
+}
+
+.distribution-legend-counties i.huc12.historic {
+  border-style: dashed;
+  border-width: 2px;
+  background: #f28f8f;
+}
+
+/* Slightly stronger historic red */
+.distribution-huc-option.historic .distribution-huc-swatch,
+.distribution-legend-counties i.huc10.historic {
+  background: #f28f8f;
+}
+
+
+
+/* Point and heatmap display modes */
+.distribution-display-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.distribution-display-mode {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--ui-border);
+  border-radius: 13px;
+  padding: 10px;
+  color: var(--ui-text);
+  background: var(--ui-panel);
+  cursor: pointer;
+}
+
+.distribution-display-mode:hover {
+  background: var(--ui-hover);
+}
+
+.distribution-display-mode.active {
+  border-color: color-mix(
+    in srgb,
+    var(--vadma-accent, #d97706) 42%,
+    var(--ui-border)
+  );
+  background: color-mix(
+    in srgb,
+    var(--vadma-accent, #d97706) 8%,
+    var(--ui-card)
+  );
+}
+
+.distribution-display-mode.heat.active {
+  border-color: rgba(236, 72, 153, 0.72);
+  background:
+    radial-gradient(circle at 15% 50%, rgba(250, 204, 21, 0.14), transparent 42%),
+    radial-gradient(circle at 40% 50%, rgba(239, 68, 68, 0.12), transparent 58%),
+    var(--ui-panel);
+}
+
+.distribution-display-mode input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.distribution-display-mode > span:nth-of-type(2) {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.distribution-display-mode strong {
+  color: var(--ui-text);
+  font-size: 0.75rem;
+}
+
+.distribution-display-mode small {
+  color: var(--ui-muted);
+  font-size: 0.62rem;
+  line-height: 1.3;
+}
+
+.distribution-display-mode em {
+  border-radius: 999px;
+  padding: 4px 7px;
+  color: var(--ui-muted);
+  background: var(--ui-subtle);
+  font-size: 0.61rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.distribution-display-mode.active em {
+  color: var(--vadma-accent-contrast, #111827);
+  background: var(--vadma-accent, #d97706);
+}
+
+.distribution-display-mode.heat.active em {
+  color: #fff;
+  background: linear-gradient(135deg, #f59e0b, #ef4444, #ec4899);
+}
+
+.distribution-display-mode-icon {
+  width: 34px;
+  height: 34px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--ui-subtle);
+}
+
+.distribution-display-mode.points .distribution-display-mode-icon i {
+  width: 7px;
+  height: 7px;
+  position: absolute;
+  border: 1px solid rgba(15, 23, 42, 0.75);
+  border-radius: 50%;
+}
+
+.distribution-display-mode.points .distribution-display-mode-icon i:nth-child(1) {
+  top: 8px;
+  left: 8px;
+  background: #ff0000;
+}
+
+.distribution-display-mode.points .distribution-display-mode-icon i:nth-child(2) {
+  right: 7px;
+  bottom: 8px;
+  background: #38a800;
+}
+
+.distribution-display-mode.points .distribution-display-mode-icon i:nth-child(3) {
+  bottom: 6px;
+  left: 10px;
+  background: #00a98f;
+}
+
+.distribution-display-mode.heat .distribution-display-mode-icon {
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle,
+      #fff 0 4%,
+      #fde047 15%,
+      #f97316 37%,
+      #ef4444 58%,
+      rgba(236, 72, 153, 0.2) 76%,
+      transparent 78%
+    );
+  box-shadow:
+    0 0 14px rgba(239, 68, 68, 0.45),
+    0 0 24px rgba(236, 72, 153, 0.22);
+}
+
+/* Interpolated canvas heatmap */
+.distribution-interpolated-heatmap {
+  mix-blend-mode: multiply;
+  opacity: 0.86;
+  filter: saturate(1.08) contrast(1.04);
+}
+
+.distribution-legend-heat {
+  display: grid;
+  grid-template-columns: auto minmax(72px, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  color: var(--ui-muted);
+  font-size: 0.66rem;
+}
+
+.distribution-legend-heat i {
+  height: 8px;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      90deg,
+      #205ab4,
+      #32aa78,
+      #e2e146,
+      #fa912d,
+      #ef4444,
+      #911426
+    );
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.25);
+}
+
+@media (max-width: 700px) {
+  .distribution-display-modes {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Leaflet zoom controls: top-right, contained inside the map */
+.distribution-map-wrap .leaflet-top.leaflet-left {
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: auto;
+  width: auto;
+  height: auto;
+  pointer-events: none;
+}
+
+.distribution-map-wrap .leaflet-top.leaflet-left .leaflet-control {
+  float: none;
+  clear: none;
+}
+
+.distribution-map-wrap .leaflet-top.leaflet-left .leaflet-control-zoom {
+  position: relative;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  margin: 10px 10px 0 0;
+  pointer-events: auto;
 }

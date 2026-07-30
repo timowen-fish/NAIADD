@@ -22,6 +22,7 @@ export type DistributionRecord = {
 export type DistributionSpecies = {
   bova: string;
   scientificName: string;
+  commonName: string;
   label: string;
 };
 
@@ -421,12 +422,22 @@ async function loadSpeciesReference(): Promise<
     const scientificName = text(
       first(row, ["ScientificName", "Scientific_Name", "Scientific Name"]),
     );
+    const commonName = text(
+      first(row, [
+        "CommonName",
+        "Common_Name",
+        "Common Name",
+        "COMMON_NAME",
+        "COMMON_NAM",
+      ]),
+    );
 
     if (!key || !bova || !scientificName) continue;
 
     reference.set(key, {
       bova,
       scientificName,
+      commonName,
       label: `${scientificName} (${bova})`,
     });
   }

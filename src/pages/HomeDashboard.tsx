@@ -93,6 +93,7 @@ const DASHBOARD_SNAPSHOT_COLUMNS = [
   "SurveyDate",
   "Taxa",
   "ScientificName",
+  "Condition",
   "Quantity",
   "SamplingMethod",
   "SiteID",
@@ -251,7 +252,7 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
 
   for (const row of rows) {
     const collectionID =
-      toText(getValue(row, ["CollectionID"])) ||
+      toText(getValue(row, ["CollectionID", "Collection_Id"])) ||
       "Unknown Collection";
 
     if (collectionID !== "Unknown Collection") {
@@ -259,7 +260,13 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
     }
 
     const siteID =
-      toText(getValue(row, ["SiteID", "SiteID_AccessDB", "SiteID_Previous"])) || "Unknown Site";
+      toText(
+        getValue(row, [
+          "SiteID",
+          "SiteID_AccessDB",
+          "SiteID_Previous",
+        ]),
+      ) || "Unknown Site";
 
     if (siteID !== "Unknown Site") {
       siteIDs.add(siteID);
@@ -288,15 +295,35 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
 
     const latitude = toNumber(
       getValue(row, [
-        "LatitudeDD",
         "DownstreamLat",
+        "downstreamLat",
+        "LatitudeDD",
+        "DownstreamLatitude",
+        "Latitude",
+        "latitude",
+        "Lat",
+        "lat",
+        "Lat_Decimal_Degree",
+        "Y",
+        "y",
       ]),
     );
 
     const longitude = toNumber(
       getValue(row, [
-        "LongitudeDD",
         "DownstreamLong",
+        "downstreamLong",
+        "LongitudeDD",
+        "DownstreamLongitude",
+        "Longitude",
+        "longitude",
+        "Long",
+        "long",
+        "Lng",
+        "lng",
+        "Long_Decimal_Degree",
+        "X",
+        "x",
       ]),
     );
 
@@ -319,12 +346,28 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
       });
     }
 
-    const dateValue = getValue(row, ["SurveyDate"]);
+    const dateValue = getValue(row, [
+      "SurveyDate",
+      "Survey_Date",
+      "SampleDate",
+      "CollectionDate",
+      "Date",
+      "FinalDate",
+    ]);
 
     const timestamp = parseDate(dateValue)?.getTime() ?? 0;
 
     const method =
-      toText(getValue(row, ["SamplingMethod"])) || "Survey";
+      toText(
+        getValue(row, [
+          "Sampling_Method",
+          "SamplingMethod",
+          "Survey_Type",
+          "SurveyType",
+          "GearType",
+          "Geartype",
+        ]),
+      ) || "Survey";
 
     if (!surveyMap.has(collectionID)) {
       surveyMap.set(collectionID, {
@@ -465,6 +508,7 @@ type MetricCardProps = {
   subtitle: string;
   icon: React.ReactNode;
   isLoading: boolean;
+  valueClassName?: string;
 };
 
 function MetricCard({
@@ -473,6 +517,7 @@ function MetricCard({
   subtitle,
   icon,
   isLoading,
+  valueClassName = "",
 }: MetricCardProps) {
   return (
     <article className="home-metric-card">
@@ -481,7 +526,16 @@ function MetricCard({
         <div className="home-metric-icon">{icon}</div>
       </div>
 
-      <strong className={isLoading ? "home-metric-value loading" : "home-metric-value"}>
+      <strong
+        className={[
+          "home-metric-value",
+          isLoading ? "loading" : "",
+          valueClassName,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        title={!isLoading ? value : undefined}
+      >
         {isLoading ? "—" : value}
       </strong>
 
@@ -509,7 +563,7 @@ function ChartList({
       {rows.map((row) => (
         <div className="home-chart-row" key={row.label}>
           <div className="home-chart-label">
-            <span title={row.label}>{row.label}</span>
+            <span className="home-scientific-name" title={row.label}>{row.label}</span>
             <strong>{row.displayValue ?? formatWholeNumber(row.value)}</strong>
           </div>
 
@@ -675,10 +729,11 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
   const [snapshotState, setSnapshotState] = useState<SnapshotLoadState>(
     () => (dashboardSnapshotRowsCache ? "ready" : "loading"),
   );
-  const [snapshotStatus, setSnapshotStatus] = useState(() => {
-    const version = getCachedSnapshotMetadata()?.version;
-    return version ? `Snapshot ${version}` : "No cached production snapshot";
-  });
+  const [snapshotStatus, setSnapshotStatus] = useState(() =>
+    dashboardSnapshotRowsCache
+      ? "Cached production snapshot loaded."
+      : "Loading cached NAIADD production snapshot...",
+  );
   const [snapshotVersion, setSnapshotVersion] = useState<string | null>(
     () => getCachedSnapshotMetadata()?.version ?? null,
   );
@@ -760,14 +815,15 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
             dashboardSnapshotRowsCache.length > 0 ? "ready" : "empty",
           );
           setSnapshotStatus(
-            meta?.version
-              ? `Snapshot ${meta.version}`
-              : "Cached production snapshot",
+            dashboardSnapshotRowsCache.length > 0
+              ? `Production snapshot${meta?.version ? ` ${meta.version}` : ""} loaded.`
+              : "The cached production snapshot contained no dashboard records.",
           );
           return;
         }
 
         setSnapshotState("loading");
+        setSnapshotStatus("Loading cached NAIADD production snapshot...");
 
         const cachedMeta = getCachedSnapshotMetadata();
         const rows = await readDashboardSnapshotRowsOnce();
@@ -781,12 +837,10 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
         setSnapshotState(rows.length > 0 ? "ready" : "empty");
         setSnapshotStatus(
           rows.length > 0
-            ? meta?.version
-              ? `Snapshot ${meta.version}`
-              : "Cached production snapshot"
+            ? `Production snapshot${meta?.version ? ` ${meta.version}` : ""} loaded.`
             : cachedMeta
-              ? "Cached production snapshot contains no dashboard records"
-              : 'No cached production snapshot. Click "Refresh Snapshot" to download one.',
+              ? "The cached production snapshot contained no dashboard records."
+              : 'No cached production snapshot is available. Click "Refresh Snapshot" to download one.',
         );
       } catch (error) {
         if (loadState.cancelled) return;
@@ -814,7 +868,7 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
     try {
       setIsSyncing(true);
       setSnapshotState("loading");
-      setSnapshotStatus("Refreshing production snapshot...");
+      setSnapshotStatus("Syncing NAIADD production snapshot...");
 
       const result = await forceSyncSnapshot();
       const rows = await readSnapshotRows({
@@ -826,13 +880,7 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
       setSnapshotRows(rows);
       setSnapshotVersion(result.version ?? meta?.version ?? null);
       setSnapshotState(rows.length > 0 ? "ready" : "empty");
-      setSnapshotStatus(
-        result.version
-          ? `Snapshot ${result.version}`
-          : meta?.version
-            ? `Snapshot ${meta.version}`
-            : "Production snapshot refreshed",
-      );
+      setSnapshotStatus(result.message);
     } catch (error) {
       console.error("Unable to refresh NAIADD production snapshot:", error);
 
@@ -948,6 +996,7 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
           subtitle="By total quantity"
           icon={<BarChart3 size={30} />}
           isLoading={isSnapshotLoading}
+          valueClassName="home-metric-value-species"
         />
       </section>
 
