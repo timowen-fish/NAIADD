@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import type { UserProfile } from "../types/user";
+import type { UserProfile } from "../../types/user";
 import type {
   SubmissionProcessingState,
   SubmissionStatus,
   SurveySubmission,
-} from "../types/submission";
-import { listMySubmissions } from "../services/submissionService";
-import "../styles/SubmissionHistoryPage.css";
+} from "../../types/submission";
+import { listMySubmissions } from "../../services/submissionService";
+import "../../styles/SubmissionHistoryPage.css";
 
 type Props = {
   profile: UserProfile;

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import type { UserProfile } from "../types/user";
+import type { UserProfile } from "../../types/user";
 import type {
   DataEntryStep,
   SurveySession,
-} from "../types/surveySession";
-import type { SurveySubmission } from "../types/submission";
+} from "../../types/surveySession";
+import type { SurveySubmission } from "../../types/submission";
 import {
   activateSurveyDraft,
   createSurveyDraft,
@@ -13,12 +13,12 @@ import {
   listSurveyDraftRecords,
   type SurveyDraftMetadata,
   WORKFLOW_SESSION_EVENT,
-} from "../services/surveySessionService";
+} from "../../services/surveySessionService";
 import {
   listMySubmissions,
   validateSubmissionSession,
-} from "../services/submissionService";
-import "../styles/DraftsPage.css";
+} from "../../services/submissionService";
+import "../../styles/DraftsPage.css";
 
 type DraftsPageProps = {
   profile: UserProfile;
