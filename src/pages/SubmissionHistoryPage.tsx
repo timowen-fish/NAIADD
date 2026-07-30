@@ -119,7 +119,7 @@ function currentProcessingState(
 }
 
 function payloadForSubmission(submission: SurveySubmission) {
-  return submission.payload ?? submission.data;
+  return submission.payload;
 }
 
 function submissionMetrics(submission: SurveySubmission) {
