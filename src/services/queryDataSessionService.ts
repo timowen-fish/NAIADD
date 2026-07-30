@@ -4,6 +4,7 @@ export type QueryDataCoordinate = {
 };
 
 export type QueryDataCustomFilterField =
+  | "collectionID"
   | "species"
   | "surveyor"
   | "project"
@@ -108,6 +109,7 @@ function normalizePolygon(value: unknown): QueryDataCoordinate[] {
 
 
 const CUSTOM_FILTER_FIELDS: QueryDataCustomFilterField[] = [
+  "collectionID",
   "species",
   "surveyor",
   "project",

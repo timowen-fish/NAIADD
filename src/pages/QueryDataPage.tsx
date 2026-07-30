@@ -845,6 +845,13 @@ function getCustomFilterLabel(
   return getCustomFilterConfig(field).label;
 }
 
+
+function isInitialSitePoint(
+  point: CollectionMapPoint | InitialSiteMapPoint,
+): point is InitialSiteMapPoint {
+  return "siteKey" in point;
+}
+
 function QueryMapViewTracker() {
   const map = useMap();
 
@@ -2872,7 +2879,7 @@ export default function QueryDataPage() {
                 {displayedMapPoints.map((point) => (
                   <CircleMarker
                     key={
-                      "siteKey" in point
+                      isInitialSitePoint(point)
                         ? point.siteKey
                         : point.collectionID
                     }
@@ -2898,7 +2905,7 @@ export default function QueryDataPage() {
                           </>
                         ) : (
                           <small>
-                            {"collectionCount" in point
+                            {isInitialSitePoint(point)
                               ? `${point.collectionCount.toLocaleString()} ${
                                   point.collectionCount === 1
                                     ? "collection"

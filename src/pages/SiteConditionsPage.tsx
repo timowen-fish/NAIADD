@@ -16,7 +16,7 @@ function toDashboardSite(site: LocationRecord): DashboardSite | null {
   const siteID = String(site.SiteID ?? "").trim();
   const siteName = String(site.SiteName ?? "").trim();
   const waterbody = String(site.Waterbody ?? "").trim();
-  const locationDesc = String(site.LocationDesc ?? "").trim();
+  const locationDesc = String(site.LocDescription ?? "").trim();
   const county = String(site.County ?? "").trim();
   const label = [waterbody, siteName].filter(Boolean).join(" — ") || siteID;
 
@@ -36,8 +36,7 @@ function toDashboardSite(site: LocationRecord): DashboardSite | null {
       county,
       site.State,
       site.PhysiographicProvince,
-      site.HUC6,
-      site.HUC8,
+      site.HUC7,
     ]
       .filter(Boolean)
       .join(" "),
