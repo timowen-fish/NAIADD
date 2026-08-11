@@ -2698,3 +2698,266 @@
     image-rendering: auto;
   }
 }
+
+
+/* =========================================================
+   Site Conditions mobile containment + layout fix
+   Prevents the standalone page from widening the document while
+   keeping long charts horizontally scrollable inside their own panels.
+========================================================= */
+
+.site-conditions-page,
+.site-conditions-page *,
+.site-conditions-page *::before,
+.site-conditions-page *::after {
+  box-sizing: border-box;
+}
+
+.site-conditions-page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.site-conditions-page .home-dashboard-intro,
+.site-conditions-page .home-current-conditions,
+.site-conditions-page .home-current-toolbar,
+.site-conditions-page .home-site-search-wrap,
+.site-conditions-page .home-condition-buttons,
+.site-conditions-page .home-current-map-wrap,
+.site-conditions-page .home-forecast-panel,
+.site-conditions-page .home-tide-panel,
+.site-conditions-page .home-tide-content,
+.site-conditions-page .home-flow-gage-panel,
+.site-conditions-page .home-flow-gage-card,
+.site-conditions-page .home-flow-hydrographs,
+.site-conditions-page .home-flow-hydrograph-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .site-conditions-page {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .site-conditions-page .home-dashboard-intro {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .site-conditions-page .home-current-conditions {
+    margin-top: 12px;
+    padding: 10px !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+  }
+
+  .site-conditions-page .home-current-toolbar {
+    gap: 10px !important;
+  }
+
+  .site-conditions-page .home-condition-buttons {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .site-conditions-page .home-wind-toggle {
+    min-width: 0 !important;
+    min-height: 52px !important;
+    padding: 11px 13px !important;
+  }
+
+  .site-conditions-page .home-current-map-wrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 300px !important;
+    min-height: 300px !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+  }
+
+  .site-conditions-page .home-current-map {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 300px !important;
+  }
+
+  .site-conditions-page .home-current-map-status {
+    top: 8px !important;
+    right: 8px !important;
+    max-width: calc(100% - 70px) !important;
+    padding: 6px 9px !important;
+    font-size: 0.68rem !important;
+  }
+
+  /*
+   * The panel owns horizontal scrolling. Never let the wide SVG/wrapper
+   * establish the width of the page itself.
+   */
+  .site-conditions-page .home-forecast-panel,
+  .site-conditions-page .home-tide-content,
+  .site-conditions-page .home-flow-hydrograph-wrap {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x pan-y;
+  }
+
+  .site-conditions-page .home-hourly-forecast-wrap {
+    display: block !important;
+    width: 760px !important;
+    min-width: 760px !important;
+    max-width: none !important;
+    margin-top: 12px !important;
+  }
+
+  .site-conditions-page .home-hourly-chart {
+    display: block !important;
+    width: 760px !important;
+    min-width: 760px !important;
+    max-width: none !important;
+    height: 285px !important;
+    min-height: 285px !important;
+    max-height: 285px !important;
+  }
+
+  .site-conditions-page .home-tide-chart {
+    display: block !important;
+    width: 700px !important;
+    min-width: 700px !important;
+    max-width: none !important;
+    height: 275px !important;
+    min-height: 275px !important;
+    max-height: 275px !important;
+  }
+
+  .site-conditions-page .home-flow-gage-card,
+  .site-conditions-page .home-flow-gage-empty {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .site-conditions-page .home-flow-gage-card {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .site-conditions-page .home-flow-gage-main,
+  .site-conditions-page .home-flow-gage-values,
+  .site-conditions-page .home-flow-hydrographs,
+  .site-conditions-page .home-flow-gage-link {
+    grid-column: 1 / -1 !important;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .site-conditions-page .home-flow-gage-main strong {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  .site-conditions-page .home-flow-gage-values {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .site-conditions-page .home-flow-hydrograph-title,
+  .site-conditions-page .home-flow-hydrograph-stats {
+    position: static !important;
+    left: auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+  }
+
+  .site-conditions-page .home-flow-hydrograph {
+    display: block !important;
+    width: 700px !important;
+    min-width: 700px !important;
+    max-width: none !important;
+    height: 275px !important;
+    min-height: 275px !important;
+    max-height: 275px !important;
+  }
+
+  .site-conditions-page .home-site-search-results {
+    grid-template-columns: 1fr !important;
+    max-width: 100%;
+  }
+
+  .site-conditions-page .home-site-search-result {
+    min-width: 0;
+  }
+
+  .site-conditions-page .home-site-search-main,
+  .site-conditions-page .home-site-search-id {
+    min-width: 0;
+  }
+
+  .site-conditions-page .home-site-search-main strong,
+  .site-conditions-page .home-site-search-main em {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .site-conditions-page .home-site-search-id {
+    max-width: 38%;
+  }
+
+  .site-conditions-page .home-tide-header span::after {
+    content: "";
+  }
+}
+
+@media (max-width: 480px) {
+  .site-conditions-page {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .site-conditions-page .home-current-conditions {
+    padding: 8px !important;
+    gap: 10px !important;
+  }
+
+  .site-conditions-page .home-current-map-wrap,
+  .site-conditions-page .home-current-map {
+    height: 270px !important;
+    min-height: 270px !important;
+  }
+
+  .site-conditions-page .home-forecast-panel,
+  .site-conditions-page .home-tide-content,
+  .site-conditions-page .home-flow-gage-panel {
+    padding: 10px !important;
+    border-radius: 14px !important;
+  }
+
+  .site-conditions-page .home-flow-gage-values {
+    grid-template-columns: 1fr !important;
+  }
+
+  .site-conditions-page .home-hourly-forecast-wrap,
+  .site-conditions-page .home-hourly-chart {
+    width: 680px !important;
+    min-width: 680px !important;
+  }
+
+  .site-conditions-page .home-tide-chart,
+  .site-conditions-page .home-flow-hydrograph {
+    width: 640px !important;
+    min-width: 640px !important;
+  }
+}

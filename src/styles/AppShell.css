@@ -178,17 +178,54 @@
   position: sticky;
   top: 76px;
   height: calc(100vh - 76px);
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: 18px 14px;
+  padding: 0;
+  overflow: hidden;
   background: rgba(12, 16, 22, 0.88);
   border-right: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.app-sidebar-scroll {
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 18px 14px;
+  scrollbar-width: thin;
+  scrollbar-color:
+    color-mix(in srgb, var(--vadma-accent, #ff9f43) 58%, transparent)
+    rgba(255, 255, 255, 0.04);
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-sidebar-scroll::-webkit-scrollbar {
+  width: 7px;
+}
+
+.app-sidebar-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 999px;
+}
+
+.app-sidebar-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--vadma-accent, #ff9f43) 52%,
+    rgba(255, 255, 255, 0.16)
+  );
 }
 
 .app-sidebar nav {
   display: grid;
   gap: 7px;
+  flex: 0 0 auto;
 }
 
 .app-sidebar nav button {
@@ -221,6 +258,7 @@
   width: 25px;
   display: grid;
   place-items: center;
+  flex: 0 0 auto;
   font-size: 1.2rem;
 }
 
@@ -228,6 +266,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 0 0 auto;
+  margin-top: auto;
   padding: 13px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.05);
@@ -236,6 +276,7 @@
 .app-sidebar-footer > span {
   width: 10px;
   height: 10px;
+  flex: 0 0 auto;
   border-radius: 50%;
 }
 
@@ -249,6 +290,7 @@
 }
 
 .app-sidebar-footer div {
+  min-width: 0;
   display: grid;
 }
 
@@ -289,6 +331,40 @@
   display: none;
 }
 
+/* Data Entry / Reports expandable navigation */
+.app-nav-group {
+  display: grid;
+  gap: 5px;
+}
+
+.app-nav-group > button .app-nav-expand {
+  margin-left: auto;
+  opacity: 0.7;
+}
+
+.app-nav-children {
+  display: grid;
+  gap: 3px;
+  margin: 0 0 5px 24px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.app-sidebar .app-nav-children button {
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  font-size: 0.78rem;
+  font-weight: 760;
+  gap: 9px;
+}
+
+.app-sidebar .app-nav-children button.active-child {
+  color: white;
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: inset 3px 0 0 var(--vadma-accent, #ff9f43);
+}
+
 @media (max-width: 850px) {
   .app-topbar {
     min-height: 68px;
@@ -320,7 +396,8 @@
     top: 68px;
     left: 0;
     width: min(290px, 84vw);
-    height: calc(100vh - 68px);
+    height: calc(100dvh - 68px);
+    max-height: calc(100dvh - 68px);
     transform: translateX(-105%);
     transition: transform 190ms ease;
     box-shadow: 24px 0 60px rgba(0, 0, 0, 0.42);
@@ -330,6 +407,10 @@
     transform: translateX(0);
   }
 
+  .app-sidebar-scroll {
+    padding: 14px 12px max(18px, env(safe-area-inset-bottom, 0px));
+  }
+
   .app-sidebar-backdrop {
     position: fixed;
     z-index: 1100;
@@ -337,6 +418,11 @@
     display: block;
     border: 0;
     background: rgba(0, 0, 0, 0.52);
+  }
+
+  .app-nav-children {
+    margin-left: 18px;
+    padding-left: 8px;
   }
 }
 
@@ -361,7 +447,3 @@
     width: auto;
   }
 }
-
-/* Data Entry workflow navigation */
-.app-nav-group{display:grid;gap:5px}.app-nav-group>button .app-nav-expand{margin-left:auto;opacity:.7}.app-nav-children{display:grid;gap:3px;margin:0 0 5px 24px;padding-left:10px;border-left:1px solid rgba(255,255,255,.12)}
-.app-sidebar .app-nav-children button{min-height:36px;padding:8px 10px;border-radius:9px;font-size:.78rem;font-weight:760;gap:9px}.app-sidebar .app-nav-children button.active-child{color:white;background:rgba(255,255,255,.09);box-shadow:inset 3px 0 0 var(--vadma-accent,#ff9f43)}

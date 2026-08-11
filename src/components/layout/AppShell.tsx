@@ -316,7 +316,8 @@ export default function AppShell({
 
       <div className="app-shell-body">
         <aside className={mobileMenuOpen ? "app-sidebar open" : "app-sidebar"}>
-          <nav aria-label="Main navigation">
+          <div className="app-sidebar-scroll">
+            <nav aria-label="Main navigation">
             {visibleNavigation.map((item) => {
               if (item.id === "data-entry") {
                 return (
@@ -324,8 +325,8 @@ export default function AppShell({
                     <button
                       type="button"
                       className={activeSection === item.id ? "active" : ""}
+                      aria-expanded={dataEntryOpen}
                       onClick={() => {
-                        navigate(item.id);
                         setDataEntryOpen((current) => !current);
                       }}
                     >
@@ -426,15 +427,16 @@ export default function AppShell({
                 </button>
               );
             })}
-          </nav>
+            </nav>
 
-          <div className="app-sidebar-footer">
+            <div className="app-sidebar-footer">
             <span className={profile.active ? "active" : "inactive"} />
             <div>
               <strong>
                 {profile.active ? "Account active" : "Account inactive"}
               </strong>
               <small>{USER_ROLE_LABELS[profile.role]}</small>
+            </div>
             </div>
           </div>
         </aside>
