@@ -1701,3 +1701,375 @@
   flex: 0 0 auto;
   color: var(--vadma-accent, #ff9f43);
 }
+
+
+/* =========================================================
+   Improved date entry + map popup quick refinement
+========================================================= */
+
+.query-data-date-entry {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+
+.query-data-date-entry > span {
+  color: var(--vadma-text-muted, rgba(255, 255, 255, 0.64));
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.query-data-date-input-shell {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  background: rgba(7, 10, 14, 0.48);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    background 150ms ease;
+}
+
+.query-data-date-input-shell:focus-within {
+  border-color: var(--vadma-accent, #ff9f43);
+  background: rgba(7, 10, 14, 0.62);
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--vadma-accent, #ff9f43) 18%, transparent);
+}
+
+.query-data-date-entry.invalid .query-data-date-input-shell {
+  border-color: #f87171;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.13);
+}
+
+.query-data-date-text-input,
+.query-data-date-fields .query-data-date-text-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  box-sizing: border-box;
+  border: 0 !important;
+  border-radius: 0 !important;
+  padding: 0 12px !important;
+  outline: 0 !important;
+  color: var(--vadma-text, #f8fafc);
+  background: transparent !important;
+  box-shadow: none !important;
+  caret-color: var(--vadma-accent, #ff9f43);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  letter-spacing: 0.025em;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.query-data-date-text-input::placeholder {
+  color: var(--vadma-text-muted, rgba(255, 255, 255, 0.42));
+  opacity: 1;
+}
+
+.query-data-date-text-input:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.query-data-date-picker-button {
+  width: 42px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--vadma-accent, #ff9f43);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+.query-data-date-picker-button:hover:not(:disabled) {
+  background: color-mix(
+    in srgb,
+    var(--vadma-accent, #ff9f43) 14%,
+    rgba(255, 255, 255, 0.04)
+  );
+}
+
+.query-data-date-picker-button:focus-visible {
+  outline: 2px solid var(--vadma-accent, #ff9f43);
+  outline-offset: -3px;
+}
+
+.query-data-date-picker-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.query-data-native-date-picker {
+  width: 1px !important;
+  height: 1px !important;
+  position: absolute !important;
+  right: 10px;
+  bottom: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.query-data-date-format-hint {
+  min-height: 14px;
+  color: var(--vadma-text-muted, rgba(255, 255, 255, 0.48));
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.query-data-date-entry.invalid .query-data-date-format-hint {
+  color: #fca5a5;
+}
+
+.query-data-map .query-data-popup-refine-button {
+  width: 100%;
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 9px;
+  border: 1px solid #c76d16;
+  border-radius: 8px;
+  padding: 7px 9px;
+  color: #111827 !important;
+  background: #ff9f43;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 900;
+  cursor: pointer;
+  text-shadow: none !important;
+}
+
+.query-data-map .query-data-popup-refine-button:hover:not(:disabled) {
+  background: #ffad5e;
+}
+
+.query-data-map .query-data-popup-refine-button:focus-visible {
+  outline: 2px solid #17202b;
+  outline-offset: 2px;
+}
+
+.query-data-map .query-data-popup-refine-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   Area drawing improvements
+========================================================= */
+
+.query-data-area-drawing-tools {
+  display: grid;
+  gap: 8px;
+}
+
+.query-data-area-tools-label {
+  color: var(--vadma-text-muted, rgba(255, 255, 255, 0.64));
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.query-data-area-mode-buttons {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.query-data-area-mode-buttons .query-data-area-button {
+  min-width: 0;
+  padding-inline: 8px;
+  font-size: 0.76rem;
+}
+
+.query-data-boundary-button {
+  margin-top: 1px;
+}
+
+.query-data-area-status {
+  display: grid;
+  gap: 7px;
+}
+
+.query-data-area-status .query-data-filter-note {
+  margin-top: 0;
+}
+
+.query-data-area-live-measure {
+  width: fit-content;
+  border: 1px solid
+    color-mix(in srgb, var(--vadma-accent, #ff9f43) 32%, transparent);
+  border-radius: 999px;
+  padding: 5px 8px;
+  color: var(--vadma-accent-soft, #ffd29a);
+  background: color-mix(
+    in srgb,
+    var(--vadma-accent, #ff9f43) 9%,
+    rgba(5, 8, 12, 0.62)
+  );
+  font-size: 0.68rem;
+  font-weight: 850;
+}
+
+.query-data-map.query-data-shape-drawing,
+.query-data-map.query-data-shape-drawing * {
+  cursor: crosshair !important;
+}
+
+.query-data-map .leaflet-interactive {
+  outline: none;
+}
+
+@media (max-width: 480px) {
+  .query-data-area-mode-buttons {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* =========================================================
+   Query map drawing visibility + Leaflet loading feedback
+========================================================= */
+
+/* Custom polygon vertices are numbered square handles, not site symbols. */
+.query-data-area-vertex-marker {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.query-data-area-vertex-marker span {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--vadma-accent, #ff9f43);
+  border-radius: 5px;
+  color: #17202b;
+  background: #ffffff;
+  box-shadow:
+    0 2px 7px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(255, 255, 255, 0.72);
+  font-size: 0.66rem;
+  font-weight: 950;
+  line-height: 1;
+}
+
+/* Keep staged rectangle/circle/polygon geometry visually prominent. */
+.query-data-map .leaflet-overlay-pane path {
+  vector-effect: non-scaling-stroke;
+}
+
+/* Visible feedback while Leaflet basemap tiles are loading. */
+.query-data-leaflet-loading-overlay {
+  position: absolute;
+  z-index: 800;
+  top: 50%;
+  left: 50%;
+  max-width: min(320px, calc(100% - 32px));
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  transform: translate(-50%, -50%);
+  border: 1px solid
+    color-mix(in srgb, var(--vadma-accent, #ff9f43) 42%, transparent);
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: var(--vadma-text, #f8fafc);
+  background: rgba(8, 11, 16, 0.92);
+  box-shadow:
+    0 16px 38px rgba(0, 0, 0, 0.38),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.query-data-leaflet-loading-overlay > svg {
+  flex: 0 0 auto;
+  color: var(--vadma-accent, #ff9f43);
+}
+
+.query-data-leaflet-loading-overlay > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.query-data-leaflet-loading-overlay strong {
+  font-size: 0.8rem;
+}
+
+.query-data-leaflet-loading-overlay span {
+  color: var(--vadma-text-muted, rgba(255, 255, 255, 0.68));
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+
+
+/* Live rectangle/circle drawing */
+.query-data-map.query-data-shape-drawing {
+  cursor: crosshair !important;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.query-data-map.query-data-shape-drawing .leaflet-interactive {
+  pointer-events: none;
+}
+
+
+
+/* Query Data point layers are rendered through Leaflet Canvas (preferCanvas)
+   to keep large site/collection resets responsive without changing map behavior. */
+
+
+/* =========================================================
+   Leaflet hard refresh
+========================================================= */
+
+.query-data-map-refresh-button {
+  position: absolute;
+  z-index: 750;
+  top: 12px;
+  right: 12px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  border-radius: 9px;
+  padding: 0;
+  color: #334155;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.18);
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.query-data-map-refresh-button:hover {
+  color: #0f172a;
+  background: #ffffff;
+}
+
+.query-data-map-refresh-button:focus-visible {
+  outline: 2px solid var(--vadma-accent, #ff9f43);
+  outline-offset: 2px;
+}
+
+.query-data-map-refresh-button:active svg {
+  transform: rotate(45deg);
+}

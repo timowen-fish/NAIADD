@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import {
   CalendarDays,
   Database,
@@ -23,19 +23,25 @@ import {
   Pentagon,
   Search,
   Trash2,
+  RotateCw,
   Waves,
   X,
 } from "lucide-react";
 import {
+  Circle,
   CircleMarker,
   MapContainer,
+  Marker,
   Polygon,
+  Polyline,
+  Rectangle,
   Popup,
   TileLayer,
   useMap,
   useMapEvents,
 } from "react-leaflet";
-import type { LatLngBoundsExpression } from "leaflet";
+import { divIcon, type LatLngBoundsExpression } from "leaflet";
+import { area as turfArea, polygon as turfPolygon } from "@turf/turf";
 import "leaflet/dist/leaflet.css";
 
 import {
@@ -90,6 +96,7 @@ type QueryMapView = {
 };
 
 type QueryBasemap = "satellite" | "street";
+type AreaDrawingMode = "polygon" | "rectangle" | "circle" | null;
 
 type BoundaryFeature = {
   id: string;
@@ -846,6 +853,306 @@ function getCustomFilterLabel(
 }
 
 
+
+function formatIsoDateForEntry(value: string): string {
+  if (!value) return "";
+
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return value;
+
+  return `${match[2]}/${match[3]}/${match[1]}`;
+}
+
+function formatDateDigits(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) {
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  }
+
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function parseDateEntry(value: string): string | null {
+  const text = value.trim();
+  if (!text) return "";
+
+  const isoMatch = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  const slashMatch = text.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+
+  let year: number;
+  let month: number;
+  let day: number;
+
+  if (isoMatch) {
+    year = Number(isoMatch[1]);
+    month = Number(isoMatch[2]);
+    day = Number(isoMatch[3]);
+  } else if (slashMatch) {
+    month = Number(slashMatch[1]);
+    day = Number(slashMatch[2]);
+    year = Number(slashMatch[3]);
+  } else {
+    return null;
+  }
+
+  const candidate = new Date(year, month - 1, day);
+
+  if (
+    candidate.getFullYear() !== year ||
+    candidate.getMonth() !== month - 1 ||
+    candidate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(
+    2,
+    "0",
+  )}-${String(day).padStart(2, "0")}`;
+}
+
+function QueryDateInput({
+  label,
+  value,
+  min,
+  max,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  min?: string;
+  max?: string;
+  disabled?: boolean;
+  onChange: (value: string) => void;
+}) {
+  const [draft, setDraft] = useState(() => formatIsoDateForEntry(value));
+  const [invalid, setInvalid] = useState(false);
+  const pickerRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    setDraft(formatIsoDateForEntry(value));
+    setInvalid(false);
+  }, [value]);
+
+  function commitDraft(): void {
+    const parsed = parseDateEntry(draft);
+
+    if (parsed === null) {
+      setInvalid(true);
+      return;
+    }
+
+    if ((min && parsed && parsed < min) || (max && parsed && parsed > max)) {
+      setInvalid(true);
+      return;
+    }
+
+    setInvalid(false);
+    onChange(parsed);
+    setDraft(formatIsoDateForEntry(parsed));
+  }
+
+  function openPicker(): void {
+    const picker = pickerRef.current;
+    if (!picker || disabled) return;
+
+    if (typeof picker.showPicker === "function") {
+      picker.showPicker();
+    } else {
+      picker.focus();
+      picker.click();
+    }
+  }
+
+  return (
+    <label className={invalid ? "query-data-date-entry invalid" : "query-data-date-entry"}>
+      <span>{label}</span>
+
+      <div className="query-data-date-input-shell">
+        <input
+          className="query-data-date-text-input"
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          value={draft}
+          placeholder="MM/DD/YYYY"
+          disabled={disabled}
+          aria-invalid={invalid}
+          onChange={(event) => {
+            setDraft(formatDateDigits(event.target.value));
+            setInvalid(false);
+          }}
+          onBlur={commitDraft}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              commitDraft();
+              event.currentTarget.blur();
+            }
+          }}
+        />
+
+        <button
+          type="button"
+          className="query-data-date-picker-button"
+          onClick={openPicker}
+          disabled={disabled}
+          aria-label={`Open ${label.toLowerCase()} calendar`}
+          title="Choose from calendar"
+        >
+          <CalendarDays size={17} />
+        </button>
+
+        <input
+          ref={pickerRef}
+          className="query-data-native-date-picker"
+          type="date"
+          value={value}
+          min={min}
+          max={max}
+          disabled={disabled}
+          tabIndex={-1}
+          aria-hidden="true"
+          onChange={(event) => onChange(event.target.value)}
+        />
+      </div>
+
+      <small className="query-data-date-format-hint">
+        {invalid ? "Use MM/DD/YYYY." : "MM/DD/YYYY"}
+      </small>
+    </label>
+  );
+}
+
+
+
+function buildRectanglePolygon(
+  start: QueryDataCoordinate,
+  end: QueryDataCoordinate,
+): QueryDataCoordinate[] {
+  return [
+    { latitude: start.latitude, longitude: start.longitude },
+    { latitude: start.latitude, longitude: end.longitude },
+    { latitude: end.latitude, longitude: end.longitude },
+    { latitude: end.latitude, longitude: start.longitude },
+  ];
+}
+
+function haversineMeters(
+  start: QueryDataCoordinate,
+  end: QueryDataCoordinate,
+): number {
+  const earthRadius = 6371008.8;
+  const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+  const lat1 = toRadians(start.latitude);
+  const lat2 = toRadians(end.latitude);
+  const deltaLat = toRadians(end.latitude - start.latitude);
+  const deltaLon = toRadians(end.longitude - start.longitude);
+
+  const a =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(lat1) *
+      Math.cos(lat2) *
+      Math.sin(deltaLon / 2) ** 2;
+
+  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function destinationCoordinate(
+  center: QueryDataCoordinate,
+  distanceMeters: number,
+  bearingDegrees: number,
+): QueryDataCoordinate {
+  const earthRadius = 6371008.8;
+  const angularDistance = distanceMeters / earthRadius;
+  const bearing = (bearingDegrees * Math.PI) / 180;
+  const latitude1 = (center.latitude * Math.PI) / 180;
+  const longitude1 = (center.longitude * Math.PI) / 180;
+
+  const latitude2 = Math.asin(
+    Math.sin(latitude1) * Math.cos(angularDistance) +
+      Math.cos(latitude1) *
+        Math.sin(angularDistance) *
+        Math.cos(bearing),
+  );
+
+  const longitude2 =
+    longitude1 +
+    Math.atan2(
+      Math.sin(bearing) *
+        Math.sin(angularDistance) *
+        Math.cos(latitude1),
+      Math.cos(angularDistance) -
+        Math.sin(latitude1) * Math.sin(latitude2),
+    );
+
+  return {
+    latitude: (latitude2 * 180) / Math.PI,
+    longitude: (longitude2 * 180) / Math.PI,
+  };
+}
+
+function buildCirclePolygon(
+  center: QueryDataCoordinate,
+  edge: QueryDataCoordinate,
+  segments = 64,
+): QueryDataCoordinate[] {
+  const radiusMeters = haversineMeters(center, edge);
+
+  return Array.from({ length: segments }, (_, index) =>
+    destinationCoordinate(
+      center,
+      radiusMeters,
+      (index / segments) * 360,
+    ),
+  );
+}
+
+function polygonAreaSquareMiles(
+  coordinates: QueryDataCoordinate[],
+): number {
+  if (coordinates.length < 3) return 0;
+
+  try {
+    const ring = [
+      ...coordinates.map((coordinate) => [
+        coordinate.longitude,
+        coordinate.latitude,
+      ]),
+      [coordinates[0].longitude, coordinates[0].latitude],
+    ];
+
+    return turfArea(turfPolygon([ring])) / 2_589_988.110336;
+  } catch {
+    return 0;
+  }
+}
+
+function formatArea(squareMiles: number): string {
+  if (!Number.isFinite(squareMiles) || squareMiles <= 0) return "";
+
+  if (squareMiles < 1) {
+    return `${(squareMiles * 640).toFixed(1)} acres`;
+  }
+
+  return `${squareMiles.toFixed(squareMiles < 10 ? 2 : 1)} sq mi`;
+}
+
+
+
+function areaVertexIcon(index: number) {
+  return divIcon({
+    className: "query-data-area-vertex-marker",
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    html: `<span>${index + 1}</span>`,
+  });
+}
+
+
 function isInitialSitePoint(
   point: CollectionMapPoint | InitialSiteMapPoint,
 ): point is InitialSiteMapPoint {
@@ -877,17 +1184,100 @@ function QueryMapViewTracker() {
 }
 
 function AreaDrawingController({
-  drawing,
+  mode,
   onAddPoint,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
 }: {
-  drawing: boolean;
+  mode: AreaDrawingMode;
   onAddPoint: (coordinate: QueryDataCoordinate) => void;
+  onDragStart: (coordinate: QueryDataCoordinate) => void;
+  onDragMove: (coordinate: QueryDataCoordinate) => void;
+  onDragEnd: (coordinate: QueryDataCoordinate) => void;
 }) {
+  const map = useMap();
+  const dragStartRef = useRef<QueryDataCoordinate | null>(null);
+
+  useEffect(() => {
+    const drawingShape = mode === "rectangle" || mode === "circle";
+
+    if (drawingShape) {
+      map.dragging.disable();
+      map.boxZoom.disable();
+      map.doubleClickZoom.disable();
+      map.getContainer().classList.add("query-data-shape-drawing");
+    } else {
+      map.dragging.enable();
+      map.boxZoom.enable();
+      map.doubleClickZoom.enable();
+      map.getContainer().classList.remove("query-data-shape-drawing");
+    }
+
+    return () => {
+      map.dragging.enable();
+      map.boxZoom.enable();
+      map.doubleClickZoom.enable();
+      map.getContainer().classList.remove("query-data-shape-drawing");
+    };
+  }, [map, mode]);
+
   useMapEvents({
     click(event) {
-      if (!drawing) return;
+      if (mode !== "polygon") return;
 
       onAddPoint({
+        latitude: event.latlng.lat,
+        longitude: event.latlng.lng,
+      });
+    },
+    mousedown(event) {
+      if (mode !== "rectangle" && mode !== "circle") return;
+
+      const coordinate = {
+        latitude: event.latlng.lat,
+        longitude: event.latlng.lng,
+      };
+
+      dragStartRef.current = coordinate;
+      onDragStart(coordinate);
+    },
+    mousemove(event) {
+      if (
+        !dragStartRef.current ||
+        (mode !== "rectangle" && mode !== "circle")
+      ) {
+        return;
+      }
+
+      onDragMove({
+        latitude: event.latlng.lat,
+        longitude: event.latlng.lng,
+      });
+    },
+    mouseup(event) {
+      if (
+        !dragStartRef.current ||
+        (mode !== "rectangle" && mode !== "circle")
+      ) {
+        return;
+      }
+
+      dragStartRef.current = null;
+      onDragEnd({
+        latitude: event.latlng.lat,
+        longitude: event.latlng.lng,
+      });
+    },
+    mouseout(event) {
+      if (
+        !dragStartRef.current ||
+        (mode !== "rectangle" && mode !== "circle")
+      ) {
+        return;
+      }
+
+      onDragMove({
         latitude: event.latlng.lat,
         longitude: event.latlng.lng,
       });
@@ -1047,7 +1437,13 @@ export default function QueryDataPage() {
   const [shouldFitAppliedPoints, setShouldFitAppliedPoints] =
     useState(false);
   const [basemap, setBasemap] = useState<QueryBasemap>("satellite");
-  const [isDrawingArea, setIsDrawingArea] = useState(false);
+  const [mapRefreshKey, setMapRefreshKey] = useState(0);
+  const [areaDrawingMode, setAreaDrawingMode] =
+    useState<AreaDrawingMode>(null);
+  const [areaDragStart, setAreaDragStart] =
+    useState<QueryDataCoordinate | null>(null);
+  const [areaDragCurrent, setAreaDragCurrent] =
+    useState<QueryDataCoordinate | null>(null);
   const [collectionPoints, setCollectionPoints] = useState<
     CollectionMapPoint[]
   >(() =>
@@ -1073,12 +1469,57 @@ export default function QueryDataPage() {
       ? `${(cachedCollectionPoints?.length ?? 0).toLocaleString()} unique mapped collections restored.`
       : "Waiting for the cached snapshot.",
   );
+  const baseSiteNames = useMemo(
+    () =>
+      [...new Set(collectionPoints.map((point) => point.siteName))]
+        .filter(Boolean)
+        .sort((left, right) => left.localeCompare(right)),
+    [collectionPoints],
+  );
+  const baseWaterbodies = useMemo(
+    () =>
+      [...new Set(collectionPoints.map((point) => point.waterbody))]
+        .filter(Boolean)
+        .sort((left, right) => left.localeCompare(right)),
+    [collectionPoints],
+  );
 
   const snapshotAvailable = Boolean(snapshotMeta);
 
   const hasDateFilter = Boolean(startDate || endDate);
   const invalidDateRange =
     Boolean(startDate && endDate) && startDate > endDate;
+  const isDrawingArea = areaDrawingMode !== null;
+  const areaSquareMiles = useMemo(
+    () => polygonAreaSquareMiles(areaPolygon),
+    [areaPolygon],
+  );
+  const liveShapePolygon = useMemo(() => {
+    if (!areaDragStart || !areaDragCurrent) return [];
+
+    if (areaDrawingMode === "rectangle") {
+      return buildRectanglePolygon(areaDragStart, areaDragCurrent);
+    }
+
+    if (areaDrawingMode === "circle") {
+      return buildCirclePolygon(areaDragStart, areaDragCurrent);
+    }
+
+    return [];
+  }, [areaDragCurrent, areaDragStart, areaDrawingMode]);
+
+  const previewAreaSquareMiles = useMemo(
+    () => polygonAreaSquareMiles(liveShapePolygon),
+    [liveShapePolygon],
+  );
+
+  const liveCircleRadiusMeters = useMemo(
+    () =>
+      areaDrawingMode === "circle" && areaDragStart && areaDragCurrent
+        ? haversineMeters(areaDragStart, areaDragCurrent)
+        : 0,
+    [areaDragCurrent, areaDragStart, areaDrawingMode],
+  );
 
   const deferredStartDate = useDeferredValue(startDate);
   const deferredEndDate = useDeferredValue(endDate);
@@ -1250,6 +1691,14 @@ export default function QueryDataPage() {
   const areaAndDateFilteredPoints = useMemo(() => {
     if (invalidDateRange) return [];
 
+    if (
+      !deferredStartDate &&
+      !deferredEndDate &&
+      deferredAreaPolygon.length < 3
+    ) {
+      return collectionPoints;
+    }
+
     const startTimestamp = deferredStartDate
       ? new Date(`${deferredStartDate}T00:00:00`).getTime()
       : Number.NEGATIVE_INFINITY;
@@ -1279,12 +1728,25 @@ export default function QueryDataPage() {
     invalidDateRange,
   ]);
 
-  const availableSiteNames = useMemo(
-    () =>
-      [...new Set(areaAndDateFilteredPoints.map((point) => point.siteName))]
-        .sort((left, right) => left.localeCompare(right)),
-    [areaAndDateFilteredPoints],
-  );
+  const availableSiteNames = useMemo(() => {
+    if (
+      !deferredStartDate &&
+      !deferredEndDate &&
+      deferredAreaPolygon.length < 3
+    ) {
+      return baseSiteNames;
+    }
+
+    return [...new Set(areaAndDateFilteredPoints.map((point) => point.siteName))]
+      .filter(Boolean)
+      .sort((left, right) => left.localeCompare(right));
+  }, [
+    areaAndDateFilteredPoints,
+    baseSiteNames,
+    deferredAreaPolygon,
+    deferredEndDate,
+    deferredStartDate,
+  ]);
 
   const visibleSiteNames = useMemo(() => {
     const normalizedSearch = deferredSiteSearchText.trim().toLowerCase();
@@ -1316,13 +1778,27 @@ export default function QueryDataPage() {
     );
   }, [areaAndDateFilteredPoints, deferredSelectedSiteNames]);
 
-  const availableWaterbodies = useMemo(
-    () =>
-      [...new Set(siteFilteredPoints.map((point) => point.waterbody))]
-        .filter(Boolean)
-        .sort((left, right) => left.localeCompare(right)),
-    [siteFilteredPoints],
-  );
+  const availableWaterbodies = useMemo(() => {
+    if (
+      deferredSelectedSiteNames.length === 0 &&
+      !deferredStartDate &&
+      !deferredEndDate &&
+      deferredAreaPolygon.length < 3
+    ) {
+      return baseWaterbodies;
+    }
+
+    return [...new Set(siteFilteredPoints.map((point) => point.waterbody))]
+      .filter(Boolean)
+      .sort((left, right) => left.localeCompare(right));
+  }, [
+    baseWaterbodies,
+    deferredAreaPolygon,
+    deferredEndDate,
+    deferredSelectedSiteNames,
+    deferredStartDate,
+    siteFilteredPoints,
+  ]);
 
   const visibleWaterbodies = useMemo(() => {
     const normalizedSearch =
@@ -1499,9 +1975,10 @@ export default function QueryDataPage() {
   const queryHasUnappliedChanges =
     JSON.stringify(currentQuerySession) !==
     JSON.stringify(appliedQuerySession);
-  const displayedAreaPolygon = isDrawingArea
-    ? areaPolygon
-    : appliedQuerySession.areaPolygon;
+  const displayedAreaPolygon =
+    areaPolygon.length >= 2
+      ? areaPolygon
+      : appliedQuerySession.areaPolygon;
 
 
   function getCurrentQuerySession(): QueryDataSession {
@@ -1523,10 +2000,12 @@ export default function QueryDataPage() {
     setStartDate(session.startDate);
     setEndDate(session.endDate);
     setAreaPolygon(session.areaPolygon);
+    setAreaDragStart(null);
+    setAreaDragCurrent(null);
     setAreaBoundaryType(session.areaBoundaryType);
     setAreaBoundaryId(session.areaBoundaryId);
     setAreaBoundaryLabel(session.areaBoundaryLabel);
-    setIsDrawingArea(false);
+    setAreaDrawingMode(null);
     setShowExistingBoundary(false);
     setSelectedSiteNames(session.selectedSiteNames);
     setSiteSearchText("");
@@ -1613,27 +2092,93 @@ export default function QueryDataPage() {
     setShouldFitAppliedPoints(true);
   }
 
+  function refineQueryToSite(point: CollectionMapPoint): void {
+    if (!snapshotAvailable || !queryIndexReady) {
+      return;
+    }
+
+    const nextSession: QueryDataSession = {
+      ...getCurrentQuerySession(),
+      selectedSiteNames: [point.siteName],
+    };
+    const nextPoints = filterCollectionPoints(nextSession);
+
+    applyQuerySession(nextSession);
+    setAppliedQuerySession(nextSession);
+    setAppliedMapPoints(nextPoints);
+    setHasAppliedMapQuery(true);
+    setShouldFitAppliedPoints(true);
+    setIsSiteFilterCollapsed(true);
+  }
+
   function clearDateFilter() {
     setStartDate("");
     setEndDate("");
   }
 
-  function toggleAreaDrawing() {
-    if (isDrawingArea) {
-      if (areaPolygon.length < 3) {
-        setAreaPolygon([]);
+  function startAreaDrawing(mode: Exclude<AreaDrawingMode, null>) {
+    if (areaDrawingMode === mode) {
+      if (mode === "polygon" && areaPolygon.length >= 3) {
+        setAreaDrawingMode(null);
+        setAreaDragStart(null);
+    setAreaDragCurrent(null);
+        return;
       }
 
-      setIsDrawingArea(false);
+      setAreaPolygon([]);
+      setAreaDragStart(null);
+    setAreaDragCurrent(null);
+      setAreaDrawingMode(null);
       return;
     }
 
     setAreaPolygon([]);
+    setAreaDragStart(null);
+    setAreaDragCurrent(null);
     setAreaBoundaryType("");
     setAreaBoundaryId("");
     setAreaBoundaryLabel("");
     setShowExistingBoundary(false);
-    setIsDrawingArea(true);
+    setAreaDrawingMode(mode);
+  }
+
+  function finishAreaShape(polygon: QueryDataCoordinate[]) {
+    if (polygon.length < 3) {
+      setAreaDragStart(null);
+    setAreaDragCurrent(null);
+      return;
+    }
+
+    setAreaPolygon(polygon);
+    setAreaDragStart(null);
+    setAreaDragCurrent(null);
+    setAreaBoundaryType("");
+    setAreaBoundaryId("");
+    setAreaBoundaryLabel("");
+    setShowExistingBoundary(false);
+    setAreaDrawingMode(null);
+  }
+
+  function beginAreaDrag(coordinate: QueryDataCoordinate) {
+    setAreaDragStart(coordinate);
+    setAreaDragCurrent(coordinate);
+  }
+
+  function updateAreaDrag(coordinate: QueryDataCoordinate) {
+    setAreaDragCurrent(coordinate);
+  }
+
+  function completeAreaDrag(coordinate: QueryDataCoordinate) {
+    if (!areaDragStart) return;
+
+    const polygon =
+      areaDrawingMode === "rectangle"
+        ? buildRectanglePolygon(areaDragStart, coordinate)
+        : areaDrawingMode === "circle"
+          ? buildCirclePolygon(areaDragStart, coordinate)
+          : [];
+
+    finishAreaShape(polygon);
   }
 
   function addAreaPoint(coordinate: QueryDataCoordinate) {
@@ -1665,19 +2210,21 @@ export default function QueryDataPage() {
     setAreaBoundaryType(feature.type);
     setAreaBoundaryLabel(feature.label);
     setAreaPolygon(polygon);
-    setIsDrawingArea(false);
+    setAreaDrawingMode(null);
     setShouldFitBoundary(true);
   }
 
   function clearAreaFilter() {
     setAreaPolygon([]);
+    setAreaDragStart(null);
+    setAreaDragCurrent(null);
     setAreaBoundaryType("");
     setAreaBoundaryId("");
     setAreaBoundaryLabel("");
     setBoundarySearchText("");
     setShowExistingBoundary(false);
     setShouldFitBoundary(false);
-    setIsDrawingArea(false);
+    setAreaDrawingMode(null);
   }
 
   function toggleSiteName(siteName: string) {
@@ -1704,17 +2251,36 @@ export default function QueryDataPage() {
     setSelectedWaterbodies([]);
   }
 
+  function hardRefreshMap() {
+    setMapRefreshKey((current) => current + 1);
+  }
+
   function clearAllFilters() {
+    const resetSession: QueryDataSession = {
+      startDate: "",
+      endDate: "",
+      areaPolygon: [],
+      areaBoundaryType: "",
+      areaBoundaryId: "",
+      areaBoundaryLabel: "",
+      selectedSiteNames: [],
+      selectedWaterbodies: [],
+      activeCustomFilterFields: [],
+      customFilters: {},
+    };
+
     setStartDate("");
     setEndDate("");
     setAreaPolygon([]);
+    setAreaDragStart(null);
+    setAreaDragCurrent(null);
     setAreaBoundaryType("");
     setAreaBoundaryId("");
     setAreaBoundaryLabel("");
     setBoundarySearchText("");
     setShowExistingBoundary(false);
     setShouldFitBoundary(false);
-    setIsDrawingArea(false);
+    setAreaDrawingMode(null);
     setSelectedSiteNames([]);
     setSiteSearchText("");
     setSelectedWaterbodies([]);
@@ -1727,6 +2293,17 @@ export default function QueryDataPage() {
     setIsAreaFilterCollapsed(true);
     setIsSiteFilterCollapsed(true);
     setIsWaterbodyFilterCollapsed(true);
+
+    // Reuse the already-loaded lightweight site overview immediately.
+    setAppliedQuerySession(resetSession);
+    setAppliedMapPoints([]);
+    setHasAppliedMapQuery(false);
+    setShouldFitAppliedPoints(false);
+    lastFittedCollectionKey = "";
+
+    // The large statewide site layer is already cached. Remount only Leaflet
+    // so its Canvas renderer redraws that existing data immediately.
+    setMapRefreshKey((current) => current + 1);
   }
 
   function addCustomFilter(field: QueryDataCustomFilterField) {
@@ -2022,31 +2599,21 @@ export default function QueryDataPage() {
             </div>
 
             <div className="query-data-date-fields">
-              <label>
-                <span>Start date</span>
-                <input
-                  type="date"
-                  value={startDate}
-                  max={endDate || undefined}
-                  onChange={(event) =>
-                    setStartDate(event.target.value)
-                  }
-                  disabled={!snapshotAvailable}
-                />
-              </label>
+              <QueryDateInput
+                label="Start date"
+                value={startDate}
+                max={endDate || undefined}
+                disabled={!snapshotAvailable}
+                onChange={setStartDate}
+              />
 
-              <label>
-                <span>End date</span>
-                <input
-                  type="date"
-                  value={endDate}
-                  min={startDate || undefined}
-                  onChange={(event) =>
-                    setEndDate(event.target.value)
-                  }
-                  disabled={!snapshotAvailable}
-                />
-              </label>
+              <QueryDateInput
+                label="End date"
+                value={endDate}
+                min={startDate || undefined}
+                disabled={!snapshotAvailable}
+                onChange={setEndDate}
+              />
             </div>
 
             {invalidDateRange && (
@@ -2114,35 +2681,63 @@ export default function QueryDataPage() {
 
             {!isAreaFilterCollapsed && (
               <div className="query-data-collapsible-content">
-                <div className="query-data-area-mode-buttons">
-                  <button
-                    type="button"
-                    className={`query-data-area-button ${
-                      isDrawingArea ? "active" : ""
-                    }`}
-                    onClick={toggleAreaDrawing}
-                    disabled={!snapshotAvailable}
-                  >
-                    <Pentagon size={18} />
-                    {isDrawingArea
-                      ? areaPolygon.length >= 3
-                        ? "Finish Drawing"
-                        : "Cancel Drawing"
-                      : areaBoundaryId
-                        ? "Draw Custom Area"
-                        : areaPolygon.length >= 3
-                          ? "Redraw Area"
-                          : "Draw Area on Map"}
-                  </button>
+                <div className="query-data-area-drawing-tools">
+                  <span className="query-data-area-tools-label">
+                    Draw a shape
+                  </span>
+
+                  <div className="query-data-area-mode-buttons">
+                    <button
+                      type="button"
+                      className={`query-data-area-button ${
+                        areaDrawingMode === "polygon" ? "active" : ""
+                      }`}
+                      onClick={() => startAreaDrawing("polygon")}
+                      disabled={!snapshotAvailable}
+                    >
+                      <Pentagon size={18} />
+                      {areaDrawingMode === "polygon"
+                        ? areaPolygon.length >= 3
+                          ? "Finish Polygon"
+                          : "Cancel Polygon"
+                        : "Polygon"}
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`query-data-area-button ${
+                        areaDrawingMode === "rectangle" ? "active" : ""
+                      }`}
+                      onClick={() => startAreaDrawing("rectangle")}
+                      disabled={!snapshotAvailable}
+                    >
+                      <LandPlot size={18} />
+                      Rectangle
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`query-data-area-button ${
+                        areaDrawingMode === "circle" ? "active" : ""
+                      }`}
+                      onClick={() => startAreaDrawing("circle")}
+                      disabled={!snapshotAvailable}
+                    >
+                      <Target size={18} />
+                      Circle
+                    </button>
+                  </div>
 
                   <button
                     type="button"
-                    className={`query-data-area-button ${
+                    className={`query-data-area-button query-data-boundary-button ${
                       showExistingBoundary ? "active" : ""
                     }`}
                     onClick={() => {
                       setShowExistingBoundary((current) => !current);
-                      setIsDrawingArea(false);
+                      setAreaDrawingMode(null);
+                      setAreaDragStart(null);
+    setAreaDragCurrent(null);
                     }}
                     disabled={!snapshotAvailable}
                   >
@@ -2268,17 +2863,41 @@ export default function QueryDataPage() {
                   </div>
                 )}
 
-                <p className="query-data-filter-note">
-                  {isDrawingArea
-                    ? areaPolygon.length >= 3
-                      ? "Continue clicking to refine the polygon, then select Finish Drawing."
-                      : "Click at least three locations on the map to create the filter polygon."
-                    : areaBoundaryLabel
-                      ? `${areaBoundaryLabel} is restricting the mapped collections.`
-                      : areaPolygon.length >= 3
-                        ? `${areaPolygon.length} polygon vertices are restricting the mapped collections.`
-                        : "Draw a custom polygon or select a county or HUC8 boundary."}
-                </p>
+                <div className="query-data-area-status">
+                  <p className="query-data-filter-note">
+                    {areaDrawingMode === "polygon"
+                      ? areaPolygon.length === 0
+                        ? "Click the first map point. Each click will be marked so you can build the polygon."
+                        : areaPolygon.length < 3
+                          ? `${areaPolygon.length} point${areaPolygon.length === 1 ? "" : "s"} placed. Add at least ${3 - areaPolygon.length} more.`
+                          : `${areaPolygon.length} vertices placed. Select Finish Polygon when the shape looks right.`
+                      : areaDrawingMode === "rectangle"
+                        ? "Click and drag across the map to size a rectangle."
+                        : areaDrawingMode === "circle"
+                          ? "Click at the center and drag outward to size a circle."
+                          : areaBoundaryLabel
+                            ? `${areaBoundaryLabel} is restricting the mapped collections.`
+                            : areaPolygon.length >= 3
+                              ? `Custom area selected${areaSquareMiles > 0 ? ` — ${formatArea(areaSquareMiles)}` : ""}.`
+                              : "Draw a polygon, rectangle, circle, or select a county or HUC8 boundary."}
+                  </p>
+
+                  {(areaDrawingMode === "rectangle" ||
+                    areaDrawingMode === "circle") &&
+                    previewAreaSquareMiles > 0 && (
+                      <span className="query-data-area-live-measure">
+                        Preview area: {formatArea(previewAreaSquareMiles)}
+                      </span>
+                    )}
+
+                  {!areaDrawingMode &&
+                    areaPolygon.length >= 3 &&
+                    areaSquareMiles > 0 && (
+                      <span className="query-data-area-live-measure">
+                        Selected area: {formatArea(areaSquareMiles)}
+                      </span>
+                    )}
+                </div>
               </div>
             )}
           </section>
@@ -2803,7 +3422,7 @@ export default function QueryDataPage() {
                   size={30}
                   aria-hidden="true"
                 />
-                <strong>Loading collection locations</strong>
+                <strong>Loading Query Data map</strong>
                 <span>{mapStatus}</span>
               </div>
             ) : mapLoadState === "error" ||
@@ -2819,11 +3438,13 @@ export default function QueryDataPage() {
               </div>
             ) : (
               <MapContainer
+                key={`query-data-map-${mapRefreshKey}`}
                 className="query-data-map"
                 center={cachedQueryMapView.center}
                 zoom={cachedQueryMapView.zoom}
                 scrollWheelZoom
                 attributionControl
+                preferCanvas
               >
                 {basemap === "street" ? (
                   <TileLayer
@@ -2855,11 +3476,71 @@ export default function QueryDataPage() {
                 />
 
                 <AreaDrawingController
-                  drawing={isDrawingArea}
+                  mode={areaDrawingMode}
                   onAddPoint={addAreaPoint}
+                  onDragStart={beginAreaDrag}
+                  onDragMove={updateAreaDrag}
+                  onDragEnd={completeAreaDrag}
                 />
 
-                {displayedAreaPolygon.length >= 2 && (
+                {areaDrawingMode === "rectangle" &&
+                  areaDragStart &&
+                  areaDragCurrent && (
+                    <Rectangle
+                      bounds={[
+                        [
+                          Math.min(
+                            areaDragStart.latitude,
+                            areaDragCurrent.latitude,
+                          ),
+                          Math.min(
+                            areaDragStart.longitude,
+                            areaDragCurrent.longitude,
+                          ),
+                        ],
+                        [
+                          Math.max(
+                            areaDragStart.latitude,
+                            areaDragCurrent.latitude,
+                          ),
+                          Math.max(
+                            areaDragStart.longitude,
+                            areaDragCurrent.longitude,
+                          ),
+                        ],
+                      ]}
+                      pathOptions={{
+                        color: "var(--vadma-accent, #ff9f43)",
+                        weight: 3,
+                        fillColor: "var(--vadma-accent, #ff9f43)",
+                        fillOpacity: 0.22,
+                        dashArray: "6 4",
+                      }}
+                      interactive={false}
+                    />
+                  )}
+
+                {areaDrawingMode === "circle" &&
+                  areaDragStart &&
+                  liveCircleRadiusMeters > 0 && (
+                    <Circle
+                      center={[
+                        areaDragStart.latitude,
+                        areaDragStart.longitude,
+                      ]}
+                      radius={liveCircleRadiusMeters}
+                      pathOptions={{
+                        color: "var(--vadma-accent, #ff9f43)",
+                        weight: 3,
+                        fillColor: "var(--vadma-accent, #ff9f43)",
+                        fillOpacity: 0.22,
+                        dashArray: "6 4",
+                      }}
+                      interactive={false}
+                    />
+                  )}
+
+                {displayedAreaPolygon.length >= 3 && (
                   <Polygon
                     positions={displayedAreaPolygon.map((coordinate) => [
                       coordinate.latitude,
@@ -2869,12 +3550,42 @@ export default function QueryDataPage() {
                       color: "var(--vadma-accent, #ff9f43)",
                       weight: 2,
                       fillColor: "var(--vadma-accent, #ff9f43)",
-                      fillOpacity: displayedAreaPolygon.length >= 3 ? 0.18 : 0.05,
-                      dashArray:
-                        displayedAreaPolygon.length >= 3 ? undefined : "6 6",
+                      fillOpacity: 0.18,
                     }}
                   />
                 )}
+
+                {areaDrawingMode === "polygon" &&
+                  areaPolygon.length >= 1 && (
+                    <>
+                      {areaPolygon.length >= 2 && (
+                        <Polyline
+                          positions={areaPolygon.map((coordinate) => [
+                            coordinate.latitude,
+                            coordinate.longitude,
+                          ])}
+                          pathOptions={{
+                            color: "var(--vadma-accent, #ff9f43)",
+                            weight: 2.5,
+                            dashArray: "5 5",
+                          }}
+                        />
+                      )}
+
+                      {areaPolygon.map((coordinate, index) => (
+                        <Marker
+                          key={`area-vertex-${index}-${coordinate.latitude}-${coordinate.longitude}`}
+                          position={[
+                            coordinate.latitude,
+                            coordinate.longitude,
+                          ]}
+                          icon={areaVertexIcon(index)}
+                          interactive={false}
+                          keyboard={false}
+                        />
+                      ))}
+                    </>
+                  )}
 
                 {displayedMapPoints.map((point) => (
                   <CircleMarker
@@ -2914,11 +3625,33 @@ export default function QueryDataPage() {
                               : "Mapped site"}
                           </small>
                         )}
+
+                        <button
+                          type="button"
+                          className="query-data-popup-refine-button"
+                          disabled={!queryIndexReady}
+                          onClick={() => refineQueryToSite(point)}
+                        >
+                          <Target size={14} aria-hidden="true" />
+                          Refine Query to this Site
+                        </button>
                       </div>
                     </Popup>
                   </CircleMarker>
                 ))}
               </MapContainer>
+            )}
+
+            {mapLoadState === "ready" && (
+              <button
+                type="button"
+                className="query-data-map-refresh-button"
+                onClick={hardRefreshMap}
+                aria-label="Refresh map"
+                title="Refresh map"
+              >
+                <RotateCw size={17} aria-hidden="true" />
+              </button>
             )}
 
             {mapLoadState === "ready" &&

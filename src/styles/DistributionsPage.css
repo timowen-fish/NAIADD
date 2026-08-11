@@ -1792,3 +1792,21 @@
   margin: 10px 10px 0 0;
   pointer-events: auto;
 }
+
+
+/* Collapsible distribution filter bodies */
+.distribution-filter-group-content {
+  display: grid;
+  gap: 12px;
+  margin-top: 13px;
+}
+
+.distribution-filter-group-content > small {
+  color: var(--ui-muted);
+  line-height: 1.45;
+}
+
+.distribution-filter-group:not([open]) {
+  padding-top: 15px;
+  padding-bottom: 15px;
+}

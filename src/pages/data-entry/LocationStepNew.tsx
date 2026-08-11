@@ -36,6 +36,18 @@ const spatialLayers = {
     url: "/spatial/physiographic_provinces.geojson",
     fields: ["PROVINCE", "Province", "PHYS_PROV", "NAME", "Name"],
   },
+  basin: {
+    url: "/spatial/huc06.geojson",
+    fields: [
+      "HUC6Name",
+      "HUC6_NAME",
+      "BASIN_NAME",
+      "BasinName",
+      "RiverBasin",
+      "NAME",
+      "Name",
+    ],
+  },
   huc7: {
     url: "/spatial/huc08.geojson",
     fields: ["HUC8", "huc8", "HUC_8", "HUC08", "huc_8"],
@@ -142,35 +154,42 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
   const update=<K extends keyof LocationRecord>(key:K,value:LocationRecord[K])=>setRecord((r)=>({...r,[key]:value}));
   async function harvestSpatialFields(lat: number, lng: number) {
     setHarvestingSpatial(true);
-    setMessage("Harvesting county, state, physiographic province, and HUC 7…");
+    setMessage("Harvesting county, state, river basin, physiographic province, and HUC 7…");
 
     try {
-      const [county, stateValue, province, huc7] = await Promise.all([
-        findPolygonValue(
-          spatialLayers.county.url,
-          spatialLayers.county.fields,
-          lat,
-          lng,
-        ),
-        findPolygonValue(
-          spatialLayers.state.url,
-          spatialLayers.state.fields,
-          lat,
-          lng,
-        ),
-        findPolygonValue(
-          spatialLayers.province.url,
-          spatialLayers.province.fields,
-          lat,
-          lng,
-        ),
-        findPolygonValue(
-          spatialLayers.huc7.url,
-          spatialLayers.huc7.fields,
-          lat,
-          lng,
-        ),
-      ]);
+      const [county, stateValue, riverBasin, province, huc7] =
+        await Promise.all([
+          findPolygonValue(
+            spatialLayers.county.url,
+            spatialLayers.county.fields,
+            lat,
+            lng,
+          ),
+          findPolygonValue(
+            spatialLayers.state.url,
+            spatialLayers.state.fields,
+            lat,
+            lng,
+          ),
+          findPolygonValue(
+            spatialLayers.basin.url,
+            spatialLayers.basin.fields,
+            lat,
+            lng,
+          ),
+          findPolygonValue(
+            spatialLayers.province.url,
+            spatialLayers.province.fields,
+            lat,
+            lng,
+          ),
+          findPolygonValue(
+            spatialLayers.huc7.url,
+            spatialLayers.huc7.fields,
+            lat,
+            lng,
+          ),
+        ]);
 
       const stateAliases: Record<string, string> = {
         Virginia: "VA",
@@ -188,6 +207,7 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
         ...current,
         County: county,
         State: state,
+        RiverBasin: riverBasin,
         PhysiographicProvince: province,
         HUC7: huc7,
       }));
@@ -195,6 +215,7 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
       const missing = [
         !county && "County",
         !state && "State",
+        !riverBasin && "River Basin",
         !province && "Physiographic Province",
         !huc7 && "HUC 7",
       ].filter(Boolean);

@@ -7,9 +7,17 @@ import "../../styles/LocationStep.css";
 
 type View = "menu" | "existing" | "new";
 
-type Props = { profile: UserProfile; savedLocation?: LocationRecord | null; onLocationSaved: (location: LocationRecord) => void };
+type Props = {
+  profile: UserProfile;
+  savedLocation?: LocationRecord | null;
+  onLocationSaved: (location: LocationRecord) => void;
+};
 
-export default function LocationStep({ profile, savedLocation = null, onLocationSaved }: Props) {
+export default function LocationStep({
+  profile,
+  savedLocation = null,
+  onLocationSaved,
+}: Props) {
   const [view, setView] = useState<View>("menu");
 
   function handleLocationSaved(location: LocationRecord) {
@@ -54,7 +62,7 @@ export default function LocationStep({ profile, savedLocation = null, onLocation
         <ul>
           <li>
             Use an existing site if the sampling location already exists in
-            VADMA.
+            NAIADD.
           </li>
           <li>Create a new site if this is a brand-new sampling location.</li>
           <li>
@@ -106,7 +114,6 @@ export default function LocationStep({ profile, savedLocation = null, onLocation
           </button>
         </div>
       )}
-
     </main>
   );
 }

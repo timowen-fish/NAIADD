@@ -35,7 +35,7 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
     id: "standard",
     name: "Orangefoot Pimpleback",
     description:
-      "A rare Clinch River mussel named for its distinctive orange foot.",
+      "A rare Clinch River mussel named for the striking orange tissue visible around its shell.",
     appearance: "dark",
     preview: {
       background: "#111418",
@@ -49,7 +49,7 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
     id: "blackbanded-sunfish",
     name: "James Spinymussel",
     description:
-      "A federally endangered mussel native to the James River drainage and one of Virginia's rarest freshwater mussels.",
+      "A Virginia native whose young shells have tiny spines that usually disappear with age.",
     appearance: "dark",
     preview: {
       background: "#080b0f",
@@ -105,7 +105,7 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
     id: "largemouth-bass",
     name: "Green Floater",
     description:
-      "Unlike most freshwater mussels, this species may not always need a fish host to reproduce.",
+      "Unlike most freshwater mussels, this little green species may not always need a fish host to reproduce.",
     appearance: "dark",
     preview: {
       background: "#0b140d",
@@ -122,11 +122,11 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
       "Its wonderfully blunt name describes a rounded shell covered in bumps, often hiding vivid purple nacre.",
     appearance: "dark",
     preview: {
-      background: "#0d0613",
-      panel: "#3d224e",
-      accent: "#c084fc",
-      secondary: "#67e8f9",
-      text: "#fbf5ff",
+      background: "#120d08",
+      panel: "#3e2a1c",
+      accent: "#f28c28",
+      secondary: "#4fc3a1",
+      text: "#fff8ed",
     },
   },
   {
@@ -150,11 +150,11 @@ export const VADMA_THEMES: readonly VadmaThemeDefinition[] = [
       "Virginia's largest aquatic salamander spends nearly its entire life beneath rocks in cool, clean rivers.",
     appearance: "dark",
     preview: {
-      background: "#0b1014",
-      panel: "#2b353c",
-      accent: "#91a6b0",
-      secondary: "#c4cdd2",
-      text: "#f4f7f8",
+      background: "#091109",
+      panel: "#314333",
+      accent: "#a6c36f",
+      secondary: "#d18b47",
+      text: "#f7f9ed",
     },
   },
   {

@@ -1222,7 +1222,7 @@ export default function DistributionsPage() {
             )}
           </section>
 
-          <details open className="distribution-filter-group">
+          <details className="distribution-filter-group">
             <summary>
               <span>Dataset</span>
               <small>
@@ -1275,7 +1275,7 @@ export default function DistributionsPage() {
             </div>
           </details>
 
-          <details open className="distribution-filter-group">
+          <details className="distribution-filter-group">
             <summary>
               <span>Condition</span>
               <small>{selectedConditions.length} selected</small>
@@ -1311,38 +1311,51 @@ export default function DistributionsPage() {
             </div>
           </details>
 
-          <section>
-            <h2>Date range</h2>
-            <div className="distribution-date-grid">
-              <label>
-                Start
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(event) => setStartDate(event.target.value)}
-                />
-              </label>
-              <label>
-                End
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(event) => setEndDate(event.target.value)}
-                />
-              </label>
-            </div>
-            <small>Records with unknown dates remain included.</small>
-          </section>
-
-          <section className="distribution-point-section">
-            <div className="distribution-point-heading">
-              <div>
-                <h2>Map display</h2>
-                <small>Choose how occurrence density is visualized.</small>
+          <details className="distribution-filter-group">
+            <summary>
+              <span>Date range</span>
+              <small>
+                {startDate || endDate ? "Active" : "All dates"}
+              </small>
+            </summary>
+            <div className="distribution-filter-group-content">
+              <div className="distribution-date-grid">
+                <label>
+                  Start
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(event) => setStartDate(event.target.value)}
+                  />
+                </label>
+                <label>
+                  End
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(event) => setEndDate(event.target.value)}
+                  />
+                </label>
               </div>
+              <small>Records with unknown dates remain included.</small>
             </div>
+          </details>
 
-            <div className="distribution-display-modes">
+          <details className="distribution-filter-group">
+            <summary>
+              <span>Map display</span>
+              <small>
+                {showHeatmap
+                  ? showPoints
+                    ? "Points + Heatmap"
+                    : "Heatmap"
+                  : showPoints
+                    ? "Points"
+                    : "Hidden"}
+              </small>
+            </summary>
+            <div className="distribution-filter-group-content distribution-point-section">
+              <div className="distribution-display-modes">
               <label
                 className={
                   showPoints
@@ -1405,14 +1418,17 @@ export default function DistributionsPage() {
                 onChange={(event) => setPointSize(Number(event.target.value))}
               />
             </label>
-          </section>
+            </div>
+          </details>
 
-          <section className="distribution-polygon-section">
+          <details className="distribution-filter-group">
+            <summary>
+              <span>County detection</span>
+              <small>{showCounties ? "Shown" : "Hidden"}</small>
+            </summary>
+            <div className="distribution-filter-group-content distribution-polygon-section">
             <div className="distribution-point-heading">
-              <div>
-                <h2>County detection</h2>
-                <small>Shade counties containing filtered records.</small>
-              </div>
+              <small>Shade counties containing filtered records.</small>
               <label className="distribution-switch">
                 <input
                   type="checkbox"
@@ -1439,15 +1455,20 @@ export default function DistributionsPage() {
             {countyError && (
               <p className="distribution-county-error">{countyError}</p>
             )}
-          </section>
-
-          <section className="distribution-huc-section">
-            <div className="distribution-point-heading">
-              <div>
-                <h2>VDCR Hydrounits</h2>
-                <small>HUC10 NWDB presence polygons.</small>
-              </div>
             </div>
+          </details>
+
+          <details className="distribution-filter-group">
+            <summary>
+              <span>VDCR Hydrounits</span>
+              <small>
+                {showHuc10Known || showHuc10Historic
+                  ? `${Number(showHuc10Known) + Number(showHuc10Historic)} active`
+                  : "Hidden"}
+              </small>
+            </summary>
+            <div className="distribution-filter-group-content distribution-huc-section">
+            <small>HUC10 NWDB presence polygons.</small>
 
             <div className="distribution-huc-options">
               <label
@@ -1502,15 +1523,20 @@ export default function DistributionsPage() {
             {huc10Error && (
               <p className="distribution-county-error">{huc10Error}</p>
             )}
-          </section>
-
-          <section className="distribution-huc-section">
-            <div className="distribution-point-heading">
-              <div>
-                <h2>Virginia Subwatersheds</h2>
-                <small>HUC12 NWDB presence polygons.</small>
-              </div>
             </div>
+          </details>
+
+          <details className="distribution-filter-group">
+            <summary>
+              <span>Virginia Subwatersheds</span>
+              <small>
+                {showHuc12Known || showHuc12Historic
+                  ? `${Number(showHuc12Known) + Number(showHuc12Historic)} active`
+                  : "Hidden"}
+              </small>
+            </summary>
+            <div className="distribution-filter-group-content distribution-huc-section">
+            <small>HUC12 NWDB presence polygons.</small>
 
             <div className="distribution-huc-options">
               <label className={showHuc12Known ? "distribution-huc-option known active" : "distribution-huc-option known"}>
@@ -1547,7 +1573,8 @@ export default function DistributionsPage() {
             {huc12Error && (
               <p className="distribution-county-error">{huc12Error}</p>
             )}
-          </section>
+            </div>
+          </details>
 
           <div className="distribution-counts">
             <span>
