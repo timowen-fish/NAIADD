@@ -13,7 +13,7 @@ import {
 import { ensureUserProfile } from "./services/userService";
 import { initializeVadmaTheme } from "./theme/themeService";
 import type { UserProfile } from "./types/user";
-import { auth } from "./firebase";
+import { auth, authPersistenceReady } from "./firebase";
 import "./styles/VADMATheme.css";
 import "./App.css";
 
@@ -58,22 +58,55 @@ export default function App() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    return onAuthStateChanged(auth, async (nextUser) => {
-      setUser(nextUser);
-      setUserProfile(null);
-      setError("");
+    let unsubscribe: (() => void) | null = null;
+    let cancelled = false;
 
-      if (nextUser) {
-        try {
-          const profile = await ensureUserProfile(nextUser);
-          setUserProfile(profile);
-        } catch (profileError) {
-          setError(getFriendlyAuthError(profileError));
+    void authPersistenceReady
+      .then(() => {
+        if (cancelled) return;
+
+        unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
+          setUser(nextUser);
+          setUserProfile(null);
+          setError("");
+
+          if (nextUser) {
+            try {
+              const profile = await ensureUserProfile(nextUser);
+
+              if (!cancelled) {
+                setUserProfile(profile);
+              }
+            } catch (profileError) {
+              if (!cancelled) {
+                setError(getFriendlyAuthError(profileError));
+              }
+            }
+          }
+
+          if (!cancelled) {
+            setAuthReady(true);
+          }
+        });
+      })
+      .catch((persistenceError) => {
+        console.error(
+          "Unable to initialize persistent authentication.",
+          persistenceError,
+        );
+
+        if (!cancelled) {
+          setError(
+            "Unable to initialize persistent sign-in. Refresh the application and try again.",
+          );
+          setAuthReady(true);
         }
-      }
+      });
 
-      setAuthReady(true);
-    });
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, []);
 
   useEffect(() => {

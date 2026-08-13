@@ -1,5 +1,9 @@
 import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import {
+  browserLocalPersistence,
+  getAuth,
+  setPersistence,
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -14,6 +18,23 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
+
+/**
+ * Force Firebase Auth to persist across browser/PWA restarts.
+ * This is intentionally initialized once and awaited by App/login before
+ * relying on authentication state.
+ */
+export const authPersistenceReady = setPersistence(
+  auth,
+  browserLocalPersistence,
+).catch((error) => {
+  console.error(
+    "Unable to enable persistent Firebase authentication.",
+    error,
+  );
+  throw error;
+});
+
 export const db = getFirestore(app);
 
 export default app;
