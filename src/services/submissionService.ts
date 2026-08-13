@@ -624,33 +624,17 @@ export async function submitSurvey(
   );
 
   try {
-    const existingSnapshot = await getDoc(submissionRef);
-
-    if (existingSnapshot.exists()) {
-      const existing = documentSubmission(existingSnapshot.data());
-
-      if (
-        existing &&
-        existing.metadata.ownerUid === input.submitter.uid &&
-        existing.metadata.collectionId ===
-          submission.metadata.collectionId
-      ) {
-        return {
-          ok: true,
-          submission: existing,
-          submissionId: existing.metadata.submissionId,
-          warnings:
-            existing.processing?.validationIssues ?? warnings,
-        };
-      }
-
-      return failure(
-        "duplicate-submission",
-        "A different submission already uses this submission ID.",
-        { warnings },
-      );
-    }
-
+    /*
+     * Write first.
+     *
+     * Non-admin users may CREATE their own submission, but a preflight
+     * getDoc() can be denied when the target document does not exist yet.
+     * Writing first allows Firestore to evaluate the create rule directly.
+     *
+     * If this document already exists, setDoc() is evaluated as an UPDATE.
+     * Non-admin users are intentionally not allowed to update queued
+     * submissions, so an existing submission cannot be overwritten.
+     */
     await setDoc(submissionRef, {
       ...submission,
 
@@ -675,6 +659,47 @@ export async function submitSurvey(
     };
   } catch (error) {
     const code = firestoreFailureCode(error);
+
+    /*
+     * A retry of an already-successful submission can be reported as
+     * permission-denied because setDoc() is now an UPDATE. Once the document
+     * exists, its owner can read it. If it is the same survey, treat that as
+     * the original successful submission rather than an error.
+     */
+    if (code === "permission-denied") {
+      try {
+        const existingSnapshot = await getDoc(submissionRef);
+
+        if (existingSnapshot.exists()) {
+          const existing = documentSubmission(existingSnapshot.data());
+
+          if (
+            existing &&
+            existing.metadata.ownerUid === input.submitter.uid &&
+            existing.metadata.collectionId ===
+              submission.metadata.collectionId
+          ) {
+            return {
+              ok: true,
+              submission: existing,
+              submissionId: existing.metadata.submissionId,
+              warnings:
+                existing.processing?.validationIssues ?? warnings,
+            };
+          }
+
+          if (existing) {
+            return failure(
+              "duplicate-submission",
+              "A different submission already uses this submission ID.",
+              { warnings },
+            );
+          }
+        }
+      } catch {
+        // Preserve the original Firestore error below.
+      }
+    }
 
     return failure(code, firestoreFailureMessage(code), {
       warnings,
