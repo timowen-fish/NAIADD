@@ -15,6 +15,7 @@ import {
   LandPlot,
   Target,
   ClipboardList,
+  Crosshair,
   Wrench,
   UserRound,
   CheckSquare,
@@ -1183,6 +1184,40 @@ function QueryMapViewTracker() {
   return null;
 }
 
+function FocusCurrentLocation({
+  coordinate,
+  radiusMeters,
+  requestKey,
+}: {
+  coordinate: QueryDataCoordinate | null;
+  radiusMeters: number;
+  requestKey: number;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!coordinate || requestKey <= 0) return;
+
+    const edge = destinationCoordinate(
+      coordinate,
+      Math.max(radiusMeters, 100),
+      90,
+    );
+
+    const bounds: LatLngBoundsExpression = [
+      [coordinate.latitude, coordinate.longitude],
+      [edge.latitude, edge.longitude],
+    ];
+
+    map.fitBounds(bounds, {
+      padding: [60, 60],
+      maxZoom: 15,
+    });
+  }, [coordinate, map, radiusMeters, requestKey]);
+
+  return null;
+}
+
 function AreaDrawingController({
   mode,
   onAddPoint,
@@ -1371,6 +1406,16 @@ export default function QueryDataPage() {
 
   const [startDate, setStartDate] = useState(initialSession.startDate);
   const [endDate, setEndDate] = useState(initialSession.endDate);
+  const [currentLocation, setCurrentLocation] =
+    useState<QueryDataCoordinate | null>(null);
+  const [currentLocationRadiusMiles, setCurrentLocationRadiusMiles] =
+    useState(5);
+  const [currentLocationStatus, setCurrentLocationStatus] =
+    useState("");
+  const [currentLocationLoading, setCurrentLocationLoading] =
+    useState(false);
+  const [currentLocationFocusKey, setCurrentLocationFocusKey] =
+    useState(0);
   const [areaPolygon, setAreaPolygon] = useState<QueryDataCoordinate[]>(
     initialSession.areaPolygon,
   );
@@ -1486,6 +1531,9 @@ export default function QueryDataPage() {
 
   const snapshotAvailable = Boolean(snapshotMeta);
 
+  const currentLocationRadiusMeters =
+    Math.max(0.1, currentLocationRadiusMiles || 0.1) * 1609.344;
+  const hasCurrentLocationFilter = currentLocation !== null;
   const hasDateFilter = Boolean(startDate || endDate);
   const invalidDateRange =
     Boolean(startDate && endDate) && startDate > endDate;
@@ -2116,6 +2164,105 @@ export default function QueryDataPage() {
     setEndDate("");
   }
 
+  function detectCurrentLocation() {
+    if (!navigator.geolocation) {
+      setCurrentLocationStatus(
+        "Current location is not supported by this browser.",
+      );
+      return;
+    }
+
+    setCurrentLocationLoading(true);
+    setCurrentLocationStatus("Detecting current location…");
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coordinate: QueryDataCoordinate = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+
+        const edge = destinationCoordinate(
+          coordinate,
+          currentLocationRadiusMeters,
+          90,
+        );
+
+        setCurrentLocation(coordinate);
+        setAreaPolygon(
+          buildCirclePolygon(coordinate, edge, 72),
+        );
+        setAreaBoundaryType("");
+        setAreaBoundaryId("");
+        setAreaBoundaryLabel("");
+        setAreaDrawingMode(null);
+        setAreaDragStart(null);
+        setAreaDragCurrent(null);
+        setShowExistingBoundary(false);
+        setShouldFitBoundary(false);
+        setCurrentLocationFocusKey((current) => current + 1);
+        setCurrentLocationStatus(
+          `Location detected to about ${Math.round(
+            position.coords.accuracy,
+          ).toLocaleString()} m accuracy.`,
+        );
+        setCurrentLocationLoading(false);
+      },
+      (error) => {
+        const message =
+          error.code === error.PERMISSION_DENIED
+            ? "Location permission was denied."
+            : error.code === error.POSITION_UNAVAILABLE
+              ? "Current location is unavailable."
+              : error.code === error.TIMEOUT
+                ? "Location detection timed out."
+                : "Unable to detect current location.";
+
+        setCurrentLocationStatus(message);
+        setCurrentLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 60000,
+      },
+    );
+  }
+
+  function updateCurrentLocationRadius(rawValue: string) {
+    const parsed = Number(rawValue);
+    const radiusMiles =
+      Number.isFinite(parsed) && parsed > 0 ? parsed : 0.1;
+
+    setCurrentLocationRadiusMiles(radiusMiles);
+
+    if (!currentLocation) return;
+
+    const edge = destinationCoordinate(
+      currentLocation,
+      radiusMiles * 1609.344,
+      90,
+    );
+
+    setAreaPolygon(
+      buildCirclePolygon(currentLocation, edge, 72),
+    );
+    setAreaBoundaryType("");
+    setAreaBoundaryId("");
+    setAreaBoundaryLabel("");
+    setCurrentLocationFocusKey((current) => current + 1);
+  }
+
+  function clearCurrentLocationFilter() {
+    setCurrentLocation(null);
+    setCurrentLocationStatus("");
+    setAreaPolygon([]);
+    setAreaBoundaryType("");
+    setAreaBoundaryId("");
+    setAreaBoundaryLabel("");
+    setShouldFitBoundary(false);
+  }
+
   function startAreaDrawing(mode: Exclude<AreaDrawingMode, null>) {
     if (areaDrawingMode === mode) {
       if (mode === "polygon" && areaPolygon.length >= 3) {
@@ -2132,6 +2279,8 @@ export default function QueryDataPage() {
       return;
     }
 
+    setCurrentLocation(null);
+    setCurrentLocationStatus("");
     setAreaPolygon([]);
     setAreaDragStart(null);
     setAreaDragCurrent(null);
@@ -2186,6 +2335,8 @@ export default function QueryDataPage() {
   }
 
   function selectExistingBoundary(id: string) {
+    setCurrentLocation(null);
+    setCurrentLocationStatus("");
     setAreaBoundaryId(id);
 
     const feature = boundaryFeatures.find((item) => item.id === id);
@@ -2215,6 +2366,8 @@ export default function QueryDataPage() {
   }
 
   function clearAreaFilter() {
+    setCurrentLocation(null);
+    setCurrentLocationStatus("");
     setAreaPolygon([]);
     setAreaDragStart(null);
     setAreaDragCurrent(null);
@@ -2271,6 +2424,9 @@ export default function QueryDataPage() {
 
     setStartDate("");
     setEndDate("");
+    setCurrentLocation(null);
+    setCurrentLocationStatus("");
+    setCurrentLocationRadiusMiles(5);
     setAreaPolygon([]);
     setAreaDragStart(null);
     setAreaDragCurrent(null);
@@ -2626,6 +2782,110 @@ export default function QueryDataPage() {
               <p className="query-data-filter-note">
                 Refresh the production snapshot from the Home Dashboard
                 before building a query.
+              </p>
+            )}
+          </section>
+
+          <section className="query-data-filter-card">
+            <div className="query-data-filter-heading">
+              <div className="query-data-filter-title">
+                <span
+                  className="query-data-filter-icon"
+                  aria-hidden="true"
+                >
+                  <Crosshair size={20} />
+                </span>
+                <div>
+                  <span>Spatial filter</span>
+                  <h2>Filter by Current Location</h2>
+                </div>
+              </div>
+
+              {hasCurrentLocationFilter && (
+                <button
+                  type="button"
+                  className="query-data-clear-filter"
+                  onClick={clearCurrentLocationFilter}
+                >
+                  <X size={16} />
+                  Clear
+                </button>
+              )}
+            </div>
+
+            <div className="query-data-date-fields">
+              <label className="query-data-date-entry">
+                <span>Search radius</span>
+
+                <div className="query-data-date-input-shell">
+                  <input
+                    className="query-data-date-text-input"
+                    type="number"
+                    min="0.1"
+                    step="0.5"
+                    value={currentLocationRadiusMiles}
+                    disabled={!snapshotAvailable}
+                    onChange={(event) =>
+                      updateCurrentLocationRadius(event.target.value)
+                    }
+                    aria-label="Current location search radius in miles"
+                  />
+                </div>
+
+                <small className="query-data-date-format-hint">
+                  Radius in miles around your detected position.
+                </small>
+              </label>
+
+              <div className="query-data-date-entry">
+                <span>Current position</span>
+
+                <button
+                  type="button"
+                  className="query-data-area-button"
+                  onClick={detectCurrentLocation}
+                  disabled={
+                    !snapshotAvailable || currentLocationLoading
+                  }
+                >
+                  {currentLocationLoading ? (
+                    <LoaderCircle
+                      className="query-data-spinner"
+                      size={18}
+                    />
+                  ) : (
+                    <Crosshair size={18} />
+                  )}
+                  {currentLocationLoading
+                    ? "Detecting…"
+                    : hasCurrentLocationFilter
+                      ? "Detect Again"
+                      : "Detect Current Location"}
+                </button>
+              </div>
+            </div>
+
+            {currentLocation && (
+              <p className="query-data-filter-note">
+                Searching within{" "}
+                {currentLocationRadiusMiles.toLocaleString()} mile
+                {currentLocationRadiusMiles === 1 ? "" : "s"} of{" "}
+                {currentLocation.latitude.toFixed(5)},{" "}
+                {currentLocation.longitude.toFixed(5)}. Apply Query to
+                Map when ready.
+              </p>
+            )}
+
+            {currentLocationStatus && (
+              <p
+                className={
+                  currentLocation
+                    ? "query-data-filter-note"
+                    : "query-data-filter-error"
+                }
+                aria-live="polite"
+              >
+                {currentLocationStatus}
               </p>
             )}
           </section>
@@ -3465,6 +3725,12 @@ export default function QueryDataPage() {
 
                 <QueryMapViewTracker />
 
+                <FocusCurrentLocation
+                  coordinate={currentLocation}
+                  radiusMeters={currentLocationRadiusMeters}
+                  requestKey={currentLocationFocusKey}
+                />
+
                 <FitMapToBoundary
                   polygon={areaPolygon}
                   enabled={shouldFitBoundary}
@@ -3540,7 +3806,51 @@ export default function QueryDataPage() {
                     />
                   )}
 
-                {displayedAreaPolygon.length >= 3 && (
+                {currentLocation && (
+                  <>
+                    <Circle
+                      center={[
+                        currentLocation.latitude,
+                        currentLocation.longitude,
+                      ]}
+                      radius={currentLocationRadiusMeters}
+                      pathOptions={{
+                        color: "var(--vadma-accent, #ff9f43)",
+                        weight: 2.5,
+                        fillColor: "var(--vadma-accent, #ff9f43)",
+                        fillOpacity: 0.1,
+                        dashArray: "7 5",
+                      }}
+                      interactive={false}
+                    />
+
+                    <CircleMarker
+                      center={[
+                        currentLocation.latitude,
+                        currentLocation.longitude,
+                      ]}
+                      radius={7}
+                      pathOptions={{
+                        color: "rgba(255, 255, 255, 0.96)",
+                        weight: 2,
+                        fillColor: "var(--vadma-accent, #ff9f43)",
+                        fillOpacity: 1,
+                      }}
+                    >
+                      <Popup>
+                        <div className="query-data-map-popup">
+                          <strong>Current Location</strong>
+                          <span>
+                            Search radius:{" "}
+                            {currentLocationRadiusMiles.toLocaleString()} mi
+                          </span>
+                        </div>
+                      </Popup>
+                    </CircleMarker>
+                  </>
+                )}
+
+                {!currentLocation && displayedAreaPolygon.length >= 3 && (
                   <Polygon
                     positions={displayedAreaPolygon.map((coordinate) => [
                       coordinate.latitude,
