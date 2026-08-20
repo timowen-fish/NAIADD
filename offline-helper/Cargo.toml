@@ -1,0 +1,30 @@
+[package]
+name = "naiadd-offline-helper"
+version = "1.0.0"
+description = "NAIADD workstation offline storage helper"
+authors = ["NAIADD"]
+edition = "2021"
+build = "build.rs"
+
+[lib]
+name = "naiadd_offline_helper_lib"
+path = "lib.rs"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "naiadd-offline-helper"
+path = "main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "native-tls", "system-proxy"] }
+keyring = { version = "3.6.3", features = ["windows-native"] }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-autostart = "2"

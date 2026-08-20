@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { UserProfile } from "../../types/user";
 import type {
   DataEntryStep,
@@ -20,6 +20,7 @@ import {
   deleteSurveyDraft,
   loadSurveySession,
   saveSurveySession,
+  WORKFLOW_SESSION_EVENT,
   WORKFLOW_STEP_EVENT,
 } from "../../services/surveySessionService";
 import "../../styles/DataEntryWorkflow.css";
@@ -50,6 +51,7 @@ export default function DataEntryWorkflow({
   const [session, setSession] = useState<SurveySession>(() =>
     loadNormalizedSession(profile.uid),
   );
+  const activeSessionIdRef = useRef(session.id);
   const [step, setStep] = useState<DataEntryStep>(
     () => loadNormalizedSession(profile.uid).currentStep,
   );
@@ -62,8 +64,60 @@ export default function DataEntryWorkflow({
     );
 
   useEffect(() => {
+    activeSessionIdRef.current = session.id;
     saveSurveySession(session);
   }, [session]);
+
+  useEffect(() => {
+    const handleActivatedSession = (event: Event): void => {
+      const activated = (event as CustomEvent<SurveySession | undefined>)
+        .detail;
+
+      if (!activated || activated.ownerUid !== profile.uid) {
+        return;
+      }
+
+      /*
+       * saveSurveySession() broadcasts WORKFLOW_SESSION_EVENT after every
+       * normal Data Entry save. DataEntryWorkflow is itself the source of
+       * those saves, so re-loading the same session here creates a render /
+       * save / event loop and can blank the application after advancing from
+       * Location to Survey Information.
+       *
+       * Only react when a DIFFERENT saved draft has been activated from
+       * outside this workflow (for example, Continue Editing on Drafts).
+       */
+      if (activated.id === activeSessionIdRef.current) {
+        return;
+      }
+
+      const next = {
+        ...activated,
+        specimenFormType: activated.specimenFormType ?? null,
+        specimens: Array.isArray(activated.specimens)
+          ? activated.specimens
+          : [],
+      };
+
+      activeSessionIdRef.current = next.id;
+      setSession(next);
+      setStep(next.currentStep);
+      setPendingSpecimenType(next.specimenFormType);
+      setShowSpecimenSelector(!next.specimenFormType);
+    };
+
+    window.addEventListener(
+      WORKFLOW_SESSION_EVENT,
+      handleActivatedSession,
+    );
+
+    return () => {
+      window.removeEventListener(
+        WORKFLOW_SESSION_EVENT,
+        handleActivatedSession,
+      );
+    };
+  }, [profile.uid]);
 
   function update(
     patch: Partial<SurveySession>,

@@ -1,0 +1,19 @@
+{
+  "name": "naiadd-offline-helper",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "tauri": "tauri",
+    "sync:app": "npm --prefix .. run build && node sync-naiadd-app.mjs"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
+    "vite": "^8.1.1"
+  },
+  "dependencies": {
+    "@tauri-apps/plugin-autostart": "^2.5.1"
+  }
+}

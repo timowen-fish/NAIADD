@@ -9,8 +9,14 @@ import {
   loginWithEmailPassword,
   logout,
   requestPasswordReset,
+  tryStoredWorkstationLogin,
 } from "./services/authService";
 import { ensureUserProfile } from "./services/userService";
+import {
+  loadWorkstationProfile,
+  saveWorkstationProfile,
+  synchronizeUserState,
+} from "./services/userSyncService";
 import { initializeVadmaTheme } from "./theme/themeService";
 import type { UserProfile } from "./types/user";
 import { auth, authPersistenceReady } from "./firebase";
@@ -18,6 +24,30 @@ import "./styles/VADMATheme.css";
 import "./App.css";
 
 initializeVadmaTheme();
+
+const APP_ROUTE_EVENT = "naiadd-app-route";
+const OFFLINE_HELPER_UPDATE_URL =
+  "http://127.0.0.1:43128/update-app";
+
+function isLocalHelperApp(): boolean {
+  return (
+    window.location.hostname === "127.0.0.1" ||
+    window.location.hostname === "localhost"
+  );
+}
+
+async function requestImmediateOfflineAppSync(): Promise<void> {
+  if (!navigator.onLine) return;
+
+  try {
+    await fetch(OFFLINE_HELPER_UPDATE_URL, {
+      method: "POST",
+      cache: "no-store",
+    });
+  } catch {
+    // No NAIADD helper is installed/running on this device.
+  }
+}
 
 function getFriendlyAuthError(error: unknown): string {
   const code =
@@ -56,6 +86,32 @@ export default function App() {
   const [working, setWorking] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [offlineWorkstationSession, setOfflineWorkstationSession] = useState(false);
+
+  useEffect(() => {
+    let lastRequestedAt = 0;
+
+    const requestSync = () => {
+      if (!navigator.onLine) return;
+
+      const now = Date.now();
+      if (now - lastRequestedAt < 5000) return;
+
+      lastRequestedAt = now;
+      void requestImmediateOfflineAppSync();
+    };
+
+    requestSync();
+    window.addEventListener("online", requestSync);
+    window.addEventListener("focus", requestSync);
+    const interval = window.setInterval(requestSync, 60_000);
+
+    return () => {
+      window.removeEventListener("online", requestSync);
+      window.removeEventListener("focus", requestSync);
+      window.clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
@@ -67,19 +123,61 @@ export default function App() {
 
         unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
           setUser(nextUser);
-          setUserProfile(null);
           setError("");
 
           if (nextUser) {
+            setOfflineWorkstationSession(false);
+
             try {
               const profile = await ensureUserProfile(nextUser);
 
               if (!cancelled) {
                 setUserProfile(profile);
+                void saveWorkstationProfile(profile);
+                void synchronizeUserState(profile);
               }
             } catch (profileError) {
               if (!cancelled) {
+                setUserProfile(null);
                 setError(getFriendlyAuthError(profileError));
+              }
+            }
+          } else {
+            setUserProfile(null);
+
+            if (navigator.onLine) {
+              const autoLoginResult =
+                await tryStoredWorkstationLogin();
+
+              if (autoLoginResult === "success") {
+                return;
+              }
+
+              if (autoLoginResult === "invalid" && !cancelled) {
+                setMessage(
+                  "Your saved workstation sign-in needs to be refreshed. Sign in once to reconnect this workstation.",
+                );
+              }
+
+              if (
+                autoLoginResult === "unavailable" &&
+                isLocalHelperApp()
+              ) {
+                const profile = await loadWorkstationProfile();
+
+                if (profile && profile.active && !cancelled) {
+                  setUserProfile(profile);
+                  setOfflineWorkstationSession(true);
+                  void synchronizeUserState(profile);
+                }
+              }
+            } else if (isLocalHelperApp()) {
+              const profile = await loadWorkstationProfile();
+
+              if (profile && profile.active && !cancelled) {
+                setUserProfile(profile);
+                setOfflineWorkstationSession(true);
+                void synchronizeUserState(profile);
               }
             }
           }
@@ -108,6 +206,66 @@ export default function App() {
       unsubscribe?.();
     };
   }, []);
+
+  useEffect(() => {
+    if (!offlineWorkstationSession || !isLocalHelperApp()) {
+      return;
+    }
+
+    let cancelled = false;
+    let reconnecting = false;
+
+    async function upgradeToOnlineSession() {
+      if (
+        cancelled ||
+        reconnecting ||
+        !navigator.onLine ||
+        auth.currentUser
+      ) {
+        return;
+      }
+
+      reconnecting = true;
+      try {
+        const result = await tryStoredWorkstationLogin();
+
+        if (result === "invalid" && !cancelled) {
+          setMessage(
+            "Your saved workstation sign-in needs to be refreshed. Sign in once to reconnect this workstation.",
+          );
+        }
+      } finally {
+        reconnecting = false;
+      }
+    }
+
+    const handleOnline = () => {
+      void upgradeToOnlineSession();
+    };
+
+    window.addEventListener("online", handleOnline);
+
+    if (navigator.onLine) {
+      void upgradeToOnlineSession();
+    }
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [offlineWorkstationSession]);
+
+  useEffect(() => {
+    const handleRoute = (event: Event) => {
+      const detail = (event as CustomEvent<{ routeId?: AppRouteId }>).detail;
+      if (detail?.routeId) {
+        handleSectionChange(detail.routeId);
+      }
+    };
+
+    window.addEventListener(APP_ROUTE_EVENT, handleRoute);
+    return () => window.removeEventListener(APP_ROUTE_EVENT, handleRoute);
+  });
 
   useEffect(() => {
     if (!isNavigating || pendingSection !== activeSection) {
@@ -197,6 +355,8 @@ export default function App() {
 
     try {
       await logout();
+      setOfflineWorkstationSession(false);
+      setUserProfile(null);
       setActiveSection("dashboard");
       setPendingSection(null);
       setIsNavigating(false);
@@ -211,7 +371,7 @@ export default function App() {
     return <div className="app-loading">Loading application…</div>;
   }
 
-  if (!user) {
+  if (!user && !offlineWorkstationSession) {
     return (
       <LoginScreen
         loading={working}
@@ -243,7 +403,7 @@ export default function App() {
     <>
       <AppShell
         profile={userProfile}
-        email={user.email ?? userProfile.email}
+        email={user?.email ?? userProfile.email}
         activeSection={pendingSection ?? activeSection}
         onSectionChange={handleSectionChange}
         onLogout={handleLogout}

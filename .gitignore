@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+offline-helper/target/
+offline-helper/node_modules/
+offline-helper/dist/

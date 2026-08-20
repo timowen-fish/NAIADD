@@ -1,3 +1,4 @@
+import { auth } from "../firebase";
 export type QueryDataCoordinate = {
   latitude: number;
   longitude: number;
@@ -52,6 +53,15 @@ export const SAVED_QUERY_DATA_EVENT = "naiadd-query-data-saved-updated";
 export const QUERY_DATA_SESSION_EVENT = "naiadd-query-data-session-updated";
 export const APPLIED_QUERY_DATA_EVENT = "naiadd-query-data-applied-updated";
 const APPLIED_QUERY_DATA_KEY = "naiadd-query-data-applied";
+const OFFLINE_HELPER_SAVED_QUERIES_URL =
+  "http://127.0.0.1:43128/saved-queries";
+
+type HelperSavedQueriesPackage = {
+  format: "NAIADD_OFFLINE_SAVED_QUERIES_V1";
+  uid: string;
+  updatedAt: string;
+  data: SavedQueryData[];
+};
 
 const DEFAULT_QUERY_DATA_SESSION: QueryDataSession = {
   startDate: "",
@@ -274,11 +284,101 @@ function getCurrentUserStorageKey(): string {
     console.warn("Unable to resolve the Query Data user storage key.", error);
   }
 
+  try {
+    const offlineUid = window.localStorage
+      .getItem("naiadd.offlineUserUid")
+      ?.trim();
+
+    if (offlineUid) {
+      return offlineUid.replace(/[^a-zA-Z0-9@._-]/g, "_");
+    }
+  } catch {
+    // Ignore browser storage restrictions.
+  }
+
   return "local-user";
 }
 
-function getSavedQueryStorageKey(): string {
-  return `${SAVED_QUERY_DATA_KEY_PREFIX}:${getCurrentUserStorageKey()}`;
+function getSavedQueryStorageKey(identity?: string): string {
+  const resolved = (identity ?? getCurrentUserStorageKey())
+    .trim()
+    .replace(/[^a-zA-Z0-9@._-]/g, "_");
+
+  return `${SAVED_QUERY_DATA_KEY_PREFIX}:${resolved || "local-user"}`;
+}
+
+
+async function writeSavedQueriesToHelper(
+  uid: string,
+  queries: SavedQueryData[],
+): Promise<void> {
+  if (!uid) return;
+
+  try {
+    await fetch(OFFLINE_HELPER_SAVED_QUERIES_URL, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        format: "NAIADD_OFFLINE_SAVED_QUERIES_V1",
+        uid,
+        updatedAt: new Date().toISOString(),
+        data: queries,
+      } satisfies HelperSavedQueriesPackage),
+    });
+  } catch {
+    // Helper is optional on ordinary/mobile devices.
+  }
+}
+
+export async function restoreSavedQueriesFromHelper(
+  uid: string,
+): Promise<SavedQueryData[]> {
+  try {
+    const response = await fetch(OFFLINE_HELPER_SAVED_QUERIES_URL, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) return loadSavedQueryData(uid);
+
+    const payload =
+      (await response.json()) as Partial<HelperSavedQueriesPackage>;
+
+    if (
+      payload.format !== "NAIADD_OFFLINE_SAVED_QUERIES_V1" ||
+      payload.uid !== uid ||
+      !Array.isArray(payload.data)
+    ) {
+      return loadSavedQueryData(uid);
+    }
+
+    const normalized = payload.data
+      .map(normalizeSavedQuery)
+      .filter((query): query is SavedQueryData => query !== null)
+      .sort((left, right) =>
+        right.updatedAt.localeCompare(left.updatedAt),
+      );
+
+    window.localStorage.setItem(
+      getSavedQueryStorageKey(uid),
+      JSON.stringify(normalized),
+    );
+
+    window.dispatchEvent(
+      new CustomEvent<SavedQueryData[]>(SAVED_QUERY_DATA_EVENT, {
+        detail: normalized,
+      }),
+    );
+
+    return normalized;
+  } catch {
+    return loadSavedQueryData(uid);
+  }
+}
+
+export async function backupSavedQueriesToHelper(
+  uid: string,
+): Promise<void> {
+  await writeSavedQueriesToHelper(uid, loadSavedQueryData(uid));
 }
 
 function normalizeSavedQuery(value: unknown): SavedQueryData | null {
@@ -308,9 +408,9 @@ function normalizeSavedQuery(value: unknown): SavedQueryData | null {
   };
 }
 
-export function loadSavedQueryData(): SavedQueryData[] {
+export function loadSavedQueryData(identity?: string): SavedQueryData[] {
   try {
-    const stored = window.localStorage.getItem(getSavedQueryStorageKey());
+    const stored = window.localStorage.getItem(getSavedQueryStorageKey(identity));
     if (!stored) return [];
 
     const parsed = JSON.parse(stored);
@@ -342,6 +442,11 @@ function persistSavedQueryData(queries: SavedQueryData[]): SavedQueryData[] {
         detail: normalized,
       }),
     );
+
+    const uid = auth.currentUser?.uid;
+    if (uid) {
+      void writeSavedQueriesToHelper(uid, normalized);
+    }
   } catch (error) {
     console.warn("Unable to save Query Data queries.", error);
   }

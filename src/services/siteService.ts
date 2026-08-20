@@ -556,9 +556,20 @@ export async function createSite(
 export function saveCurrentLocation(
   site: LocationRecord,
 ): void {
+  const normalized = normalizeLocationRecord(
+    site as unknown as SnapshotRow,
+    asString(site.SiteID),
+  );
+
+  if (!normalized) {
+    throw new Error(
+      "The selected site does not contain valid NAIADD location coordinates.",
+    );
+  }
+
   localStorage.setItem(
     CURRENT_LOCATION_KEY,
-    JSON.stringify(site),
+    JSON.stringify(normalized),
   );
 }
 

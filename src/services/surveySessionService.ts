@@ -2,6 +2,14 @@ import type {
   DataEntryStep,
   SurveySession,
 } from "../types/surveySession";
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  setDoc,
+} from "firebase/firestore";
+import { db } from "../firebase";
 
 const ACTIVE_SESSION_PREFIX = "naiadd.surveySession";
 const DRAFTS_PREFIX = "naiadd.surveyDrafts";
@@ -10,6 +18,46 @@ export const WORKFLOW_STEP_EVENT = "naiadd-workflow-step";
 export const WORKFLOW_SESSION_EVENT = "naiadd-workflow-session";
 
 type AnyRecord = Record<string, unknown>;
+
+const USER_DRAFTS_COLLECTION = "drafts";
+const USER_DELETED_DRAFTS_COLLECTION = "deletedDrafts";
+
+function userDraftRef(uid: string, sessionId: string) {
+  return doc(db, "users", uid, USER_DRAFTS_COLLECTION, sessionId);
+}
+
+function deletedDraftRef(uid: string, sessionId: string) {
+  return doc(db, "users", uid, USER_DELETED_DRAFTS_COLLECTION, sessionId);
+}
+
+function syncDraftToCloud(session: SurveySession): void {
+  void setDoc(userDraftRef(session.ownerUid, session.id), {
+    session,
+    updatedAt: session.updatedAt,
+  })
+    .then(() =>
+      deleteDoc(deletedDraftRef(session.ownerUid, session.id)).catch(
+        () => undefined,
+      ),
+    )
+    .catch((error) => {
+      console.warn("Unable to sync survey draft to Firestore.", error);
+    });
+}
+
+function syncDraftDeletionToCloud(uid: string, sessionId: string): void {
+  const deletedAt = new Date().toISOString();
+
+  void Promise.all([
+    deleteDoc(userDraftRef(uid, sessionId)),
+    setDoc(deletedDraftRef(uid, sessionId), {
+      id: sessionId,
+      deletedAt,
+    }),
+  ]).catch((error) => {
+    console.warn("Unable to sync survey draft deletion to Firestore.", error);
+  });
+}
 
 export type SurveyDraftStatus =
   | "not-started"
@@ -40,6 +88,182 @@ export type SurveyDraftRecord = {
   session: SurveySession;
   metadata: SurveyDraftMetadata;
 };
+
+
+type ExternalSurveyState = {
+  drafts: SurveySession[];
+  activeSession: SurveySession | null;
+};
+
+
+const OFFLINE_HELPER_BASE_URL = "http://127.0.0.1:43128";
+const OFFLINE_HELPER_SURVEY_STATE_URL =
+  `${OFFLINE_HELPER_BASE_URL}/survey-state`;
+
+type HelperUserStatePackage<T> = {
+  format: "NAIADD_OFFLINE_USER_STATE_V1";
+  uid: string;
+  updatedAt: string;
+  data: T;
+};
+
+async function writeSurveyStateToHelper(
+  uid: string,
+  state: ExternalSurveyState,
+): Promise<boolean> {
+  try {
+    const payload: HelperUserStatePackage<ExternalSurveyState> = {
+      format: "NAIADD_OFFLINE_USER_STATE_V1",
+      uid,
+      updatedAt: new Date().toISOString(),
+      data: state,
+    };
+
+    const response = await fetch(OFFLINE_HELPER_SURVEY_STATE_URL, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function readSurveyStateFromHelper(
+  uid: string,
+): Promise<ExternalSurveyState | null> {
+  try {
+    const response = await fetch(OFFLINE_HELPER_SURVEY_STATE_URL, {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    if (!response.ok) return null;
+
+    const payload =
+      (await response.json()) as Partial<
+        HelperUserStatePackage<ExternalSurveyState>
+      >;
+
+    if (
+      payload.format !== "NAIADD_OFFLINE_USER_STATE_V1" ||
+      payload.uid !== uid ||
+      !payload.data
+    ) {
+      return null;
+    }
+
+    return payload.data;
+  } catch {
+    return null;
+  }
+}
+
+function readActiveSession(uid: string): SurveySession | null {
+  try {
+    const raw = localStorage.getItem(activeSessionKey(uid));
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw) as unknown;
+    return isSurveySession(parsed, uid)
+      ? normalizeSession(parsed)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+const surveyBackupQueues = new Map<string, Promise<void>>();
+
+function backupSurveyStateExternally(uid: string): Promise<void> {
+  const previous = surveyBackupQueues.get(uid) ?? Promise.resolve();
+
+  const next = previous
+    .catch(() => undefined)
+    .then(async () => {
+      /*
+       * Read the state only when this queued write actually runs.
+       * That guarantees a slower, older helper request can never finish
+       * after a newer survey state and overwrite it.
+       */
+      const state: ExternalSurveyState = {
+        drafts: readDrafts(uid),
+        activeSession: readActiveSession(uid),
+      };
+
+      const helperSaved = await writeSurveyStateToHelper(uid, state);
+
+      if (!helperSaved) {
+        console.warn("Unable to write NAIADD survey-state backup to Offline Helper.");
+      }
+    })
+    .finally(() => {
+      if (surveyBackupQueues.get(uid) === next) {
+        surveyBackupQueues.delete(uid);
+      }
+    });
+
+  surveyBackupQueues.set(uid, next);
+  return next;
+}
+
+export async function flushSurveyStateBackup(uid: string): Promise<void> {
+  await backupSurveyStateExternally(uid);
+}
+
+async function restoreSurveyStateFromExternal(
+  uid: string,
+): Promise<ExternalSurveyState | null> {
+  try {
+    const helperState = await readSurveyStateFromHelper(uid);
+
+    if (!helperState) return null;
+
+    const externalDrafts = Array.isArray(helperState.drafts)
+      ? helperState.drafts
+          .filter((item): item is SurveySession =>
+            isSurveySession(item, uid),
+          )
+          .map(normalizeSession)
+      : [];
+
+    const externalActive =
+      helperState.activeSession &&
+      isSurveySession(helperState.activeSession, uid)
+        ? normalizeSession(helperState.activeSession)
+        : null;
+
+    if (externalDrafts.length > 0) {
+      writeDrafts(uid, [
+        ...readDrafts(uid),
+        ...externalDrafts,
+      ]);
+    }
+
+    if (externalActive) {
+      const localActive = readActiveSession(uid);
+
+      if (
+        !localActive ||
+        externalActive.updatedAt.localeCompare(
+          localActive.updatedAt,
+        ) > 0
+      ) {
+        writeActiveSession(externalActive);
+      }
+    }
+
+    return {
+      drafts: externalDrafts,
+      activeSession: externalActive,
+    };
+  } catch (error) {
+    console.warn("Unable to restore external survey-state backup.", error);
+    return null;
+  }
+}
 
 function activeSessionKey(uid: string): string {
   return `${ACTIVE_SESSION_PREFIX}.${uid}`;
@@ -302,12 +526,7 @@ function countSpecimens(session: SurveySession): number {
     const row = asRecord(specimen);
     const speciesName = textValue(
       row,
-      [
-        "ScientificName",
-        "scientificName",
-        "Species",
-        "species",
-      ],
+      ["ScientificName", "scientificName", "Species", "species"],
       "",
     );
 
@@ -335,12 +554,7 @@ function countSpecies(session: SurveySession): number {
     const row = asRecord(specimen);
     const speciesName = textValue(
       row,
-      [
-        "ScientificName",
-        "scientificName",
-        "Species",
-        "species",
-      ],
+      ["ScientificName", "scientificName", "Species", "species"],
       "",
     );
 
@@ -442,7 +656,7 @@ export function getSurveyDraftMetadata(
     ...normalized.specimens.map((specimen) =>
       textValue(
         asRecord(specimen),
-        ["ScientificName", "scientificName"],
+        ["ScientificName", "scientificName", "Species", "species"],
         "",
       ),
     ),
@@ -591,6 +805,8 @@ export function saveSurveySession(
 
   writeActiveSession(next);
   upsertDraft(next);
+  syncDraftToCloud(next);
+  backupSurveyStateExternally(next.ownerUid);
   dispatchSessionEvent(next);
 
   return next;
@@ -606,6 +822,8 @@ export function createSurveyDraft(
   const session = createSurveySession(uid);
 
   upsertDraft(session);
+  syncDraftToCloud(session);
+  backupSurveyStateExternally(session.ownerUid);
   dispatchSessionEvent(session);
 
   return session;
@@ -633,9 +851,24 @@ export function activateSurveyDraft(
 
   writeActiveSession(next);
   upsertDraft(next);
+  syncDraftToCloud(next);
+  backupSurveyStateExternally(next.ownerUid);
   dispatchSessionEvent(next);
 
   return next;
+}
+
+/**
+ * Makes an existing draft active and waits until its complete state has
+ * reached the durable offline helper before navigation occurs.
+ */
+export async function activateSurveyDraftDurably(
+  uid: string,
+  sessionId: string,
+): Promise<SurveySession> {
+  const session = activateSurveyDraft(uid, sessionId);
+  await flushSurveyStateBackup(uid);
+  return session;
 }
 
 /**
@@ -673,6 +906,8 @@ export function duplicateSurveyDraft(
   });
 
   upsertDraft(duplicate);
+  syncDraftToCloud(duplicate);
+  backupSurveyStateExternally(duplicate.ownerUid);
   dispatchSessionEvent(duplicate);
 
   return duplicate;
@@ -711,7 +946,70 @@ export function deleteSurveyDraft(
     localStorage.removeItem(activeSessionKey(uid));
   }
 
+  syncDraftDeletionToCloud(uid, sessionId);
+  backupSurveyStateExternally(uid);
   dispatchSessionEvent();
+}
+
+export async function syncSurveyDrafts(uid: string): Promise<SurveySession[]> {
+  try {
+    await restoreSurveyStateFromExternal(uid);
+
+    const [cloudSnapshot, deletedSnapshot] = await Promise.all([
+      getDocs(collection(db, "users", uid, USER_DRAFTS_COLLECTION)),
+      getDocs(collection(db, "users", uid, USER_DELETED_DRAFTS_COLLECTION)),
+    ]);
+
+    const deleted = new Map<string, string>();
+    deletedSnapshot.docs.forEach((item) => {
+      const data = item.data() as { deletedAt?: unknown };
+      deleted.set(
+        item.id,
+        typeof data.deletedAt === "string" ? data.deletedAt : "",
+      );
+    });
+
+    const merged = new Map<string, SurveySession>();
+
+    readDrafts(uid).forEach((session) => {
+      const deletedAt = deleted.get(session.id);
+      if (!deletedAt || session.updatedAt.localeCompare(deletedAt) > 0) {
+        merged.set(session.id, session);
+      }
+    });
+
+    cloudSnapshot.docs.forEach((item) => {
+      const data = item.data() as { session?: unknown };
+      if (!isSurveySession(data.session, uid)) return;
+
+      const session = normalizeSession(data.session);
+      const deletedAt = deleted.get(session.id);
+      if (deletedAt && deletedAt.localeCompare(session.updatedAt) >= 0) return;
+
+      const existing = merged.get(session.id);
+      if (!existing || session.updatedAt.localeCompare(existing.updatedAt) > 0) {
+        merged.set(session.id, session);
+      }
+    });
+
+    const result = writeDrafts(uid, [...merged.values()]);
+
+    await Promise.all(
+      result.map((session) =>
+        setDoc(userDraftRef(uid, session.id), {
+          session,
+          updatedAt: session.updatedAt,
+        }),
+      ),
+    );
+
+    backupSurveyStateExternally(uid);
+    dispatchSessionEvent();
+    return result;
+  } catch (error) {
+    console.warn("Unable to synchronize survey drafts.", error);
+    return listSurveyDrafts(uid);
+  }
 }
 
 /**
@@ -753,6 +1051,7 @@ export function getSurveyDraftRecord(
  */
 export function clearSurveySession(uid: string): void {
   localStorage.removeItem(activeSessionKey(uid));
+  backupSurveyStateExternally(uid);
   dispatchSessionEvent();
 }
 

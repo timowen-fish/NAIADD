@@ -7,6 +7,7 @@ import type {
 import type { SurveySubmission } from "../types/submission";
 import {
   activateSurveyDraft,
+  activateSurveyDraftDurably,
   createSurveyDraft,
   deleteSurveyDraft,
   duplicateSurveyDraft,
@@ -48,7 +49,7 @@ type DraftSummary = {
   currentStepLabel: string;
 };
 
-const APP_ROUTE_EVENT = "vadma-app-route";
+const APP_ROUTE_EVENT = "naiadd-app-route";
 
 const FILTERS: Array<{ id: DraftFilter; label: string }> = [
   { id: "all", label: "All" },
@@ -445,7 +446,9 @@ function DraftCard({
         >
           {draft.submission
             ? "Submitted"
-            : "Continue Editing"}
+            : busy
+              ? "Opening..."
+              : "Continue Editing"}
         </button>
 
         <button
@@ -642,9 +645,12 @@ export default function DraftsPage({
     setError("");
 
     try {
-      activateSurveyDraft(profile.uid, session.id);
+      setMessage("Opening saved survey...");
+      await activateSurveyDraftDurably(profile.uid, session.id);
+      window.alert("Selected Draft Added to Data Entry Workflow");
       routeToDataEntry();
     } catch {
+      setMessage("");
       setError("This saved survey could not be opened.");
     } finally {
       setBusyId("");

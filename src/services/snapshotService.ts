@@ -9,6 +9,12 @@ const SNAPSHOT_RECORD_ID = "currentSnapshot";
 const COLLECTION_INDEX_RECORD_ID = "currentCollectionIndex";
 const SNAPSHOT_META_KEY = "naiadd_snapshot_meta_v1";
 
+const OFFLINE_HELPER_BASE_URL = "http://127.0.0.1:43128";
+const OFFLINE_HELPER_SNAPSHOT_URL = `${OFFLINE_HELPER_BASE_URL}/snapshot`;
+const OFFLINE_HELPER_SNAPSHOT_META_URL = `${OFFLINE_HELPER_BASE_URL}/snapshot-meta`;
+const OFFLINE_HELPER_SNAPSHOT_INDEX_URL = `${OFFLINE_HELPER_BASE_URL}/snapshot-index`;
+const OFFLINE_HELPER_SNAPSHOT_KEY_URL = `${OFFLINE_HELPER_BASE_URL}/snapshot-key`;
+
 export type SnapshotConfiguration = {
   active: boolean;
   version: string;
@@ -393,7 +399,7 @@ async function decryptPayload(
   );
 }
 
-async function fetchEncryptedPayload(url: string): Promise<EncryptedPayload> {
+async function fetchEncryptedPayloadText(url: string): Promise<string> {
   const response = await fetch(url, {
     method: "GET",
     cache: "no-store",
@@ -405,7 +411,171 @@ async function fetchEncryptedPayload(url: string): Promise<EncryptedPayload> {
     );
   }
 
-  return parseEncryptedPayload(await response.text());
+  return response.text();
+}
+
+async function fetchEncryptedPayload(url: string): Promise<EncryptedPayload> {
+  return parseEncryptedPayload(await fetchEncryptedPayloadText(url));
+}
+
+
+async function writeHelperJson(
+  url: string,
+  value: unknown,
+): Promise<boolean> {
+  try {
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(value),
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function mirrorEncryptedSnapshotToHelper(
+  meta: SnapshotMetadata,
+  snapshotKey: string,
+  encryptedSnapshotText: string,
+): Promise<void> {
+  try {
+    await Promise.all([
+      fetch(OFFLINE_HELPER_SNAPSHOT_URL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/octet-stream" },
+        body: new TextEncoder().encode(encryptedSnapshotText),
+      }),
+      writeHelperJson(OFFLINE_HELPER_SNAPSHOT_META_URL, meta),
+      writeHelperJson(OFFLINE_HELPER_SNAPSHOT_KEY_URL, {
+        snapshot_key: snapshotKey,
+      }),
+    ]);
+  } catch {
+    // Helper is optional on ordinary/mobile devices.
+  }
+}
+
+async function mirrorEncryptedIndexToHelper(
+  encryptedIndexText: string,
+): Promise<void> {
+  try {
+    await fetch(OFFLINE_HELPER_SNAPSHOT_INDEX_URL, {
+      method: "PUT",
+      headers: { "Content-Type": "application/octet-stream" },
+      body: new TextEncoder().encode(encryptedIndexText),
+    });
+  } catch {
+    // Helper is optional on ordinary/mobile devices.
+  }
+}
+
+export async function restoreSnapshotFromHelper(): Promise<boolean> {
+  try {
+    const [metaResponse, snapshotResponse, keyResponse] =
+      await Promise.all([
+        fetch(OFFLINE_HELPER_SNAPSHOT_META_URL, {
+          cache: "no-store",
+        }),
+        fetch(OFFLINE_HELPER_SNAPSHOT_URL, {
+          cache: "no-store",
+        }),
+        fetch(OFFLINE_HELPER_SNAPSHOT_KEY_URL, {
+          cache: "no-store",
+        }),
+      ]);
+
+    if (
+      !metaResponse.ok ||
+      !snapshotResponse.ok ||
+      !keyResponse.ok
+    ) {
+      return false;
+    }
+
+    const meta = (await metaResponse.json()) as SnapshotMetadata;
+    const keyPackage = (await keyResponse.json()) as {
+      snapshotKey?: unknown;
+    };
+    const snapshotKey =
+      typeof keyPackage.snapshotKey === "string"
+        ? keyPackage.snapshotKey.trim()
+        : "";
+
+    if (
+      !meta?.version ||
+      !/^[0-9a-fA-F]{128}$/.test(snapshotKey)
+    ) {
+      return false;
+    }
+
+    const encryptedSnapshotText = await snapshotResponse.text();
+    const decrypted = await decryptPayload(
+      parseEncryptedPayload(encryptedSnapshotText),
+      snapshotKey,
+    );
+
+    const blob = new Blob([decrypted], {
+      type: "application/octet-stream",
+    });
+
+    const restoredMeta: SnapshotMetadata = {
+      ...meta,
+      sizeBytes: blob.size,
+      encrypted: true,
+    };
+
+    await writeCacheRecord({
+      id: SNAPSHOT_RECORD_ID,
+      meta: restoredMeta,
+      blob,
+    });
+
+    localStorage.setItem(
+      SNAPSHOT_META_KEY,
+      JSON.stringify(restoredMeta),
+    );
+
+    try {
+      const indexResponse = await fetch(
+        OFFLINE_HELPER_SNAPSHOT_INDEX_URL,
+        { cache: "no-store" },
+      );
+
+      if (indexResponse.ok) {
+        const encryptedIndexText = await indexResponse.text();
+        const indexPayload =
+          parseEncryptedPayload(encryptedIndexText);
+        const decryptedIndex = await decryptPayload(
+          indexPayload,
+          snapshotKey,
+        );
+        const records = normalizeIndexRecords(
+          JSON.parse(
+            new TextDecoder("utf-8").decode(decryptedIndex),
+          ),
+        );
+
+        await writeCacheRecord({
+          id: COLLECTION_INDEX_RECORD_ID,
+          version: restoredMeta.version,
+          cachedAt: new Date().toISOString(),
+          records,
+        });
+      }
+    } catch (error) {
+      console.warn(
+        "NAIADD snapshot restored, but the helper collection index could not be restored.",
+        error,
+      );
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function normalizeIndexRecords(value: unknown): CollectionIndexRecord[] {
@@ -525,9 +695,19 @@ export function getCachedSnapshotMetadata(): SnapshotMetadata | null {
 }
 
 export async function getCachedSnapshot(): Promise<CachedSnapshot | null> {
-  const record = await readCacheRecord<SnapshotCacheRecord>(
+  let record = await readCacheRecord<SnapshotCacheRecord>(
     SNAPSHOT_RECORD_ID,
   );
+
+  if (!record?.blob || !record.meta) {
+    const restored = await restoreSnapshotFromHelper();
+
+    if (restored) {
+      record = await readCacheRecord<SnapshotCacheRecord>(
+        SNAPSHOT_RECORD_ID,
+      );
+    }
+  }
 
   if (!record?.blob || !record.meta) {
     return null;
@@ -606,18 +786,36 @@ export async function ensureCollectionIndex(): Promise<
     );
   }
 
-  const records = await downloadCollectionIndex(
+  const encryptedIndexText = await fetchEncryptedPayloadText(
     configuration.snapshotIndexUrl,
+  );
+  const decryptedIndex = await decryptPayload(
+    parseEncryptedPayload(encryptedIndexText),
     configuration.snapshotKey,
+  );
+  const records = normalizeIndexRecords(
+    JSON.parse(new TextDecoder("utf-8").decode(decryptedIndex)),
   );
 
   await cacheCollectionIndex(configuration.version, records);
+  void mirrorEncryptedIndexToHelper(encryptedIndexText);
+  void writeHelperJson(OFFLINE_HELPER_SNAPSHOT_KEY_URL, {
+    snapshot_key: configuration.snapshotKey,
+  });
 
   return records;
 }
 
 export async function syncSnapshotIfNeeded(): Promise<SnapshotSyncStatus> {
-  const cachedMeta = getCachedSnapshotMetadata();
+  let cachedMeta = getCachedSnapshotMetadata();
+
+  if (!cachedMeta) {
+    const restored = await restoreSnapshotFromHelper();
+
+    if (restored) {
+      cachedMeta = getCachedSnapshotMetadata();
+    }
+  }
 
   if (!navigator.onLine) {
     return cachedMeta
@@ -664,20 +862,41 @@ export async function forceSyncSnapshot(
   const configuration =
     suppliedConfiguration ?? (await fetchSnapshotConfiguration());
 
-  const blob = await downloadSnapshotBlob(
+  const encryptedSnapshotText = await fetchEncryptedPayloadText(
     configuration.snapshotUrl,
+  );
+  const decryptedSnapshot = await decryptPayload(
+    parseEncryptedPayload(encryptedSnapshotText),
     configuration.snapshotKey,
   );
+  const blob = new Blob([decryptedSnapshot], {
+    type: "application/octet-stream",
+  });
 
   const meta = await cacheSnapshot(configuration, blob);
 
+  void mirrorEncryptedSnapshotToHelper(
+    meta,
+    configuration.snapshotKey,
+    encryptedSnapshotText,
+  );
+
   if (configuration.snapshotIndexUrl) {
-    const records = await downloadCollectionIndex(
+    const encryptedIndexText = await fetchEncryptedPayloadText(
       configuration.snapshotIndexUrl,
+    );
+    const decryptedIndex = await decryptPayload(
+      parseEncryptedPayload(encryptedIndexText),
       configuration.snapshotKey,
+    );
+    const records = normalizeIndexRecords(
+      JSON.parse(
+        new TextDecoder("utf-8").decode(decryptedIndex),
+      ),
     );
 
     await cacheCollectionIndex(configuration.version, records);
+    void mirrorEncryptedIndexToHelper(encryptedIndexText);
   }
 
   return {

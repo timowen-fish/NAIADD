@@ -706,11 +706,79 @@ function ExistingSiteStep({
   }
 
   function saveSiteAndContinue(site: SiteRecord) {
-    saveCurrentLocation(site);
-    onLocationSaved(site);
-    setSiteStatusMessage(
-      `${site.SiteName} saved as the current location.`,
-    );
+    try {
+      /*
+       * Keep the selected location entirely JSON/Firestore safe.
+       *
+       * This mirrors the working VADMA implementation: every optional text
+       * field is materialized as an empty string instead of `undefined`.
+       * Firestore rejects undefined field values when the updated survey
+       * session is autosaved immediately after advancing to Step 2.
+       */
+      const downstreamLat = asNumber(site.DownstreamLat);
+      const downstreamLong = asNumber(site.DownstreamLong);
+      const upstreamLat = asNumber(site.UpstreamLat);
+      const upstreamLong = asNumber(site.UpstreamLong);
+
+      const safeSite: LocationRecord = {
+        SiteID: asString(site.SiteID).trim(),
+        SiteID_AccessDB: asString(site.SiteID_AccessDB).trim(),
+        SiteID_Previous: asString(site.SiteID_Previous).trim(),
+        SiteName: asString(site.SiteName).trim(),
+        Waterbody: asString(site.Waterbody).trim(),
+
+        LatitudeDD: downstreamLat,
+        LongitudeDD: downstreamLong,
+        DownstreamLat: downstreamLat,
+        DownstreamLong: downstreamLong,
+
+        UpstreamLat: Number.isFinite(upstreamLat)
+          ? upstreamLat
+          : null,
+        UpstreamLong: Number.isFinite(upstreamLong)
+          ? upstreamLong
+          : null,
+
+        LocDescription: asString(site.LocDescription).trim(),
+        County: asString(site.County).trim(),
+        State: asString(site.State).trim(),
+        RiverBasin: asString(site.RiverBasin).trim(),
+        HUC7: asString(site.HUC7).trim(),
+        PhysiographicProvince: asString(
+          site.PhysiographicProvince,
+        ).trim(),
+        RoadName: asString(site.RoadName).trim(),
+        RoadNumber: asString(site.RoadNumber).trim(),
+        createdBy: asString(site.createdBy).trim(),
+      };
+
+      if (
+        !safeSite.SiteID ||
+        !safeSite.SiteName ||
+        !Number.isFinite(safeSite.LatitudeDD) ||
+        !Number.isFinite(safeSite.LongitudeDD) ||
+        !Number.isFinite(safeSite.DownstreamLat) ||
+        !Number.isFinite(safeSite.DownstreamLong)
+      ) {
+        throw new Error(
+          "The selected site does not contain valid NAIADD location information.",
+        );
+      }
+
+      saveCurrentLocation(safeSite);
+      onLocationSaved(safeSite);
+    } catch (error) {
+      console.error(
+        "Unable to use the selected existing site:",
+        error,
+      );
+
+      setSiteStatusMessage(
+        error instanceof Error
+          ? `Unable to use this site: ${error.message}`
+          : "Unable to use the selected site.",
+      );
+    }
   }
 
   function saveSelectedSite() {

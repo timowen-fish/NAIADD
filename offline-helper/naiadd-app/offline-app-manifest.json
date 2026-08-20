@@ -1,0 +1,472 @@
+{
+  "format": "NAIADD_OFFLINE_APP_MANIFEST_V1",
+  "version": "local-1787238961934",
+  "builtAt": "2026-08-20T15:16:01.934Z",
+  "files": [
+    {
+      "path": "apple-touch-icon.png",
+      "size": 43383,
+      "sha256": "e73436960a91ba3e2674ac39fd396369f5d742cb64e8743b752cc613f21e0088"
+    },
+    {
+      "path": "assets/CreateNewSite-BddjuiEu.jpg",
+      "size": 243844,
+      "sha256": "e05667d150d6ce655ed1d95441813bd45a791bd337c963395def50eafb568c7c"
+    },
+    {
+      "path": "assets/index-02uxGfE2.js",
+      "size": 1382099,
+      "sha256": "942d7a6172070b381eda04c0e2a6aa0095c7a55372dd66f4a246b011f7a41581"
+    },
+    {
+      "path": "assets/index-B4RmvRkY.css",
+      "size": 385718,
+      "sha256": "542cfd32b6e3480b7aac8a0223d855bb4fd5c4f26084c031664c2cf43833e169"
+    },
+    {
+      "path": "assets/naiadd-shield-COzVrkkD.png",
+      "size": 249664,
+      "sha256": "83915e9fbffabbad7178163f44c7ff7b33e332f44e6fdebc69b083fe509120ac"
+    },
+    {
+      "path": "assets/Species-Header-BabyHeads-Bb2FjCxV.jpg",
+      "size": 272920,
+      "sha256": "39130c93892f1780ef5da926570e1e82ac2e729f72fc107d6362246522670e66"
+    },
+    {
+      "path": "assets/Species-Header-SCUBA-ob3ufIH9.jpg",
+      "size": 145468,
+      "sha256": "9ff06b74160556aaa7dc4359e55dce263fd7a3e67571b6950cc5fa58c18383d6"
+    },
+    {
+      "path": "assets/Species-Header-ThreeRidge-BU07m7MD.jpg",
+      "size": 111412,
+      "sha256": "3d164c2f392070cb7dc614eaf21a3e749545fec71646057283ceb6840f27dad5"
+    },
+    {
+      "path": "assets/Species-Header-TidewaterMucket-B9Gc1hNK.jpg",
+      "size": 124957,
+      "sha256": "cbeb300c80a084e530231c80f2df80d009040d92930155837def93f141706861"
+    },
+    {
+      "path": "assets/src-BJtiCRgS.js",
+      "size": 50338,
+      "sha256": "f49e8a7601a2a6a702573aa08aeb73721dd59bd09eca177520794dfbef5970f8"
+    },
+    {
+      "path": "assets/src-C0qVJKjd.js",
+      "size": 114620,
+      "sha256": "66eda11f820aed61a2226407081179cb6a5e386e0661fc0430df914cd393bd6b"
+    },
+    {
+      "path": "assets/UseExistingSite-3I37F1Kv.jpg",
+      "size": 213812,
+      "sha256": "c98934cb922f46dd8ed86dcccf75ca5c5b415142926f8d414849d7e9074719b3"
+    },
+    {
+      "path": "assets/VirginiaWaters--Sgf-aP8.png",
+      "size": 6725113,
+      "sha256": "f6acd3e3547c46edd3d621a32a7be0a327be193bf8c72d39c8863c2031f177f0"
+    },
+    {
+      "path": "assets/workbox-window.prod.es5-Bd17z0YL.js",
+      "size": 5653,
+      "sha256": "17bcc17d60dc78f927834b880c39649b03af46fd1f5cdbb8c42c5ae2b515dce9"
+    },
+    {
+      "path": "data/data_entry_lists.json",
+      "size": 53077,
+      "sha256": "3e6ed27fd3b10d4f6a9cc7a3f5ea489eab7904c2c6fb67dbe71f93d8ee9c8189"
+    },
+    {
+      "path": "data/distributions/lookups/species-reference.json",
+      "size": 11276,
+      "sha256": "27f7999050f3d205af9e85ce10debfb0f6660079a97d59979a1a9cfa245a830a"
+    },
+    {
+      "path": "data/distributions/observations/historic-ortmann.json",
+      "size": 111806,
+      "sha256": "bfbb55428b5393d361b1288e843621fc0c08d5b5ed8d6fcee26862a8ac99e74f"
+    },
+    {
+      "path": "data/distributions/observations/historic-ortmann/part-0001.json",
+      "size": 80956,
+      "sha256": "8a10ad22b163ca3081b38e24958be78a036e0bbb0ca52077254cd7b8cf2eb772"
+    },
+    {
+      "path": "data/distributions/observations/jma-dataset.json",
+      "size": 2286087,
+      "sha256": "7745de84223d091bf02097ed80a4de0821045cb28acc04a5701efea9d37fe3db"
+    },
+    {
+      "path": "data/distributions/observations/jma-dataset/part-0001.json",
+      "size": 785225,
+      "sha256": "46d6f0d79b72dd72e319ac46708d4354b6bef70472c7e5d5a26a97d0aefd9540"
+    },
+    {
+      "path": "data/distributions/observations/manifest.json",
+      "size": 1717,
+      "sha256": "32ddf7fd4d0067b2747bd972e8ba00c423cc2a86fa9b242fa39ca17aa2ef61f8"
+    },
+    {
+      "path": "data/distributions/observations/natural-heritage.json",
+      "size": 324947,
+      "sha256": "d379548df37260ce3a582a2bfb8dcfd023637f6b27eac138c008283c3d1b93f4"
+    },
+    {
+      "path": "data/distributions/observations/natural-heritage/part-0001.json",
+      "size": 315600,
+      "sha256": "0fd879c1da97dc805c6dbbfaf9ebfc138dea778bf705fb3d2a2471a9c70245f0"
+    },
+    {
+      "path": "data/distributions/observations/release-output.json",
+      "size": 3492802,
+      "sha256": "4ec63e85033cd1863b4f577b68890dc895f9058fc95df084fbd015ed768debc0"
+    },
+    {
+      "path": "data/distributions/observations/release-output/part-0001.json",
+      "size": 341059,
+      "sha256": "d2ec708eb4ce0cf363ed6eeadeb87c73283e7510a5286a187ab5e1aac87b5592"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0001.json",
+      "size": 6652326,
+      "sha256": "0859c112db1044d2860cb497e76265ef9bdcfc3422ce1543c1d5eb9e9e5b3534"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0002.json",
+      "size": 6602610,
+      "sha256": "98cf4a39e4ba98315878fe3cefbaadc5a8a621b31a3b8b091a947f3d45c3169b"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0003.json",
+      "size": 5736960,
+      "sha256": "9443c5d984ae03f6e4086aec1c5e32adab034b31f3f5337d439f36acfc1158ae"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0004.json",
+      "size": 5415364,
+      "sha256": "27145c7510bcfde6f76d868cddd9f20000823ed92117f272ea0b0d2ef77c3b97"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0005.json",
+      "size": 5703149,
+      "sha256": "a22a309b8080747f00c3bc5d64f69e8bd11a14fafec5fb16dcec11317b6c4216"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0006.json",
+      "size": 5881025,
+      "sha256": "6215ac092f4116e5d46720783593d5bf1de3deef57e2adb1690777f09d7bf1ca"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0007.json",
+      "size": 5947874,
+      "sha256": "a728d93e23d24bd2a9310d5b2b3eace2fcc18964ee114979b085339142238feb"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0008.json",
+      "size": 6002588,
+      "sha256": "56ccbee6b60cecabbdfef23bd5222bb1229a1e1c141f4ab1e0944e420deaadd0"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0009.json",
+      "size": 6149826,
+      "sha256": "17221287aa4e240609550b7ff3a8057b8031ea3c8015c22f925546958422cc3a"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0010.json",
+      "size": 5929411,
+      "sha256": "aa38f7d6ca9652bc0993d08f589f292de38fc90ef07f8fa798580645e18f7199"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0011.json",
+      "size": 6079903,
+      "sha256": "0a410fde8b8b1d0ff74b0d8ffe6b06dd3285b9781e3bd1d97a7088a05e635acf"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0012.json",
+      "size": 6022591,
+      "sha256": "96b574ecde81c0f54f4ca62d57255d586c47844480e151e113cb89224bb371f5"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0013.json",
+      "size": 6044361,
+      "sha256": "0323c486ed1c1989ea52f2c273790563b1df1c238dff6d22a6691f7352472834"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0014.json",
+      "size": 5995140,
+      "sha256": "29126b5289ab74a85dc3efe5dc66a1e4b5553ae5522b9752a4f55e3234ec69cc"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0015.json",
+      "size": 6094417,
+      "sha256": "6047b98f351327c750e830bddf1ac2790166bd5ce507875fcaad0e69103b8460"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0016.json",
+      "size": 6148062,
+      "sha256": "28577cfe414b892927204f9bb7ba5715c28bd9b91c058f8c7bded6214535c338"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0017.json",
+      "size": 6192033,
+      "sha256": "e117aec3c84549a1a5e9007a9d62ade12a4a3c230fd51b81ee0007b1d37ce7fc"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0018.json",
+      "size": 6280483,
+      "sha256": "bd680408567798ad782f7fa9ddc0d1c85ce9007b4d45d64d90a8d517bfb335c7"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0019.json",
+      "size": 6039648,
+      "sha256": "3d28ff2534864472faf987856f95285d9b0b59e19800ef3f21faec7bf9e0c03d"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0020.json",
+      "size": 6122672,
+      "sha256": "59916ca413d13fd8b53eafa282ae06d0ee95741739a6913ec2c53f81b25245bf"
+    },
+    {
+      "path": "data/distributions/observations/vafwis-latlong/part-0021.json",
+      "size": 5502720,
+      "sha256": "e1ac6d11955dc3398a391d8f9a04433996ea669b69b1a72f96264804ebc93908"
+    },
+    {
+      "path": "data/sites_existing.json",
+      "size": 872589,
+      "sha256": "323b5d4feaf86f343d9506debfc060d97de3276d63bfa8fc857322bf960a3b59"
+    },
+    {
+      "path": "data/species_list.json",
+      "size": 22438,
+      "sha256": "a162e840aabf3518e5f741ddc4db387a75f5c04059003199c5b67fc9a1bcf129"
+    },
+    {
+      "path": "favicon-16x16.png",
+      "size": 955,
+      "sha256": "cc1e4cdbb405facd1881ae57363fcd4021f32657a667dfbafccad56ce1307a1b"
+    },
+    {
+      "path": "favicon-32x32.png",
+      "size": 3026,
+      "sha256": "da94181cd6224521d3dc39c89ffb9757f2db69d6ef1bec2d4e7a57ae901f34eb"
+    },
+    {
+      "path": "favicon.ico",
+      "size": 19901,
+      "sha256": "1938cdc2f45480ce7e579a37488ec3c11bccbdacd736740fae2510f460e752e8"
+    },
+    {
+      "path": "favicon.svg",
+      "size": 9522,
+      "sha256": "61bc9a161de58248288e6905425d7180f0624c2865007b97d763fdac12043a66"
+    },
+    {
+      "path": "icon-192.png",
+      "size": 35619,
+      "sha256": "d68486bb4e03769c502df1dd4e1a40109f6a7a7a125c54d638ca75fedb5973f6"
+    },
+    {
+      "path": "icon-512.png",
+      "size": 193162,
+      "sha256": "004b423dc587ea806174d4220600d3d88b313d2218d56093147aacf934eeba21"
+    },
+    {
+      "path": "icons.svg",
+      "size": 5031,
+      "sha256": "b45fa506195cfcdef406ba9f0c77b36ddc1a7c224040926ec70abc2fdea7b93a"
+    },
+    {
+      "path": "images/login-backgrounds/CreateNewSite.jpg",
+      "size": 243844,
+      "sha256": "e05667d150d6ce655ed1d95441813bd45a791bd337c963395def50eafb568c7c"
+    },
+    {
+      "path": "images/login-backgrounds/Species-Header-Babyheads.jpg",
+      "size": 272920,
+      "sha256": "39130c93892f1780ef5da926570e1e82ac2e729f72fc107d6362246522670e66"
+    },
+    {
+      "path": "images/login-backgrounds/Species-Header-Pheasantshell.jpg",
+      "size": 427310,
+      "sha256": "1e506ec52f9b0959dac06790fd19437a557b1903075323d9b387210caca3f292"
+    },
+    {
+      "path": "images/login-backgrounds/Species-Header-SCUBA.jpg",
+      "size": 408836,
+      "sha256": "1fee0f360724f002c73524cd81a8ac2e11527a97263fd80d7c738d2611e93ad4"
+    },
+    {
+      "path": "images/login-backgrounds/Species-Header-ThreeRidge.jpg",
+      "size": 299117,
+      "sha256": "976a74a8e55a4968f0b04fd4303926934b3114269e6884636bdd5fdaaf8243d0"
+    },
+    {
+      "path": "images/login-backgrounds/Species-Header-TidewaterMucket.jpg",
+      "size": 331600,
+      "sha256": "a056ee9a0c2e11f2bba648f6314cf88f16166a384a7465b7f2f7a41069a8e68c"
+    },
+    {
+      "path": "images/login-backgrounds/Species-Header-TriangleFloater.jpg",
+      "size": 362112,
+      "sha256": "3ff1ff46b76f0d33fbfdb5944774e4875d688a37395a3ae7c618533129308803"
+    },
+    {
+      "path": "images/login-backgrounds/UseExistingSite.jpg",
+      "size": 213812,
+      "sha256": "c98934cb922f46dd8ed86dcccf75ca5c5b415142926f8d414849d7e9074719b3"
+    },
+    {
+      "path": "images/login-backgrounds/VirginiaWaters.png",
+      "size": 6725113,
+      "sha256": "f6acd3e3547c46edd3d621a32a7be0a327be193bf8c72d39c8863c2031f177f0"
+    },
+    {
+      "path": "images/scenery/Header_1.jpg",
+      "size": 888305,
+      "sha256": "e5065ded81bf9785e77b09943e0f04cb18610c64e247918c802026fea10e3609"
+    },
+    {
+      "path": "images/scenery/Header_10.jpg",
+      "size": 390014,
+      "sha256": "fd92311b01f97e0bf4355ba31774842c724ec713102a30dce563a8cb857ff40a"
+    },
+    {
+      "path": "images/scenery/Header_11.jpg",
+      "size": 825484,
+      "sha256": "009fde4691822113fd90d41cee67b4d60860b111b1a815f74522d2facdb4ff96"
+    },
+    {
+      "path": "images/scenery/Header_12.jpg",
+      "size": 813861,
+      "sha256": "90b3cdb0f826b4da8619a90228916f92e1b230e5cf9f6aaa7d07d99d5218e358"
+    },
+    {
+      "path": "images/scenery/Header_13.jpg",
+      "size": 946721,
+      "sha256": "fe53d0f65e4534309ecf8f391a5fe5a065025fb3f67ee6645758d555599e4093"
+    },
+    {
+      "path": "images/scenery/Header_14.jpg",
+      "size": 472216,
+      "sha256": "7ccc1b2ce9b4891e617893ca420f7f6b2b3aa5f627322b09e6c10a05366f1dbc"
+    },
+    {
+      "path": "images/scenery/Header_15.jpg",
+      "size": 736840,
+      "sha256": "1852577f074c40d03ec683cecd4bcbe7411f0617bbc01fb8705f4e3bf5286ce9"
+    },
+    {
+      "path": "images/scenery/Header_16.jpg",
+      "size": 124050,
+      "sha256": "1d50a663c5511fcbffd1829f0d42e65e017b3aba7205718a6a576c86062a3435"
+    },
+    {
+      "path": "images/scenery/Header_2.jpg",
+      "size": 56383,
+      "sha256": "13a896082d81fa84d669ab750f8c96c883feaee01c25c5b842266b58537ca244"
+    },
+    {
+      "path": "images/scenery/Header_3.jpg",
+      "size": 819282,
+      "sha256": "dbf31574824d1acce1ec7f46feb1fe9fab4aeff822065d94aac2c2ce349a0a98"
+    },
+    {
+      "path": "images/scenery/Header_4.jpg",
+      "size": 776192,
+      "sha256": "7fa429c8d0b51af44ed246348e91be61bdef26be35529b4c3ab1a81b26a27efd"
+    },
+    {
+      "path": "images/scenery/Header_5.jpg",
+      "size": 797732,
+      "sha256": "27225d348a83ff8176ab8dcaa11b6d78382038f8d16b8a847b33033caaacbf82"
+    },
+    {
+      "path": "images/scenery/Header_6.jpg",
+      "size": 61418,
+      "sha256": "e134fd71a1c7877ce8f4f8ddd2653abe1a9fbf77632a155425a62fe2bf0e4bab"
+    },
+    {
+      "path": "images/scenery/Header_7.jpg",
+      "size": 712990,
+      "sha256": "c9b339d520eed2bbb51bdeed3d472794708dd269902042062b1a25298cdac794"
+    },
+    {
+      "path": "images/scenery/Header_8.jpg",
+      "size": 877799,
+      "sha256": "2d50034f0d23e9c1eafd6638937316a3d917ccf88d77b1242dcebcdc35328535"
+    },
+    {
+      "path": "images/scenery/Header_9.jpg",
+      "size": 830998,
+      "sha256": "9ae7cedb650b316725f9805a52cf2e2dbab2b16ce9a2347dfb9195878d664434"
+    },
+    {
+      "path": "index.html",
+      "size": 947,
+      "sha256": "a9521a3877c020a90339588ed98a52a201e2f7e3d6fcb682880346587be5e666"
+    },
+    {
+      "path": "manifest.webmanifest",
+      "size": 571,
+      "sha256": "04492eedbbcbb1ac8fd8eef9c8763bdfc26a96a14004f7d650e14218fd007965"
+    },
+    {
+      "path": "spatial/counties.geojson",
+      "size": 553281,
+      "sha256": "4ddf1922ebcc7dbdf74e7018d3e3d986258c044f1cf98f084191483cd67a3078"
+    },
+    {
+      "path": "spatial/distributions/huc10.geojson",
+      "size": 8367181,
+      "sha256": "fe8fc9e24c1c02b2becc1aea34e2c2da9753725bb7c15b8fd0170bd2ef59e15c"
+    },
+    {
+      "path": "spatial/distributions/huc12.geojson",
+      "size": 19760884,
+      "sha256": "8c7152fba09f2976467b8afe5dda314e575b92f067dbe5bcaec2324a1f6ed2e2"
+    },
+    {
+      "path": "spatial/distributions/te-waters.geojson",
+      "size": 12121416,
+      "sha256": "9f64a857fb72fb182e74daf315dcdb4347c2e7c61a56933b2f94f29a358d3d6b"
+    },
+    {
+      "path": "spatial/huc06.geojson",
+      "size": 4449254,
+      "sha256": "7fc5bc3426a3fb5f1053486acaa2de32cb646cae5555fafd74920d9b7237941f"
+    },
+    {
+      "path": "spatial/huc08.geojson",
+      "size": 6532161,
+      "sha256": "f25f371bed2e30debe95e4ac2d989185d7567b77997ceaef2211757fea1bc1ac"
+    },
+    {
+      "path": "spatial/physiographic_provinces.geojson",
+      "size": 789923,
+      "sha256": "f837fa6066f90e12f1807660c2b50bcd74d4278fcfd9e02c0bf65fc5b6c261fd"
+    },
+    {
+      "path": "spatial/states.geojson",
+      "size": 1993610,
+      "sha256": "b6d3f6cfcc52d3ba93f0f5860d2a9d197da475ed9560f7e1408b9d2dd10df8a0"
+    },
+    {
+      "path": "sw.js",
+      "size": 6499,
+      "sha256": "9dca85d0760f5ce0fcef8ee2b1290270f4fbd38f859519c48bba8ceb197eda88"
+    },
+    {
+      "path": "vadma_shield.png",
+      "size": 315073,
+      "sha256": "aedb36c6a6ab799b786797d8d9ef435017cc389919cb72d9d7815c26f728abbc"
+    },
+    {
+      "path": "workbox-07e28819.js",
+      "size": 22700,
+      "sha256": "2696f01904a905314678618d310735a304b29cc1fe08afb338d10877371e1477"
+    }
+  ]
+}
