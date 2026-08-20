@@ -1,7 +1,7 @@
 {
   "format": "NAIADD_OFFLINE_APP_MANIFEST_V1",
-  "version": "local-1787244550797",
-  "builtAt": "2026-08-20T16:49:10.797Z",
+  "version": "local-1787246537610",
+  "builtAt": "2026-08-20T17:22:17.610Z",
   "files": [
     {
       "path": "apple-touch-icon.png",
@@ -79,161 +79,6 @@
       "sha256": "3e6ed27fd3b10d4f6a9cc7a3f5ea489eab7904c2c6fb67dbe71f93d8ee9c8189"
     },
     {
-      "path": "data/distributions/lookups/species-reference.json",
-      "size": 11276,
-      "sha256": "27f7999050f3d205af9e85ce10debfb0f6660079a97d59979a1a9cfa245a830a"
-    },
-    {
-      "path": "data/distributions/observations/historic-ortmann.json",
-      "size": 111806,
-      "sha256": "bfbb55428b5393d361b1288e843621fc0c08d5b5ed8d6fcee26862a8ac99e74f"
-    },
-    {
-      "path": "data/distributions/observations/historic-ortmann/part-0001.json",
-      "size": 80956,
-      "sha256": "8a10ad22b163ca3081b38e24958be78a036e0bbb0ca52077254cd7b8cf2eb772"
-    },
-    {
-      "path": "data/distributions/observations/jma-dataset.json",
-      "size": 2286087,
-      "sha256": "7745de84223d091bf02097ed80a4de0821045cb28acc04a5701efea9d37fe3db"
-    },
-    {
-      "path": "data/distributions/observations/jma-dataset/part-0001.json",
-      "size": 785225,
-      "sha256": "46d6f0d79b72dd72e319ac46708d4354b6bef70472c7e5d5a26a97d0aefd9540"
-    },
-    {
-      "path": "data/distributions/observations/manifest.json",
-      "size": 1717,
-      "sha256": "32ddf7fd4d0067b2747bd972e8ba00c423cc2a86fa9b242fa39ca17aa2ef61f8"
-    },
-    {
-      "path": "data/distributions/observations/natural-heritage.json",
-      "size": 324947,
-      "sha256": "d379548df37260ce3a582a2bfb8dcfd023637f6b27eac138c008283c3d1b93f4"
-    },
-    {
-      "path": "data/distributions/observations/natural-heritage/part-0001.json",
-      "size": 315600,
-      "sha256": "0fd879c1da97dc805c6dbbfaf9ebfc138dea778bf705fb3d2a2471a9c70245f0"
-    },
-    {
-      "path": "data/distributions/observations/release-output.json",
-      "size": 3492802,
-      "sha256": "4ec63e85033cd1863b4f577b68890dc895f9058fc95df084fbd015ed768debc0"
-    },
-    {
-      "path": "data/distributions/observations/release-output/part-0001.json",
-      "size": 341059,
-      "sha256": "d2ec708eb4ce0cf363ed6eeadeb87c73283e7510a5286a187ab5e1aac87b5592"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0001.json",
-      "size": 6652326,
-      "sha256": "0859c112db1044d2860cb497e76265ef9bdcfc3422ce1543c1d5eb9e9e5b3534"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0002.json",
-      "size": 6602610,
-      "sha256": "98cf4a39e4ba98315878fe3cefbaadc5a8a621b31a3b8b091a947f3d45c3169b"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0003.json",
-      "size": 5736960,
-      "sha256": "9443c5d984ae03f6e4086aec1c5e32adab034b31f3f5337d439f36acfc1158ae"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0004.json",
-      "size": 5415364,
-      "sha256": "27145c7510bcfde6f76d868cddd9f20000823ed92117f272ea0b0d2ef77c3b97"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0005.json",
-      "size": 5703149,
-      "sha256": "a22a309b8080747f00c3bc5d64f69e8bd11a14fafec5fb16dcec11317b6c4216"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0006.json",
-      "size": 5881025,
-      "sha256": "6215ac092f4116e5d46720783593d5bf1de3deef57e2adb1690777f09d7bf1ca"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0007.json",
-      "size": 5947874,
-      "sha256": "a728d93e23d24bd2a9310d5b2b3eace2fcc18964ee114979b085339142238feb"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0008.json",
-      "size": 6002588,
-      "sha256": "56ccbee6b60cecabbdfef23bd5222bb1229a1e1c141f4ab1e0944e420deaadd0"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0009.json",
-      "size": 6149826,
-      "sha256": "17221287aa4e240609550b7ff3a8057b8031ea3c8015c22f925546958422cc3a"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0010.json",
-      "size": 5929411,
-      "sha256": "aa38f7d6ca9652bc0993d08f589f292de38fc90ef07f8fa798580645e18f7199"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0011.json",
-      "size": 6079903,
-      "sha256": "0a410fde8b8b1d0ff74b0d8ffe6b06dd3285b9781e3bd1d97a7088a05e635acf"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0012.json",
-      "size": 6022591,
-      "sha256": "96b574ecde81c0f54f4ca62d57255d586c47844480e151e113cb89224bb371f5"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0013.json",
-      "size": 6044361,
-      "sha256": "0323c486ed1c1989ea52f2c273790563b1df1c238dff6d22a6691f7352472834"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0014.json",
-      "size": 5995140,
-      "sha256": "29126b5289ab74a85dc3efe5dc66a1e4b5553ae5522b9752a4f55e3234ec69cc"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0015.json",
-      "size": 6094417,
-      "sha256": "6047b98f351327c750e830bddf1ac2790166bd5ce507875fcaad0e69103b8460"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0016.json",
-      "size": 6148062,
-      "sha256": "28577cfe414b892927204f9bb7ba5715c28bd9b91c058f8c7bded6214535c338"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0017.json",
-      "size": 6192033,
-      "sha256": "e117aec3c84549a1a5e9007a9d62ade12a4a3c230fd51b81ee0007b1d37ce7fc"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0018.json",
-      "size": 6280483,
-      "sha256": "bd680408567798ad782f7fa9ddc0d1c85ce9007b4d45d64d90a8d517bfb335c7"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0019.json",
-      "size": 6039648,
-      "sha256": "3d28ff2534864472faf987856f95285d9b0b59e19800ef3f21faec7bf9e0c03d"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0020.json",
-      "size": 6122672,
-      "sha256": "59916ca413d13fd8b53eafa282ae06d0ee95741739a6913ec2c53f81b25245bf"
-    },
-    {
-      "path": "data/distributions/observations/vafwis-latlong/part-0021.json",
-      "size": 5502720,
-      "sha256": "e1ac6d11955dc3398a391d8f9a04433996ea669b69b1a72f96264804ebc93908"
-    },
-    {
       "path": "data/sites_existing.json",
       "size": 872589,
       "sha256": "323b5d4feaf86f343d9506debfc060d97de3276d63bfa8fc857322bf960a3b59"
@@ -242,11 +87,6 @@
       "path": "data/species_list.json",
       "size": 22438,
       "sha256": "a162e840aabf3518e5f741ddc4db387a75f5c04059003199c5b67fc9a1bcf129"
-    },
-    {
-      "path": "downloads/NAIADD-Offline-Helper-1.0.0-x64-setup.exe",
-      "size": 71510644,
-      "sha256": "394ff3556557ee75697ebf7c25cebd913f01eb750ecdf98f991d82703b20af06"
     },
     {
       "path": "favicon-16x16.png",
@@ -422,21 +262,6 @@
       "path": "spatial/counties.geojson",
       "size": 553281,
       "sha256": "4ddf1922ebcc7dbdf74e7018d3e3d986258c044f1cf98f084191483cd67a3078"
-    },
-    {
-      "path": "spatial/distributions/huc10.geojson",
-      "size": 8367181,
-      "sha256": "fe8fc9e24c1c02b2becc1aea34e2c2da9753725bb7c15b8fd0170bd2ef59e15c"
-    },
-    {
-      "path": "spatial/distributions/huc12.geojson",
-      "size": 19760884,
-      "sha256": "8c7152fba09f2976467b8afe5dda314e575b92f067dbe5bcaec2324a1f6ed2e2"
-    },
-    {
-      "path": "spatial/distributions/te-waters.geojson",
-      "size": 12121416,
-      "sha256": "9f64a857fb72fb182e74daf315dcdb4347c2e7c61a56933b2f94f29a358d3d6b"
     },
     {
       "path": "spatial/huc06.geojson",
