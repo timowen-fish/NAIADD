@@ -401,7 +401,7 @@ export default function PreferencesPage() {
         </section>
       )}
 
-      {desktopDevice && helperConnected && (
+      {desktopDevice && (
         <section
           className="preferences-section preferences-application-section"
           aria-labelledby="application-status-heading"
@@ -418,28 +418,31 @@ export default function PreferencesPage() {
               }`}
             >
               <i aria-hidden="true" />
-              {applicationChecking
-                ? "Checking..."
-                : localApplicationCurrent
-                  ? "Up to Date"
-                  : productionAppVersion
-                    ? "Update Available"
-                    : "Not Checked"}
+              {!helperConnected
+                ? "Helper Required"
+                : applicationChecking
+                  ? "Checking..."
+                  : localApplicationCurrent
+                    ? "Up to Date"
+                    : productionAppVersion
+                      ? "Update Available"
+                      : "Not Checked"}
             </span>
           </div>
 
           <div className="application-status-card">
             <div className="application-status-copy">
               <h3>
-                {localApplicationCurrent
-                  ? "Local NAIADD matches production"
-                  : "Verify the workstation application"}
+                {!helperConnected
+                  ? "Connect the NAIADD Offline Helper"
+                  : localApplicationCurrent
+                    ? "Local NAIADD matches production"
+                    : "Verify the workstation application"}
               </h3>
               <p>
-                This compares the NAIADD application stored by the Offline Helper
-                with the current production build. If a workstation is showing
-                an older page or behavior, you can force the helper to refresh
-                its local application copy here.
+                {helperConnected
+                  ? "This compares the NAIADD application stored by the Offline Helper with the current production build. If a workstation is showing an older page or behavior, you can force the helper to refresh its local application copy here."
+                  : "Install or start the NAIADD Offline Helper to compare this workstation's local application with the current production build and enable forced local updates."}
               </p>
 
               <div className="application-version-grid">
@@ -473,7 +476,11 @@ export default function PreferencesPage() {
               <button
                 type="button"
                 className="application-status-secondary"
-                disabled={applicationChecking || applicationUpdating}
+                disabled={
+                  !helperConnected ||
+                  applicationChecking ||
+                  applicationUpdating
+                }
                 onClick={() => void checkApplicationStatus()}
               >
                 {applicationChecking ? "Checking..." : "Check Again"}
@@ -482,7 +489,7 @@ export default function PreferencesPage() {
               <button
                 type="button"
                 className="application-status-primary"
-                disabled={applicationUpdating}
+                disabled={!helperConnected || applicationUpdating}
                 onClick={() => void forceUpdateLocalApplication()}
               >
                 {applicationUpdating
