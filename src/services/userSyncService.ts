@@ -83,10 +83,16 @@ export async function synchronizeUserState(
 ): Promise<void> {
   await saveWorkstationProfile(profile);
 
+  /*
+   * Apply the durable workstation theme first so the localhost/offline UI
+   * adopts the user's selected appearance before the heavier snapshot/draft
+   * synchronization work begins.
+   */
+  await syncVadmaTheme(profile.uid).catch(() => undefined);
+
   await restoreSnapshotFromHelper().catch(() => false);
   await restoreSavedQueriesFromHelper(profile.uid).catch(() => []);
   await syncSurveyDrafts(profile.uid).catch(() => []);
-  await syncVadmaTheme(profile.uid).catch(() => undefined);
 
   if (typeof navigator === "undefined" || navigator.onLine) {
     await syncSnapshotIfNeeded().catch((error) => {

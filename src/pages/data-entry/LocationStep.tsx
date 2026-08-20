@@ -18,7 +18,11 @@ export default function LocationStep({
   savedLocation = null,
   onLocationSaved,
 }: Props) {
-  const [view, setView] = useState<View>("menu");
+  const [view, setView] = useState<View>(() => {
+    if (savedLocation?.EntryMode === "existing") return "existing";
+    if (savedLocation?.EntryMode === "new") return "new";
+    return "menu";
+  });
 
   function handleLocationSaved(location: LocationRecord) {
     onLocationSaved(location);
@@ -28,6 +32,11 @@ export default function LocationStep({
     return (
       <ExistingSiteStep
         onBack={() => setView("menu")}
+        savedLocation={
+          savedLocation?.EntryMode === "existing"
+            ? savedLocation
+            : null
+        }
         onLocationSaved={handleLocationSaved}
       />
     );
@@ -37,6 +46,11 @@ export default function LocationStep({
     return (
       <LocationStepNew
         profile={profile}
+        savedLocation={
+          savedLocation?.EntryMode === "new"
+            ? savedLocation
+            : null
+        }
         onBack={() => setView("menu")}
         onLocationSaved={handleLocationSaved}
       />

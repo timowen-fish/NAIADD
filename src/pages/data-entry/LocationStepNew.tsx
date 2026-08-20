@@ -10,7 +10,12 @@ import { createSite, saveCurrentLocation } from "../../services/siteService";
 import "../../styles/LocationStepNew.css";
 import "../../styles/ExistingSiteStep.css";
 
-type Props = { profile: UserProfile; onBack: () => void; onLocationSaved: (site: LocationRecord) => void };
+type Props = {
+  profile: UserProfile;
+  savedLocation?: LocationRecord | null;
+  onBack: () => void;
+  onLocationSaved: (site: LocationRecord) => void;
+};
 type Mode = "downstream" | "upstream"; type Basemap = "dark" | "satellite";
 const center: [number, number] = [37.55, -78.6];
 const icon = (label: string, className: string) => L.divIcon({ className: `vadmaLeafletPin ${className}`, html: `<span>${label}</span>`, iconSize: [32,32], iconAnchor: [16,32] });
@@ -126,28 +131,40 @@ function ClickHandler({ mode, setPoint }: { mode: Mode; setPoint: (mode: Mode, l
 function Fly({ target }: { target: [number, number] | null }) { const map = useMap(); useEffect(() => { if (target) map.flyTo(target, 16, {duration: 1.1}); }, [map, target]); return null; }
 function makeSiteId(profile: UserProfile) { const raw = (profile.email.split("@")[0] || profile.displayName || "USER").replace(/[^a-z0-9]/gi, "").toUpperCase(); const d = new Date(); const pad=(n:number)=>String(n).padStart(2,"0"); return `SITE_${raw}_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}_${crypto.randomUUID().slice(0,4).toUpperCase()}`; }
 
-export default function LocationStepNew({ profile, onBack, onLocationSaved }: Props) {
-  const [record, setRecord] = useState<LocationRecord>({
-    SiteID: makeSiteId(profile),
-    SiteName: "",
-    Waterbody: "",
-    LatitudeDD: Number.NaN,
-    LongitudeDD: Number.NaN,
-    DownstreamLat: Number.NaN,
-    DownstreamLong: Number.NaN,
-    UpstreamLat: null,
-    UpstreamLong: null,
-    LocDescription: "",
-    County: "",
-    State: "",
-    RiverBasin: "",
-    HUC7: "",
-    PhysiographicProvince: "",
-    RoadName: "",
-    RoadNumber: "",
-    createdBy: profile.uid,
-  });
-  const [mode,setMode]=useState<Mode>("downstream"); const [basemap,setBasemap]=useState<Basemap>("satellite"); const [message,setMessage]=useState(""); const [harvestingSpatial,setHarvestingSpatial]=useState(false); const [saving,setSaving]=useState(false); const [showAdditional,setShowAdditional]=useState(false); const [waterbodies,setWaterbodies]=useState<string[]>([]); const [waterbodySearch,setWaterbodySearch]=useState(""); const [open,setOpen]=useState(false); const [flyTarget,setFlyTarget]=useState<[number,number]|null>(null);
+export default function LocationStepNew({
+  profile,
+  savedLocation = null,
+  onBack,
+  onLocationSaved,
+}: Props) {
+  const [record, setRecord] = useState<LocationRecord>(() =>
+    savedLocation?.EntryMode === "new"
+      ? { ...savedLocation, EntryMode: "new" }
+      : {
+          EntryMode: "new",
+          SiteID: makeSiteId(profile),
+          SiteName: "",
+          Waterbody: "",
+          LatitudeDD: Number.NaN,
+          LongitudeDD: Number.NaN,
+          DownstreamLat: Number.NaN,
+          DownstreamLong: Number.NaN,
+          UpstreamLat: null,
+          UpstreamLong: null,
+          LocDescription: "",
+          County: "",
+          State: "",
+          RiverBasin: "",
+          HUC7: "",
+          PhysiographicProvince: "",
+          RoadName: "",
+          RoadNumber: "",
+          createdBy: profile.uid,
+        },
+  );
+  const [mode,setMode]=useState<Mode>("downstream"); const [basemap,setBasemap]=useState<Basemap>("satellite"); const [message,setMessage]=useState(""); const [harvestingSpatial,setHarvestingSpatial]=useState(false); const [saving,setSaving]=useState(false); const [showAdditional,setShowAdditional]=useState(false); const [waterbodies,setWaterbodies]=useState<string[]>([]); const [waterbodySearch,setWaterbodySearch]=useState(
+    savedLocation?.EntryMode === "new" ? savedLocation.Waterbody : "",
+  ); const [open,setOpen]=useState(false); const [flyTarget,setFlyTarget]=useState<[number,number]|null>(null);
   useEffect(()=>{ loadReferenceData().then((data)=>{ setWaterbodies(data.generalLists.waterbody ?? data.generalLists.Waterbody ?? data.generalLists.Waterbodies ?? []); }).catch(()=>setMessage("Waterbody reference data could not be loaded.")); },[]);
   const deferred=useDeferredValue(waterbodySearch); const options=useMemo(()=>{ const q=deferred.trim().toLowerCase(); if(q.length<2)return[]; return waterbodies.filter((v)=>v.toLowerCase().includes(q)).sort((a,b)=>Number(!a.toLowerCase().startsWith(q))-Number(!b.toLowerCase().startsWith(q))).slice(0,20); },[deferred,waterbodies]);
   const downstream=Number.isFinite(record.DownstreamLat)&&Number.isFinite(record.DownstreamLong)?[record.DownstreamLat,record.DownstreamLong] as [number,number]:null; const upstream=Number.isFinite(record.UpstreamLat)&&Number.isFinite(record.UpstreamLong)?[record.UpstreamLat!,record.UpstreamLong!] as [number,number]:null;
@@ -253,7 +270,7 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
     }
   }
   function gps(capture:boolean){ if(!navigator.geolocation){setMessage("GPS is not supported on this device.");return;} setMessage("Requesting current GPS location…"); navigator.geolocation.getCurrentPosition((p)=>{ const t:[number,number]=[p.coords.latitude,p.coords.longitude]; setFlyTarget(t); if(capture)void setPoint(mode,...t); else setMessage(`Map zoomed to current location. Accuracy approximately ${Math.round(p.coords.accuracy)} meters.`); },()=>setMessage("Unable to retrieve GPS location. Check location permission and try again."),{enableHighAccuracy:true,timeout:15000,maximumAge:0}); }
-  async function save(){ if(!downstream){setMessage("A downstream coordinate is required before saving.");return;} if(!record.Waterbody.trim()||!record.SiteName.trim()){setMessage("Waterbody and Site Name are required before saving.");return;} setSaving(true); try{ await createSite(record); saveCurrentLocation(record); onLocationSaved(record); setMessage("New site saved and selected as the current location."); }catch{setMessage("The site could not be saved. Check your connection and Firestore permissions.");}finally{setSaving(false);} }
+  async function save(){ if(!downstream){setMessage("A downstream coordinate is required before saving.");return;} if(!record.Waterbody.trim()||!record.SiteName.trim()){setMessage("Waterbody and Site Name are required before saving.");return;} setSaving(true); try{ const newSite: LocationRecord = { ...record, EntryMode: "new" }; await createSite(newSite); saveCurrentLocation(newSite); onLocationSaved(newSite); setMessage("New site saved and selected as the current location."); }catch{setMessage("The site could not be saved. Check your connection and Firestore permissions.");}finally{setSaving(false);} }
 
   const messageIsError =
     message.toLowerCase().includes("required") ||
@@ -649,6 +666,7 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
               className="secondaryActionBtn"
               onClick={() => {
                 setRecord({
+                  EntryMode: "new",
                   SiteID: makeSiteId(profile),
                   SiteName: "",
                   Waterbody: "",
@@ -714,6 +732,7 @@ export default function LocationStepNew({ profile, onBack, onLocationSaved }: Pr
           className="mobileStepSecondaryAction"
           onClick={() => {
             setRecord({
+              EntryMode: "new",
               SiteID: makeSiteId(profile),
               SiteName: "",
               Waterbody: "",

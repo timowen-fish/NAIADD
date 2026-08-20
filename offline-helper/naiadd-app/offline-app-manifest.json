@@ -1,7 +1,7 @@
 {
   "format": "NAIADD_OFFLINE_APP_MANIFEST_V1",
-  "version": "local-1787238961934",
-  "builtAt": "2026-08-20T15:16:01.934Z",
+  "version": "local-1787242322022",
+  "builtAt": "2026-08-20T16:12:02.022Z",
   "files": [
     {
       "path": "apple-touch-icon.png",
@@ -14,14 +14,14 @@
       "sha256": "e05667d150d6ce655ed1d95441813bd45a791bd337c963395def50eafb568c7c"
     },
     {
-      "path": "assets/index-02uxGfE2.js",
-      "size": 1382099,
-      "sha256": "942d7a6172070b381eda04c0e2a6aa0095c7a55372dd66f4a246b011f7a41581"
-    },
-    {
       "path": "assets/index-B4RmvRkY.css",
       "size": 385718,
       "sha256": "542cfd32b6e3480b7aac8a0223d855bb4fd5c4f26084c031664c2cf43833e169"
+    },
+    {
+      "path": "assets/index-CA1uap8E.js",
+      "size": 1382960,
+      "sha256": "f321f0993fb44eea955ae49339dfc959913304ad3fcf3d60dae28f7aad5b472f"
     },
     {
       "path": "assets/naiadd-shield-COzVrkkD.png",
@@ -244,6 +244,11 @@
       "sha256": "a162e840aabf3518e5f741ddc4db387a75f5c04059003199c5b67fc9a1bcf129"
     },
     {
+      "path": "downloads/NAIADD-Offline-Helper-1.0.0-x64-setup.exe",
+      "size": 35523690,
+      "sha256": "0b3adeb1b6ccc59d3977b6af115be0f6286b913a9682280eccb83c3765ab9690"
+    },
+    {
       "path": "favicon-16x16.png",
       "size": 955,
       "sha256": "cc1e4cdbb405facd1881ae57363fcd4021f32657a667dfbafccad56ce1307a1b"
@@ -406,7 +411,7 @@
     {
       "path": "index.html",
       "size": 947,
-      "sha256": "a9521a3877c020a90339588ed98a52a201e2f7e3d6fcb682880346587be5e666"
+      "sha256": "eb96dec9d8b07542cc6c45b7e12d9bfdc52c77a6e8a6ec390f29f29e3fe085f5"
     },
     {
       "path": "manifest.webmanifest",
@@ -456,7 +461,7 @@
     {
       "path": "sw.js",
       "size": 6499,
-      "sha256": "9dca85d0760f5ce0fcef8ee2b1290270f4fbd38f859519c48bba8ceb197eda88"
+      "sha256": "06ea6037339f2b9cbad57c9939d71012f70fda6654a1f5409cc8560de6ecfeed"
     },
     {
       "path": "vadma_shield.png",

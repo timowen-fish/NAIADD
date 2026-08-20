@@ -119,27 +119,81 @@ export function setVadmaTheme(themeId: VadmaThemeId): void {
 
 export async function syncVadmaTheme(uid: string): Promise<VadmaThemeId> {
   const localTheme = readStoredVadmaTheme();
+
+  /*
+   * The workstation helper is the durable bridge between the production PWA
+   * and the localhost/offline copy. Read it FIRST so an offline launch applies
+   * the user's actual workstation theme immediately instead of starting from
+   * this origin's independent localStorage value.
+   */
+  const helperTheme = await readThemeFromOfflineHelper(uid);
+  const workstationTheme = helperTheme ?? localTheme;
+
+  if (helperTheme) {
+    applyAndStoreTheme(helperTheme);
+  }
+
+  /*
+   * When offline there is nothing useful to reconcile with Firestore. Keep
+   * the helper/local theme exactly as-is.
+   */
+  if (
+    typeof navigator !== "undefined" &&
+    !navigator.onLine
+  ) {
+    if (!helperTheme) {
+      void writeThemeToOfflineHelper(uid, localTheme);
+    }
+
+    return workstationTheme;
+  }
+
   try {
-    const preferenceRef = doc(db, "users", uid, "preferences", "settings");
+    const preferenceRef = doc(
+      db,
+      "users",
+      uid,
+      "preferences",
+      "settings",
+    );
     const snapshot = await getDoc(preferenceRef);
+
     if (snapshot.exists()) {
       const data = snapshot.data() as { themeId?: unknown };
+
       if (isVadmaThemeId(data.themeId)) {
         applyAndStoreTheme(data.themeId);
         void writeThemeToOfflineHelper(uid, data.themeId);
         return data.themeId;
       }
     }
-    await setDoc(preferenceRef, { themeId: localTheme, updatedAt: new Date().toISOString() }, { merge: true });
-    void writeThemeToOfflineHelper(uid, localTheme);
-    return localTheme;
+
+    /*
+     * If Firestore has no preference yet, preserve the workstation's current
+     * theme rather than replacing it with the localhost default.
+     */
+    await setDoc(
+      preferenceRef,
+      {
+        themeId: workstationTheme,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true },
+    );
+
+    applyAndStoreTheme(workstationTheme);
+    void writeThemeToOfflineHelper(uid, workstationTheme);
+    return workstationTheme;
   } catch (error) {
-    console.warn("Unable to synchronize NAIADD theme from Firestore. Trying workstation copy.", error);
+    console.warn(
+      "Unable to synchronize NAIADD theme from Firestore. Using workstation copy.",
+      error,
+    );
   }
-  const helperTheme = await readThemeFromOfflineHelper(uid);
-  if (helperTheme) return applyAndStoreTheme(helperTheme);
-  void writeThemeToOfflineHelper(uid, localTheme);
-  return localTheme;
+
+  applyAndStoreTheme(workstationTheme);
+  void writeThemeToOfflineHelper(uid, workstationTheme);
+  return workstationTheme;
 }
 
 export function subscribeToVadmaTheme(listener: (themeId: VadmaThemeId) => void): () => void {

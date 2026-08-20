@@ -19,6 +19,7 @@ type LocationTable = LocationRecord & Record<string, unknown>;
 
 type ExistingSiteStepProps = {
   onBack: () => void;
+  savedLocation?: LocationRecord | null;
   onLocationSaved: (locationTable: LocationRecord) => void;
 };
 
@@ -536,6 +537,7 @@ function FlyToCurrentLocation({
 
 function ExistingSiteStep({
   onBack,
+  savedLocation = null,
   onLocationSaved,
 }: ExistingSiteStepProps) {
   const [sites, setSites] = useState<SiteRecord[]>([]);
@@ -649,6 +651,25 @@ function ExistingSiteStep({
     }
   }
 
+  useEffect(() => {
+    if (
+      savedLocation?.EntryMode !== "existing" ||
+      !savedLocation.SiteID ||
+      sites.length === 0
+    ) {
+      return;
+    }
+
+    const match = sites.find(
+      (site) => site.SiteID === savedLocation.SiteID,
+    );
+
+    if (!match) return;
+
+    setSelectedSiteId(match.SiteID);
+    setSearchText(match.SiteName || match.Waterbody || match.SiteID);
+  }, [savedLocation, sites]);
+
   const selectedSite = useMemo(
     () => sites.find((site) => site.SiteID === selectedSiteId),
     [sites, selectedSiteId],
@@ -721,6 +742,7 @@ function ExistingSiteStep({
       const upstreamLong = asNumber(site.UpstreamLong);
 
       const safeSite: LocationRecord = {
+        EntryMode: "existing",
         SiteID: asString(site.SiteID).trim(),
         SiteID_AccessDB: asString(site.SiteID_AccessDB).trim(),
         SiteID_Previous: asString(site.SiteID_Previous).trim(),

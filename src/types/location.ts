@@ -1,4 +1,11 @@
 export interface LocationRecord {
+  /**
+   * Records how this location entered the current survey workflow.
+   * This stays with the draft so returning to Location reopens the correct
+   * Existing Site or New Site editor.
+   */
+  EntryMode?: "existing" | "new";
+
   SiteID: string;
   SiteName: string;
   Waterbody: string;
