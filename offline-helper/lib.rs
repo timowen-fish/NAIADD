@@ -301,12 +301,40 @@ fn credential_request_allowed(headers: &str) -> bool {
 fn read_offline_profile_email() -> Option<String> {
     let bytes = fs::read(user_profile_path()).ok()?;
     let value = serde_json::from_slice::<serde_json::Value>(&bytes).ok()?;
-    value
-        .get("email")
+
+    /*
+     * NAIADD stores the durable workstation user as:
+     *
+     * {
+     *   "format": "NAIADD_OFFLINE_USER_PROFILE_V1",
+     *   "uid": "...",
+     *   "updatedAt": "...",
+     *   "profile": {
+     *     "email": "user@example.com",
+     *     ...
+     *   }
+     * }
+     *
+     * The original helper looked only for a top-level "email", which meant it
+     * could SAVE a Windows credential after login but could never determine
+     * which Credential Manager entry to READ on the next launch.
+     *
+     * Support the current nested NAIADD format and retain the top-level lookup
+     * as a compatibility fallback for any older workstation profile files.
+     */
+    let email = value
+        .get("profile")
+        .and_then(|profile| profile.get("email"))
         .and_then(|email| email.as_str())
-        .map(str::trim)
-        .filter(|email| !email.is_empty())
-        .map(ToOwned::to_owned)
+        .or_else(|| value.get("email").and_then(|email| email.as_str()))?;
+
+    let email = email.trim();
+
+    if email.is_empty() {
+        None
+    } else {
+        Some(email.to_owned())
+    }
 }
 
 fn credential_entry(email: &str) -> Result<keyring::Entry, String> {

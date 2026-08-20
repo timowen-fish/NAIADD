@@ -1,7 +1,7 @@
 {
   "format": "NAIADD_OFFLINE_APP_MANIFEST_V1",
-  "version": "local-1787243722803",
-  "builtAt": "2026-08-20T16:35:22.803Z",
+  "version": "local-1787244550797",
+  "builtAt": "2026-08-20T16:49:10.797Z",
   "files": [
     {
       "path": "apple-touch-icon.png",
@@ -245,8 +245,8 @@
     },
     {
       "path": "downloads/NAIADD-Offline-Helper-1.0.0-x64-setup.exe",
-      "size": 35523690,
-      "sha256": "0b3adeb1b6ccc59d3977b6af115be0f6286b913a9682280eccb83c3765ab9690"
+      "size": 71510644,
+      "sha256": "394ff3556557ee75697ebf7c25cebd913f01eb750ecdf98f991d82703b20af06"
     },
     {
       "path": "favicon-16x16.png",
