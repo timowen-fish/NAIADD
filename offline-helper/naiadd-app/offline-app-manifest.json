@@ -1,7 +1,7 @@
 {
   "format": "NAIADD_OFFLINE_APP_MANIFEST_V1",
-  "version": "local-1787242322022",
-  "builtAt": "2026-08-20T16:12:02.022Z",
+  "version": "local-1787243722803",
+  "builtAt": "2026-08-20T16:35:22.803Z",
   "files": [
     {
       "path": "apple-touch-icon.png",
@@ -19,9 +19,9 @@
       "sha256": "542cfd32b6e3480b7aac8a0223d855bb4fd5c4f26084c031664c2cf43833e169"
     },
     {
-      "path": "assets/index-CA1uap8E.js",
-      "size": 1382960,
-      "sha256": "f321f0993fb44eea955ae49339dfc959913304ad3fcf3d60dae28f7aad5b472f"
+      "path": "assets/index-hlfwTAHB.js",
+      "size": 1383165,
+      "sha256": "173f9a409a02cbb27e1eee4933d1f7668ec47b06056ee9b1f6ae5fbe494d800d"
     },
     {
       "path": "assets/naiadd-shield-COzVrkkD.png",
@@ -411,7 +411,7 @@
     {
       "path": "index.html",
       "size": 947,
-      "sha256": "eb96dec9d8b07542cc6c45b7e12d9bfdc52c77a6e8a6ec390f29f29e3fe085f5"
+      "sha256": "c97dde0215eddb41b016d8fcf5757bfcda86721a9c7f5c5e8997aceadee3e893"
     },
     {
       "path": "manifest.webmanifest",
@@ -461,7 +461,7 @@
     {
       "path": "sw.js",
       "size": 6499,
-      "sha256": "06ea6037339f2b9cbad57c9939d71012f70fda6654a1f5409cc8560de6ecfeed"
+      "sha256": "5336909ff292e94ed6ae8841ee9fd98d692a11703f95ec4c325a39c2621d6840"
     },
     {
       "path": "vadma_shield.png",

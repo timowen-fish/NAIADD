@@ -117,17 +117,39 @@ export default function App() {
     let unsubscribe: (() => void) | null = null;
     let cancelled = false;
 
+    async function restoreWorkstationProfile(): Promise<boolean> {
+      if (!isLocalHelperApp()) {
+        return false;
+      }
+
+      const profile = await loadWorkstationProfile();
+
+      if (!profile || !profile.active) {
+        return false;
+      }
+
+      if (!cancelled) {
+        setUser(null);
+        setUserProfile(profile);
+        setOfflineWorkstationSession(true);
+        setError("");
+        void synchronizeUserState(profile);
+      }
+
+      return true;
+    }
+
     void authPersistenceReady
       .then(() => {
         if (cancelled) return;
 
         unsubscribe = onAuthStateChanged(auth, async (nextUser) => {
           setUser(nextUser);
+          setUserProfile(null);
+          setOfflineWorkstationSession(false);
           setError("");
 
           if (nextUser) {
-            setOfflineWorkstationSession(false);
-
             try {
               const profile = await ensureUserProfile(nextUser);
 
@@ -137,14 +159,19 @@ export default function App() {
                 void synchronizeUserState(profile);
               }
             } catch (profileError) {
-              if (!cancelled) {
-                setUserProfile(null);
-                setError(getFriendlyAuthError(profileError));
+              try {
+                const restored = await restoreWorkstationProfile();
+
+                if (!restored && !cancelled) {
+                  setError(getFriendlyAuthError(profileError));
+                }
+              } catch {
+                if (!cancelled) {
+                  setError(getFriendlyAuthError(profileError));
+                }
               }
             }
           } else {
-            setUserProfile(null);
-
             if (navigator.onLine) {
               const autoLoginResult =
                 await tryStoredWorkstationLogin();
@@ -163,21 +190,17 @@ export default function App() {
                 autoLoginResult === "unavailable" &&
                 isLocalHelperApp()
               ) {
-                const profile = await loadWorkstationProfile();
-
-                if (profile && profile.active && !cancelled) {
-                  setUserProfile(profile);
-                  setOfflineWorkstationSession(true);
-                  void synchronizeUserState(profile);
+                try {
+                  await restoreWorkstationProfile();
+                } catch {
+                  // Normal login remains available.
                 }
               }
             } else if (isLocalHelperApp()) {
-              const profile = await loadWorkstationProfile();
-
-              if (profile && profile.active && !cancelled) {
-                setUserProfile(profile);
-                setOfflineWorkstationSession(true);
-                void synchronizeUserState(profile);
+              try {
+                await restoreWorkstationProfile();
+              } catch {
+                // No durable workstation profile is available.
               }
             }
           }
@@ -187,16 +210,29 @@ export default function App() {
           }
         });
       })
-      .catch((persistenceError) => {
+      .catch(async (persistenceError) => {
         console.error(
           "Unable to initialize persistent authentication.",
           persistenceError,
         );
 
+        try {
+          const restored = await restoreWorkstationProfile();
+
+          if (!restored && !cancelled) {
+            setError(
+              "Unable to initialize persistent sign-in. Refresh the application and try again.",
+            );
+          }
+        } catch {
+          if (!cancelled) {
+            setError(
+              "Unable to initialize persistent sign-in. Refresh the application and try again.",
+            );
+          }
+        }
+
         if (!cancelled) {
-          setError(
-            "Unable to initialize persistent sign-in. Refresh the application and try again.",
-          );
           setAuthReady(true);
         }
       });
@@ -354,7 +390,11 @@ export default function App() {
     setError("");
 
     try {
-      await logout();
+      if (!offlineWorkstationSession) {
+        await logout();
+      }
+
+      setUser(null);
       setOfflineWorkstationSession(false);
       setUserProfile(null);
       setActiveSection("dashboard");
