@@ -1,7 +1,7 @@
 {
   "format": "NAIADD_OFFLINE_APP_MANIFEST_V1",
-  "version": "local-1787246537610",
-  "builtAt": "2026-08-20T17:22:17.610Z",
+  "version": "local-1787321459048",
+  "builtAt": "2026-08-21T14:10:59.048Z",
   "files": [
     {
       "path": "apple-touch-icon.png",
@@ -75,8 +75,8 @@
     },
     {
       "path": "data/data_entry_lists.json",
-      "size": 53077,
-      "sha256": "3e6ed27fd3b10d4f6a9cc7a3f5ea489eab7904c2c6fb67dbe71f93d8ee9c8189"
+      "size": 55303,
+      "sha256": "d1d40200a9ed631e67e7bd071ed5aa1c68be54985adb9ae6baaceca1271fe291"
     },
     {
       "path": "data/sites_existing.json",
@@ -85,8 +85,8 @@
     },
     {
       "path": "data/species_list.json",
-      "size": 22438,
-      "sha256": "a162e840aabf3518e5f741ddc4db387a75f5c04059003199c5b67fc9a1bcf129"
+      "size": 23435,
+      "sha256": "9b9f346f23143c5a08aa11492ba7f016d55f8bf8391c12b044c34b6baf82eafa"
     },
     {
       "path": "favicon-16x16.png",
@@ -120,8 +120,8 @@
     },
     {
       "path": "icons.svg",
-      "size": 5031,
-      "sha256": "b45fa506195cfcdef406ba9f0c77b36ddc1a7c224040926ec70abc2fdea7b93a"
+      "size": 5055,
+      "sha256": "7ca2d67c9c3aebf50cdc8709ee8aacf8cdb8cc7ea6325ea94939caef5da1c53d"
     },
     {
       "path": "images/login-backgrounds/CreateNewSite.jpg",
@@ -250,43 +250,43 @@
     },
     {
       "path": "index.html",
-      "size": 947,
-      "sha256": "c97dde0215eddb41b016d8fcf5757bfcda86721a9c7f5c5e8997aceadee3e893"
+      "size": 982,
+      "sha256": "33d16a3c89615a4ef7cee443efd5bbdccc0c8b7444c932235f88d801ffd3a976"
     },
     {
       "path": "manifest.webmanifest",
-      "size": 571,
-      "sha256": "04492eedbbcbb1ac8fd8eef9c8763bdfc26a96a14004f7d650e14218fd007965"
+      "size": 594,
+      "sha256": "72d47ae1bb7096f92264a61ad1d18d0bf0a50b62c9e050d4449cbabe935709eb"
     },
     {
       "path": "spatial/counties.geojson",
-      "size": 553281,
-      "sha256": "4ddf1922ebcc7dbdf74e7018d3e3d986258c044f1cf98f084191483cd67a3078"
+      "size": 553459,
+      "sha256": "84ae6d9df288e11a36037204d48f630bbd5aa39b41f83abfc9cd33a7ed92538e"
     },
     {
       "path": "spatial/huc06.geojson",
-      "size": 4449254,
-      "sha256": "7fc5bc3426a3fb5f1053486acaa2de32cb646cae5555fafd74920d9b7237941f"
+      "size": 4449666,
+      "sha256": "1797b8f31b2bf00f9c3d4cf819c96881ce24a6d7dc288713f21552f275ffdc00"
     },
     {
       "path": "spatial/huc08.geojson",
-      "size": 6532161,
-      "sha256": "f25f371bed2e30debe95e4ac2d989185d7567b77997ceaef2211757fea1bc1ac"
+      "size": 6534581,
+      "sha256": "ff2b9d6e349216d7b86d771867d9879a8c75c251d3a4b1dd17abf571ce2b9ed3"
     },
     {
       "path": "spatial/physiographic_provinces.geojson",
-      "size": 789923,
-      "sha256": "f837fa6066f90e12f1807660c2b50bcd74d4278fcfd9e02c0bf65fc5b6c261fd"
+      "size": 790431,
+      "sha256": "bdf06d55cd809c9c701616b7ad7a45f7a947ce10db56660daa256faa1cc18327"
     },
     {
       "path": "spatial/states.geojson",
-      "size": 1993610,
-      "sha256": "b6d3f6cfcc52d3ba93f0f5860d2a9d197da475ed9560f7e1408b9d2dd10df8a0"
+      "size": 1993670,
+      "sha256": "adf3ecd50a6fcfccef9a8539136a054f83e7f56ebc3540143390cb764c0a19f9"
     },
     {
       "path": "sw.js",
       "size": 6499,
-      "sha256": "5336909ff292e94ed6ae8841ee9fd98d692a11703f95ec4c325a39c2621d6840"
+      "sha256": "40fc4e91d332a7c712464f1d159d93c40ff03e86de0732255fdf7d6dd99597e9"
     },
     {
       "path": "vadma_shield.png",

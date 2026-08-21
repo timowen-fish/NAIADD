@@ -26,5 +26,3 @@ sha2 = "0.10"
 reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "native-tls", "system-proxy"] }
 keyring = { version = "3.6.3", features = ["windows-native"] }
 
-[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-autostart = "2"

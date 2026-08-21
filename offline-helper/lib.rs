@@ -12,10 +12,9 @@ use std::{
         Mutex, OnceLock,
     },
     thread,
-    time::Duration,
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use tauri::Manager;
-use tauri_plugin_autostart::ManagerExt;
 
 const HELPER_VERSION: &str = "1.0.0";
 const API_ADDRESS: &str = "127.0.0.1:43128";
@@ -25,10 +24,9 @@ const PRODUCTION_APP_BASE_URL: &str = "https://naiadd.vercel.app";
 const REMOTE_APP_MANIFEST_URL: &str =
     "https://naiadd.vercel.app/offline-app-manifest.json";
 const APP_MANIFEST_FILENAME: &str = "offline-app-manifest.json";
-const APP_UPDATE_INTERVAL_SECONDS: u64 = 300;
 const PRODUCTION_LAUNCH_URL: &str = "https://naiadd.vercel.app/";
-const LOCAL_LAUNCH_URL: &str = "http://127.0.0.1:43128/";
-const LAUNCH_PROBE_TIMEOUT_SECONDS: u64 = 3;
+const LOCAL_LAUNCH_URL: &str = "http://127.0.0.1:43128/?session=offline";
+const SESSION_CHOOSER_URL: &str = "http://127.0.0.1:43128/session";
 
 const SNAPSHOT_FILENAME: &str = "NAIADD_Offline_Snapshot.naiadd";
 const SNAPSHOT_META_FILENAME: &str = "NAIADD_Offline_SnapshotMeta.json";
@@ -45,8 +43,12 @@ const MAX_REQUEST_BYTES: usize = 256 * 1024 * 1024;
 const WINDOWS_CREDENTIAL_SERVICE: &str = "NAIADD Offline Workstation";
 const WORKSTATION_CREDENTIAL_PATH: &str = "/workstation-credential";
 const APP_UPDATE_PATH: &str = "/update-app";
+const HELPER_SHUTDOWN_PATH: &str = "/shutdown";
+const HELPER_IDLE_TIMEOUT: Duration = Duration::from_secs(90 * 60);
+const HELPER_IDLE_CHECK_INTERVAL: Duration = Duration::from_secs(30);
 
 static APP_UPDATE_IN_PROGRESS: AtomicBool = AtomicBool::new(false);
+static LAST_HELPER_ACTIVITY_MS: OnceLock<std::sync::atomic::AtomicU64> = OnceLock::new();
 static LAST_APP_UPDATE_RESULT: OnceLock<Mutex<Option<String>>> = OnceLock::new();
 static LAST_APP_UPDATE_ERROR: OnceLock<Mutex<Option<String>>> = OnceLock::new();
 static LAST_APP_UPDATE_AT: OnceLock<Mutex<Option<String>>> = OnceLock::new();
@@ -98,7 +100,34 @@ struct SnapshotKeyRequest {
     snapshot_key: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct HelperProbeStatus {
+    ok: bool,
+    version: String,
+}
 
+fn current_unix_millis() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|duration| duration.as_millis() as u64)
+        .unwrap_or(0)
+}
+
+fn helper_activity_slot() -> &'static std::sync::atomic::AtomicU64 {
+    LAST_HELPER_ACTIVITY_MS.get_or_init(|| {
+        std::sync::atomic::AtomicU64::new(current_unix_millis())
+    })
+}
+
+fn mark_helper_activity() {
+    helper_activity_slot().store(current_unix_millis(), Ordering::SeqCst);
+}
+
+fn helper_idle_for() -> Duration {
+    let now = current_unix_millis();
+    let last = helper_activity_slot().load(Ordering::SeqCst);
+    Duration::from_millis(now.saturating_sub(last))
+}
 
 fn update_status_slot(
     slot: &'static OnceLock<Mutex<Option<String>>>,
@@ -151,7 +180,7 @@ fn mark_app_update_finished(result: &str, error: Option<String>) {
 }
 
 
-fn helper_is_running() -> bool {
+fn probe_running_helper() -> Option<HelperProbeStatus> {
     Client::builder()
         .connect_timeout(Duration::from_millis(500))
         .timeout(Duration::from_millis(900))
@@ -163,13 +192,64 @@ fn helper_is_running() -> bool {
                 .send()
                 .ok()
         })
+        .and_then(|response| {
+            if response.status().is_success() {
+                response.json::<HelperProbeStatus>().ok()
+            } else {
+                None
+            }
+        })
+        .filter(|status| status.ok)
+}
+
+fn helper_is_running() -> bool {
+    probe_running_helper().is_some()
+}
+
+fn request_running_helper_shutdown() -> bool {
+    Client::builder()
+        .connect_timeout(Duration::from_millis(500))
+        .timeout(Duration::from_millis(1200))
+        .build()
+        .ok()
+        .and_then(|client| {
+            client
+                .post(format!("http://{API_ADDRESS}{HELPER_SHUTDOWN_PATH}"))
+                .send()
+                .ok()
+        })
         .map(|response| response.status().is_success())
         .unwrap_or(false)
 }
 
 fn ensure_background_helper_running() {
-    if helper_is_running() {
-        return;
+    if let Some(status) = probe_running_helper() {
+        if status.version == HELPER_VERSION {
+            return;
+        }
+
+        eprintln!(
+            "A different NAIADD Offline Helper version is running ({}). Requesting shutdown before launching version {}.",
+            status.version,
+            HELPER_VERSION
+        );
+
+        if request_running_helper_shutdown() {
+            for _ in 0..30 {
+                if !helper_is_running() {
+                    break;
+                }
+
+                thread::sleep(Duration::from_millis(100));
+            }
+        }
+
+        if helper_is_running() {
+            eprintln!(
+                "The older NAIADD Offline Helper is still running and must be closed before the new helper can start."
+            );
+            return;
+        }
     }
 
     let executable = match std::env::current_exe() {
@@ -186,29 +266,14 @@ fn ensure_background_helper_running() {
     }
 
     for _ in 0..30 {
-        if helper_is_running() {
-            return;
+        if let Some(status) = probe_running_helper() {
+            if status.version == HELPER_VERSION {
+                return;
+            }
         }
 
         thread::sleep(Duration::from_millis(100));
     }
-}
-
-fn production_app_is_reachable() -> bool {
-    Client::builder()
-        .connect_timeout(Duration::from_secs(LAUNCH_PROBE_TIMEOUT_SECONDS))
-        .timeout(Duration::from_secs(LAUNCH_PROBE_TIMEOUT_SECONDS))
-        .user_agent(format!("NAIADD-Offline-Helper/{HELPER_VERSION}"))
-        .build()
-        .ok()
-        .and_then(|client| {
-            client
-                .get(REMOTE_APP_MANIFEST_URL)
-                .send()
-                .ok()
-        })
-        .map(|response| response.status().is_success())
-        .unwrap_or(false)
 }
 
 #[cfg(target_os = "windows")]
@@ -226,21 +291,12 @@ fn open_default_browser(_url: &str) -> Result<(), String> {
 }
 
 pub fn launch_naiadd() {
-    /*
-     * The visible desktop shortcut calls the helper with --launch-naiadd.
-     * Ensure the invisible background service exists first so the local
-     * fallback is immediately available even if Windows autostart was blocked.
-     */
     ensure_background_helper_running();
 
-    let launch_url = if production_app_is_reachable() {
-        PRODUCTION_LAUNCH_URL
-    } else {
-        LOCAL_LAUNCH_URL
-    };
-
-    if let Err(error) = open_default_browser(launch_url) {
-        eprintln!("Unable to open NAIADD at {launch_url}: {error}");
+    if let Err(error) = open_default_browser(SESSION_CHOOSER_URL) {
+        eprintln!(
+            "Unable to open the NAIADD session chooser at {SESSION_CHOOSER_URL}: {error}"
+        );
     }
 }
 
@@ -269,7 +325,7 @@ fn navigator_origin_allowed_for_app_update(headers: &str) -> bool {
         Some("http://127.0.0.1:43128") => true,
         Some("http://localhost:43128") => true,
         Some("http://localhost:5173") => true,
-        Some("http://localhost:1420") => true,
+        Some("http://localhost:1421") => true,
         Some(_) => false,
         None => {
             host == "127.0.0.1:43128"
@@ -289,7 +345,7 @@ fn credential_request_allowed(headers: &str) -> bool {
         Some("http://127.0.0.1:43128") => true,
         Some("http://localhost:43128") => true,
         Some("http://localhost:5173") => true,
-        Some("http://localhost:1420") => true,
+        Some("http://localhost:1421") => true,
         Some(_) => false,
         None => {
             host == "127.0.0.1:43128"
@@ -505,13 +561,21 @@ fn copy_dir_recursive(source: &Path, target: &Path) -> std::io::Result<()> {
 
 fn install_bundled_offline_app(resource_dir: &Path) -> std::io::Result<()> {
     let destination = app_path();
-
-    // Never overwrite a newer app that the background updater already installed.
-    if destination.join("index.html").is_file() {
-        return Ok(());
-    }
-
     let bundled = resource_dir.join("naiadd-app");
+
+    if destination.join("index.html").is_file() {
+        let local_manifest = read_local_app_manifest();
+
+        let bundled_manifest = fs::read(bundled.join(APP_MANIFEST_FILENAME))
+            .ok()
+            .and_then(|bytes| serde_json::from_slice::<OfflineAppManifest>(&bytes).ok());
+
+        if let (Some(local), Some(bundled_info)) = (&local_manifest, &bundled_manifest) {
+            if local.version == bundled_info.version {
+                return Ok(());
+            }
+        }
+    }
 
     if !bundled.join("index.html").is_file() {
         eprintln!(
@@ -869,15 +933,6 @@ fn trigger_app_update() -> bool {
     true
 }
 
-fn start_app_update_watcher() {
-    thread::spawn(|| loop {
-        let _ = trigger_app_update();
-
-        thread::sleep(Duration::from_secs(
-            APP_UPDATE_INTERVAL_SECONDS,
-        ));
-    });
-}
 
 fn status() -> HelperStatus {
     let (workspace_exists, workspace_writable) = ensure_workspace();
@@ -1030,6 +1085,7 @@ fn content_type_for(path: &Path) -> &'static str {
         }
         "png" => "image/png",
         "jpg" | "jpeg" => "image/jpeg",
+        "avif" => "image/avif",
         "svg" => "image/svg+xml",
         "ico" => "image/x-icon",
         "woff" => "font/woff",
@@ -1058,6 +1114,418 @@ fn safe_app_file(url_path: &str) -> PathBuf {
     } else {
         app_path().join("index.html")
     }
+}
+
+
+fn naiadd_shield_url() -> String {
+    let assets = app_path().join("assets");
+
+    if let Ok(entries) = fs::read_dir(assets) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+
+            if !path.is_file() {
+                continue;
+            }
+
+            let file_name = match path.file_name().and_then(|value| value.to_str()) {
+                Some(value) => value,
+                None => continue,
+            };
+
+            let lower = file_name.to_ascii_lowercase();
+
+            if lower.starts_with("naiadd-shield-")
+                && (lower.ends_with(".png")
+                    || lower.ends_with(".webp")
+                    || lower.ends_with(".jpg")
+                    || lower.ends_with(".jpeg"))
+            {
+                return format!("/assets/{file_name}");
+            }
+        }
+    }
+
+    "/apple-touch-icon.png".to_string()
+}
+
+fn naiadd_login_background_urls() -> Vec<String> {
+    let assets = app_path().join("assets");
+    let mut backgrounds = Vec::new();
+
+    if let Ok(entries) = fs::read_dir(assets) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+
+            if !path.is_file() {
+                continue;
+            }
+
+            let file_name = match path.file_name().and_then(|value| value.to_str()) {
+                Some(value) => value,
+                None => continue,
+            };
+
+            let lower = file_name.to_ascii_lowercase();
+            let is_image = lower.ends_with(".jpg")
+                || lower.ends_with(".jpeg")
+                || lower.ends_with(".png")
+                || lower.ends_with(".webp")
+                || lower.ends_with(".avif");
+
+            if !is_image || lower.contains("naiadd-shield") {
+                continue;
+            }
+
+            let large_enough = fs::metadata(&path)
+                .map(|metadata| metadata.len() >= 150_000)
+                .unwrap_or(false);
+
+            if large_enough {
+                backgrounds.push(format!("/assets/{file_name}"));
+            }
+        }
+    }
+
+    backgrounds.sort();
+    backgrounds
+}
+
+fn serve_session_chooser(stream: TcpStream) {
+    let offline_available = app_path().join("index.html").is_file();
+    let shield_url = naiadd_shield_url();
+    let backgrounds_json =
+        serde_json::to_string(&naiadd_login_background_urls()).unwrap_or_else(|_| "[]".to_string());
+
+    let offline_note = if offline_available {
+        "Server is not contacted. Drafts will need to be submitted during an online session."
+    } else {
+        "The offline application is not installed on this workstation yet."
+    };
+
+    let offline_class = if offline_available {
+        "session-choice offline"
+    } else {
+        "session-choice offline disabled"
+    };
+
+    let offline_aria = if offline_available { "false" } else { "true" };
+
+    let body = format!(
+        r#"<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NAIADD — Choose Session</title>
+  <style>
+    * {{ box-sizing: border-box; }}
+    html, body {{
+      margin: 0;
+      min-height: 100%;
+      font-family: Arial, Helvetica, sans-serif;
+    }}
+    body {{
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 34px;
+      position: relative;
+      overflow: hidden;
+      color: white;
+      background-color: #00121f;
+      background-size: cover;
+      background-position: 64% 40%;
+      background-repeat: no-repeat;
+    }}
+    body::before {{
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(
+          90deg,
+          rgba(0, 18, 32, 0.94) 0%,
+          rgba(0, 18, 32, 0.88) 9%,
+          rgba(0, 18, 32, 0.68) 20%,
+          rgba(0, 18, 32, 0.34) 42%,
+          rgba(0, 18, 32, 0.12) 72%,
+          rgba(0, 18, 32, 0.02) 100%
+        ),
+        radial-gradient(circle at 10% 50%, rgba(0, 0, 0, 0.18), transparent 30rem);
+      pointer-events: none;
+    }}
+    .session-shell {{
+      position: relative;
+      z-index: 1;
+      width: min(1420px, 100%);
+      min-height: min(760px, calc(100vh - 68px));
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 470px;
+      gap: 38px;
+      align-items: center;
+    }}
+    .session-brand-panel {{
+      display: grid;
+      grid-template-columns: 347px minmax(0, 1fr);
+      gap: 44px;
+      align-items: center;
+      min-width: 0;
+    }}
+    .session-shield-column {{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }}
+    .session-shield {{
+      width: min(347px, 33vw);
+      height: auto;
+      object-fit: contain;
+      filter:
+        drop-shadow(0 24px 42px rgba(0, 0, 0, 0.62))
+        drop-shadow(0 0 28px rgba(255, 130, 0, 0.18));
+    }}
+    .session-brand-copy {{ min-width: 0; color: white; }}
+    .session-kicker {{
+      margin: 0 0 0.8rem;
+      color: #fb923c;
+      font-size: 0.78rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }}
+    .session-brand-copy h1 {{
+      margin: 0;
+      max-width: 560px;
+      font-size: clamp(1.85rem, 2.65vw, 3.35rem);
+      line-height: 1.08;
+      font-weight: 900;
+      letter-spacing: -0.025em;
+      text-shadow: 0 10px 24px rgba(0, 0, 0, 0.48);
+    }}
+    .session-brand-copy > p:last-of-type {{
+      margin: 22px 0 0;
+      max-width: 560px;
+      color: rgba(255, 255, 255, 0.92);
+      font-size: clamp(0.98rem, 1.25vw, 1.2rem);
+      font-weight: 650;
+      line-height: 1.52;
+      text-shadow: 0 8px 24px rgba(0, 0, 0, 0.48);
+    }}
+    .session-feature-list {{
+      margin-top: 32px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(180px, max-content));
+      gap: 13px 18px;
+      align-items: center;
+    }}
+    .session-feature-pill {{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 45px;
+      padding: 10px 20px;
+      border-radius: 999px;
+      color: white;
+      font-size: 1rem;
+      font-weight: 850;
+      background: rgba(2, 6, 23, 0.28);
+      border: 1.5px solid rgba(125, 211, 252, 0.72);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(9px);
+    }}
+    .session-feature-pill:nth-child(1) {{ border-color: rgba(52, 211, 153, 0.86); }}
+    .session-feature-pill:nth-child(2) {{ border-color: rgba(125, 211, 252, 0.82); }}
+    .session-feature-pill:nth-child(3) {{
+      border-color: rgba(251, 146, 60, 0.9);
+      grid-column: 1 / span 2;
+      width: fit-content;
+    }}
+    .session-panel {{
+      border-radius: 26px;
+      padding: 36px;
+      background: linear-gradient(180deg, rgba(10, 18, 32, 0.52), rgba(15, 23, 42, 0.38));
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow: 0 34px 90px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+    }}
+    .session-panel-heading {{ margin-bottom: 22px; }}
+    .session-panel-heading p {{
+      margin: 0 0 8px;
+      color: #fb923c;
+      font-size: 0.76rem;
+      font-weight: 950;
+      letter-spacing: 0.15em;
+    }}
+    .session-panel-heading h2 {{
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 950;
+      letter-spacing: -0.025em;
+    }}
+    .session-panel-heading span {{
+      display: block;
+      margin-top: 8px;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.45;
+    }}
+    .session-choices {{ display: grid; gap: 14px; }}
+    .session-choice {{
+      display: block;
+      width: 100%;
+      border-radius: 14px;
+      padding: 20px;
+      color: white;
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 12px 26px rgba(15, 23, 42, 0.18);
+      backdrop-filter: blur(10px);
+      transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+    }}
+    .session-choice:hover {{
+      transform: translateY(-2px);
+      border-color: rgba(96, 165, 250, 0.72);
+      background: rgba(59, 130, 246, 0.15);
+    }}
+    .session-choice.offline {{ border-color: rgba(52, 211, 153, 0.38); }}
+    .session-choice.offline:hover {{
+      border-color: rgba(52, 211, 153, 0.82);
+      background: rgba(16, 185, 129, 0.12);
+    }}
+    .session-choice.disabled {{ opacity: 0.48; pointer-events: none; }}
+    .choice-kicker {{
+      display: block;
+      margin-bottom: 8px;
+      color: #93c5fd;
+      font-size: 0.74rem;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+    }}
+    .offline .choice-kicker {{ color: #86efac; }}
+    .session-choice h3 {{ margin: 0; font-size: 1.32rem; font-weight: 950; }}
+    .session-choice p {{
+      margin: 9px 0 0;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 0.93rem;
+      font-weight: 650;
+      line-height: 1.48;
+    }}
+    .choice-action {{ display: block; margin-top: 16px; font-weight: 900; }}
+    .session-footnote {{
+      margin: 22px auto 0;
+      max-width: 360px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 0.92rem;
+      font-weight: 650;
+      line-height: 1.45;
+      text-align: center;
+    }}
+    @media (max-width: 1180px) {{
+      .session-shell {{ grid-template-columns: 1fr; gap: 24px; }}
+      .session-brand-panel {{ grid-template-columns: 270px minmax(0, 1fr); }}
+      .session-shield {{ width: 270px; }}
+      .session-panel {{ width: min(520px, 100%); justify-self: center; }}
+    }}
+    @media (max-width: 760px) {{
+      body {{ padding: 16px; background-position: 60% 38%; overflow: auto; }}
+      .session-shell {{ min-height: auto; }}
+      .session-brand-panel {{ grid-template-columns: 1fr; gap: 18px; text-align: center; }}
+      .session-shield {{ width: 198px; max-width: 62vw; }}
+      .session-brand-copy h1 {{ margin: 0 auto; font-size: clamp(1.8rem, 7.7vw, 2.75rem); }}
+      .session-brand-copy > p:last-of-type {{ margin: 16px auto 0; font-size: 0.94rem; }}
+      .session-feature-list {{ grid-template-columns: 1fr; justify-items: center; margin-top: 22px; }}
+      .session-feature-pill, .session-feature-pill:nth-child(3) {{
+        grid-column: auto;
+        width: min(280px, 100%);
+        justify-content: center;
+      }}
+      .session-panel {{ padding: 22px; border-radius: 22px; }}
+    }}
+    @media (max-width: 460px) {{
+      .session-feature-list {{ display: none; }}
+      .session-panel {{ padding: 18px; }}
+    }}
+  </style>
+</head>
+<body>
+  <main class="session-shell">
+    <section class="session-brand-panel">
+      <div class="session-shield-column">
+        <img class="session-shield" src="{shield}" alt="NAIADD shield">
+      </div>
+      <div class="session-brand-copy">
+        <p class="session-kicker">NAIADD</p>
+        <h1>Nongame Aquatic Invertebrate Assessment and Distribution Database</h1>
+        <p>
+          A Virginia Department of Wildlife Resources platform for the
+          collection, management, analysis, and distribution of nongame aquatic
+          invertebrate observations.
+        </p>
+        <div class="session-feature-list">
+          <div class="session-feature-pill">Offline Drafts</div>
+          <div class="session-feature-pill">Field Collection</div>
+          <div class="session-feature-pill">Choose Your Session</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="session-panel">
+      <div class="session-panel-heading">
+        <p>SESSION MODE</p>
+        <h2>Open NAIADD</h2>
+        <span>Choose how you want to work on this workstation.</span>
+      </div>
+      <div class="session-choices">
+        <a class="session-choice" href="{online}">
+          <span class="choice-kicker">Connected</span>
+          <h3>Online Session</h3>
+          <p>Open the current production application with server authentication and connected services.</p>
+          <span class="choice-action">Open Online NAIADD →</span>
+        </a>
+        <a class="{offline_class}" href="{offline}" aria-disabled="{offline_aria}">
+          <span class="choice-kicker">Workstation</span>
+          <h3>Offline Session</h3>
+          <p>{offline_note}</p>
+          <span class="choice-action">Open Offline NAIADD →</span>
+        </a>
+      </div>
+      <p class="session-footnote">
+        Offline Session stays isolated from the server even when this computer has an internet connection.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const backgrounds = {backgrounds};
+    if (backgrounds.length > 0) {{
+      const selected = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+      const preload = new Image();
+      preload.onload = () => {{
+        document.body.style.backgroundImage = `url("${{selected}}")`;
+      }};
+      preload.src = selected;
+    }}
+  </script>
+</body>
+</html>"#,
+        online = PRODUCTION_LAUNCH_URL,
+        offline = LOCAL_LAUNCH_URL,
+        offline_class = offline_class,
+        offline_aria = offline_aria,
+        offline_note = offline_note,
+        shield = shield_url,
+        backgrounds = backgrounds_json,
+    );
+
+    write_response(
+        stream,
+        "HTTP/1.1 200 OK",
+        "text/html; charset=utf-8",
+        body.as_bytes(),
+    );
 }
 
 fn serve_app(stream: TcpStream, url_path: &str) {
@@ -1137,7 +1605,7 @@ fn save_json_file(
         write_json_response(
             stream,
             "HTTP/1.1 500 Internal Server Error",
-            r#"{"ok":false,"error":"C:\\TSE\\NAIADD2 is not writable."}"#,
+            r#"{"ok":false,"error":"C:\\TSE\\NAIADD is not writable."}"#,
         );
         return;
     }
@@ -1267,6 +1735,8 @@ fn save_binary_file(stream: TcpStream, request: &[u8], final_path: PathBuf, file
 }
 
 fn handle_client(mut stream: TcpStream) {
+    mark_helper_activity();
+
     let request = match read_http_request(&mut stream) {
         Ok(request) => request,
         Err(error) => {
@@ -1337,6 +1807,26 @@ fn handle_client(mut stream: TcpStream) {
             "text/plain",
             b"",
         );
+        return;
+    }
+
+    if method == "GET" && (url_path == "/session" || url_path == "/session/") {
+        serve_session_chooser(stream);
+        return;
+    }
+
+    if method == "POST" && url_path == HELPER_SHUTDOWN_PATH {
+        write_json_response(
+            stream,
+            "HTTP/1.1 200 OK",
+            r#"{"ok":true,"shuttingDown":true}"#,
+        );
+
+        thread::spawn(|| {
+            thread::sleep(Duration::from_millis(150));
+            std::process::exit(0);
+        });
+
         return;
     }
 
@@ -1701,6 +2191,27 @@ fn handle_client(mut stream: TcpStream) {
     );
 }
 
+fn start_idle_shutdown_monitor() {
+    mark_helper_activity();
+
+    thread::spawn(|| loop {
+        thread::sleep(HELPER_IDLE_CHECK_INTERVAL);
+
+        if APP_UPDATE_IN_PROGRESS.load(Ordering::SeqCst) {
+            mark_helper_activity();
+            continue;
+        }
+
+        if helper_idle_for() >= HELPER_IDLE_TIMEOUT {
+            println!(
+                "NAIADD Offline Helper has been idle for {} minutes and will exit.",
+                HELPER_IDLE_TIMEOUT.as_secs() / 60
+            );
+            std::process::exit(0);
+        }
+    });
+}
+
 fn start_local_api() {
     thread::spawn(|| {
         let listener =
@@ -1736,17 +2247,7 @@ pub fn run() {
     let _ = ensure_workspace();
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_autostart::Builder::new().build())
         .setup(|app| {
-            #[cfg(desktop)]
-            {
-                if let Err(error) = app.autolaunch().enable() {
-                    eprintln!(
-                        "Unable to enable NAIADD Offline Helper autostart: {error}"
-                    );
-                }
-            }
-
             match app.path().resource_dir() {
                 Ok(resource_dir) => {
                     if let Err(error) =
@@ -1767,7 +2268,7 @@ pub fn run() {
             }
 
             start_local_api();
-            start_app_update_watcher();
+            start_idle_shutdown_monitor();
 
             Ok(())
         })
