@@ -1810,3 +1810,58 @@
   padding-top: 15px;
   padding-bottom: 15px;
 }
+
+
+/* Basemap selector */
+.distribution-map-actions {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.distribution-basemap-control {
+  display: grid;
+  gap: 5px;
+  min-width: 150px;
+}
+
+.distribution-basemap-control > span {
+  color: var(--ui-muted);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.distribution-basemap-control select {
+  min-height: 38px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius-small);
+  padding: 7px 34px 7px 10px;
+  color: var(--ui-text);
+  background: var(--ui-panel);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  outline: none;
+}
+
+.distribution-basemap-control select:focus {
+  border-color: var(--vadma-accent, #d97706);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--vadma-accent, #d97706) 16%, transparent);
+}
+
+@media (max-width: 700px) {
+  .distribution-map-actions {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .distribution-basemap-control {
+    min-width: 0;
+    flex: 1 1 160px;
+  }
+}

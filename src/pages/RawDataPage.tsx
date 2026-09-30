@@ -80,6 +80,10 @@ function describeAppliedQuery(applied: AppliedQueryData): string {
   const parts: string[] = [];
   const { session } = applied;
 
+  if (session.dataSources?.length) {
+    parts.push(session.dataSources.map((source) => source === "release" ? "Release Database" : "Survey Database").join(" + "));
+  }
+
   if (session.startDate || session.endDate) {
     parts.push(
       `${session.startDate || "Any date"} to ${session.endDate || "Any date"}`,
@@ -129,6 +133,7 @@ export default function RawDataPage() {
   const [loadingRows, setLoadingRows] = useState(false);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
+  const [releasePage, setReleasePage] = useState(1);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportScope, setExportScope] = useState<ExportScope>("selected");
   const [exportLayout, setExportLayout] = useState<ExportLayout>("single");
@@ -252,6 +257,49 @@ export default function RawDataPage() {
     return names;
   }, [rows, snapshotColumns]);
 
+  const releaseRecords = appliedQuery?.releaseRecords ?? [];
+  const releaseRows = useMemo<DataRow[]>(() =>
+    releaseRecords.map((record) => ({
+      ...record.raw,
+      _DataSource: "Release Database",
+      _ReleaseRecordID: record.id,
+      _Dataset: record.datasetGroup,
+      _ScientificName: record.scientificName,
+      _BOVA: record.bova,
+      _ReleaseDate: record.surveyDate,
+      _Latitude: record.latitude,
+      _Longitude: record.longitude,
+      _Project: record.project,
+      _SourceFile: record.sourceFile,
+      _SourceRow: record.sourceRow,
+    })), [releaseRecords]);
+  const releaseColumns = useMemo(() => {
+    const names: string[] = [];
+    const found = new Set<string>();
+    for (const row of releaseRows) {
+      for (const key of Object.keys(row)) {
+        if (!found.has(key)) { found.add(key); names.push(key); }
+      }
+    }
+    return names;
+  }, [releaseRows]);
+  const releasePageCount = Math.max(1, Math.ceil(releaseRows.length / ROWS_PER_PAGE));
+  const safeReleasePage = Math.min(releasePage, releasePageCount);
+  const releasePageRows = releaseRows.slice(
+    (safeReleasePage - 1) * ROWS_PER_PAGE,
+    safeReleasePage * ROWS_PER_PAGE,
+  );
+
+  function exportReleaseRecords() {
+    if (releaseRows.length === 0 || releaseColumns.length === 0) return;
+    const header = `${releaseColumns.map(escapeCsvValue).join(",")}\r\n`;
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    downloadCsv(`NAIADD_Release_Query_${dateStamp}.csv`, [
+      header,
+      ...rowsToCsvChunks(releaseRows, releaseColumns),
+    ]);
+  }
+
   const pageCount = Math.max(1, Math.ceil(rows.length / ROWS_PER_PAGE));
   const safePage = Math.min(page, pageCount);
   const pageRows = rows.slice(
@@ -302,8 +350,15 @@ export default function RawDataPage() {
           ? snapshotColumns
           : await readCachedNaiaddSnapshotColumnNames();
 
-      const resolvedExportColumns =
-        exportColumns.length > 0 ? exportColumns : columns;
+      // The Parquet schema is the authoritative field list. Also retain any
+      // additional keys discovered on loaded rows so Raw Data never silently
+      // drops a field if a future reader exposes one outside the schema list.
+      const resolvedExportColumns = Array.from(
+        new Set([
+          ...exportColumns,
+          ...columns,
+        ]),
+      );
 
       if (resolvedExportColumns.length === 0) {
         throw new Error("No snapshot columns were available for export.");
@@ -408,11 +463,11 @@ export default function RawDataPage() {
           <div className="raw-data-summary-card">
           <Database size={22} aria-hidden="true" />
           <div>
-            <span>Matching collections</span>
+            <span>Matching records</span>
             <strong>
               {loadingIndex
                 ? "—"
-                : matchingCollections.length.toLocaleString()}
+                : (matchingCollections.length + releaseRecords.length).toLocaleString()}
             </strong>
           </div>
           </div>
@@ -606,6 +661,54 @@ export default function RawDataPage() {
               </>
             )}
           </section>
+
+          {releaseRecords.length > 0 ? (
+            <section className="raw-data-table-card raw-data-release-card">
+              <div className="raw-data-release-heading">
+                <div>
+                  <span>Release Database</span>
+                  <strong>{releaseRecords.length.toLocaleString()} matching release records</strong>
+                </div>
+                <button type="button" className="raw-data-export-button" onClick={exportReleaseRecords}>
+                  <Download size={17} aria-hidden="true" />
+                  Export release records
+                </button>
+              </div>
+
+              <div className="raw-data-table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      {releaseColumns.map((column) => <th key={column}>{column}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {releasePageRows.map((row, rowIndex) => (
+                      <tr key={`${String(row._ReleaseRecordID ?? "release")}-${rowIndex}`}>
+                        {releaseColumns.map((column) => (
+                          <td key={column}>{formatCellValue(row[column])}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <footer className="raw-data-pagination">
+                <span>
+                  Rows {((safeReleasePage - 1) * ROWS_PER_PAGE + 1).toLocaleString()}–{Math.min(safeReleasePage * ROWS_PER_PAGE, releaseRows.length).toLocaleString()} of {releaseRows.length.toLocaleString()}
+                </span>
+                <div>
+                  <button type="button" onClick={() => setReleasePage((current) => Math.max(1, current - 1))} disabled={safeReleasePage <= 1}>
+                    <ChevronLeft size={17} /> Previous rows
+                  </button>
+                  <button type="button" onClick={() => setReleasePage((current) => Math.min(releasePageCount, current + 1))} disabled={safeReleasePage >= releasePageCount}>
+                    Next rows <ChevronRight size={17} />
+                  </button>
+                </div>
+              </footer>
+            </section>
+          ) : null}
         </>
       )}
 

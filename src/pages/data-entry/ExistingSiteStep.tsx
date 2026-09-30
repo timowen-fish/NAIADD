@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   CircleMarker,
+  GeoJSON,
   MapContainer,
   Popup,
   TileLayer,
   useMap,
   ZoomControl,
 } from "react-leaflet";
+import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 import type { LocationRecord } from "../../types/location";
@@ -23,7 +25,7 @@ type ExistingSiteStepProps = {
   onLocationSaved: (locationTable: LocationRecord) => void;
 };
 
-type BasemapType = "dark" | "satellite";
+type BasemapType = "dark" | "satellite" | "street";
 
 type ExistingSiteDataSource = "snapshot" | "cached" | "empty";
 
@@ -40,6 +42,163 @@ type SiteRecord = LocationTable & {
 };
 
 const virginiaCenter: [number, number] = [37.55, -78.6];
+
+type NominatimLocationResult = {
+  latitude: number;
+  longitude: number;
+  label: string;
+  type: string;
+  addressType: string;
+  category: string;
+  county: string;
+};
+
+
+type CountyBoundaryFeature = GeoJSON.Feature<GeoJSON.Polygon | GeoJSON.MultiPolygon, Record<string, unknown>>;
+let countyBoundaryCache: GeoJSON.FeatureCollection | null = null;
+
+function normalizeCountyName(value: string) {
+  return value.toLowerCase().replace(/\b(county|city of|city)\b/g, "").replace(/[^a-z0-9]/g, "");
+}
+
+async function loadCountyBoundary(countyName: string): Promise<CountyBoundaryFeature | null> {
+  if (!countyName.trim()) return null;
+  if (!countyBoundaryCache) {
+    const response = await fetch("/spatial/counties.geojson", { cache: "no-cache" });
+    if (!response.ok) throw new Error(`Could not load county boundaries (${response.status}).`);
+    countyBoundaryCache = (await response.json()) as GeoJSON.FeatureCollection;
+  }
+  const target = normalizeCountyName(countyName);
+  const fields = ["County_Nam", "County", "COUNTY", "NAME", "Name", "NAMELSAD"];
+  const match = countyBoundaryCache.features.find((feature) => {
+    const props = (feature.properties || {}) as Record<string, unknown>;
+    return fields.some((field) => normalizeCountyName(String(props[field] || "")) === target);
+  });
+  if (!match || (match.geometry.type !== "Polygon" && match.geometry.type !== "MultiPolygon")) return null;
+  return match as CountyBoundaryFeature;
+}
+
+function FitCountyBoundary({ feature }: { feature: CountyBoundaryFeature | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!feature) return;
+    const bounds = L.geoJSON(feature).getBounds();
+    if (bounds.isValid()) map.fitBounds(bounds, { padding: [28, 28], maxZoom: 12 });
+  }, [feature, map]);
+  return null;
+}
+
+let lastNominatimRequestAt = 0;
+
+async function waitForNominatimRateLimit() {
+  const elapsed = Date.now() - lastNominatimRequestAt;
+  const remaining = 1100 - elapsed;
+
+  if (remaining > 0) {
+    await new Promise<void>((resolve) =>
+      window.setTimeout(resolve, remaining),
+    );
+  }
+
+  lastNominatimRequestAt = Date.now();
+}
+
+async function searchVirginiaWithNominatim(
+  rawQuery: string,
+): Promise<NominatimLocationResult[]> {
+  const query = rawQuery.trim();
+
+  if (!query) {
+    throw new Error(
+      "Enter an address, road, waterbody, county, park, forest, or place to search.",
+    );
+  }
+
+  if (!navigator.onLine) {
+    throw new Error("Map location search is unavailable while offline.");
+  }
+
+  await waitForNominatimRateLimit();
+
+  const searchQuery = /\b(virginia|va)\b/i.test(query)
+    ? query
+    : `${query}, Virginia`;
+
+  const params = new URLSearchParams({
+    format: "jsonv2",
+    q: searchQuery,
+    countrycodes: "us",
+    viewbox: "-83.8,39.6,-75.0,36.4",
+    bounded: "1",
+    limit: "6",
+    addressdetails: "1",
+    dedupe: "1",
+  });
+
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/search?${params.toString()}`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Location search is temporarily unavailable (${response.status}).`,
+    );
+  }
+
+  const rawResults = (await response.json()) as Array<{
+    lat?: string;
+    lon?: string;
+    display_name?: string;
+    type?: string;
+    class?: string;
+    addresstype?: string;
+    address?: { county?: string };
+  }>;
+
+  const results = rawResults
+    .map((result) => ({
+      latitude: Number(result.lat),
+      longitude: Number(result.lon),
+      label: String(result.display_name || query),
+      type: String(result.type || "location"),
+      addressType: String(result.addresstype || ""),
+      category: String(result.class || ""),
+      county: String(result.address?.county || ""),
+    }))
+    .filter(
+      (result) =>
+        Number.isFinite(result.latitude) &&
+        Number.isFinite(result.longitude) &&
+        result.latitude >= 36.4 &&
+        result.latitude <= 39.6 &&
+        result.longitude >= -83.8 &&
+        result.longitude <= -75.0,
+    );
+
+  if (results.length === 0) {
+    throw new Error(
+      "No matching Virginia location was found. Try an address, road, waterbody, county, state park, state forest, or place name.",
+    );
+  }
+
+  return results;
+}
+
+function isCountySearchResult(result: NominatimLocationResult) {
+  const addressType = result.addressType.toLowerCase();
+  const type = result.type.toLowerCase();
+  const firstLabelPart = result.label.split(",")[0]?.trim() || "";
+
+  return (
+    addressType === "county" ||
+    type === "county" ||
+    /\bcounty\b/i.test(firstLabelPart)
+  );
+}
 
 const SITES_CACHE_KEY = "naiadd_existing_sites_cache_v1";
 const SITES_CACHE_TIME_KEY = "naiadd_existing_sites_cached_at_v1";
@@ -543,6 +702,11 @@ function ExistingSiteStep({
   const [sites, setSites] = useState<SiteRecord[]>([]);
   const [selectedSiteId, setSelectedSiteId] = useState("");
   const [searchText, setSearchText] = useState("");
+  const [mapSearchText, setMapSearchText] = useState("");
+  const [mapSearching, setMapSearching] = useState(false);
+  const [mapSearchMessage, setMapSearchMessage] = useState("");
+  const [mapSearchResults, setMapSearchResults] = useState<NominatimLocationResult[]>([]);
+  const [searchCountyBoundary, setSearchCountyBoundary] = useState<CountyBoundaryFeature | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshingSites, setRefreshingSites] = useState(false);
   const [siteStatusMessage, setSiteStatusMessage] = useState("");
@@ -553,6 +717,15 @@ function ExistingSiteStep({
   const [locatingUser, setLocatingUser] = useState(false);
   const [locationError, setLocationError] = useState("");
   const [currentLocation, setCurrentLocation] = useState<{
+    latitude: number | null;
+    longitude: number | null;
+    trigger: number;
+  }>({
+    latitude: null,
+    longitude: null,
+    trigger: 0,
+  });
+  const [mapSearchLocation, setMapSearchLocation] = useState<{
     latitude: number | null;
     longitude: number | null;
     trigger: number;
@@ -843,6 +1016,56 @@ function ExistingSiteStep({
     );
   }
 
+  async function searchMapLocation() {
+    if (mapSearching) return;
+
+    setMapSearchMessage("");
+    setMapSearchResults([]);
+    setMapSearching(true);
+
+    try {
+      const results = await searchVirginiaWithNominatim(mapSearchText);
+      setMapSearchResults(results);
+      setMapSearchMessage(
+        `${results.length} matching Virginia location${results.length === 1 ? "" : "s"} found. Choose one to move the map.`,
+      );
+    } catch (error) {
+      setMapSearchMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to search for that location.",
+      );
+    } finally {
+      setMapSearching(false);
+    }
+  }
+
+  async function chooseMapSearchResult(result: NominatimLocationResult) {
+    setMapSearchResults([]);
+    setSearchCountyBoundary(null);
+
+    const isCountyResult = isCountySearchResult(result);
+    if (isCountyResult && result.county) {
+      try {
+        const boundary = await loadCountyBoundary(result.county);
+        if (boundary) {
+          setSearchCountyBoundary(boundary);
+          setMapSearchMessage(`Showing the ${result.county} boundary. This does not select a NAIADD sampling site.`);
+          return;
+        }
+      } catch (error) {
+        console.warn("Unable to load county boundary:", error);
+      }
+    }
+
+    setMapSearchLocation((current) => ({
+      latitude: result.latitude,
+      longitude: result.longitude,
+      trigger: current.trigger + 1,
+    }));
+    setMapSearchMessage(`Map centered on ${result.label}. This does not select a NAIADD sampling site.`);
+  }
+
   return (
     <main className="app existingSitePage">
       {(dataSource === "cached" || !isOnline) && (
@@ -981,6 +1204,16 @@ function ExistingSiteStep({
 
             <button
               type="button"
+              className={`basemapOptionButton ${
+                basemap === "street" ? "active" : ""
+              }`}
+              onClick={() => setBasemap("street")}
+            >
+              Streets
+            </button>
+
+            <button
+              type="button"
               className="basemapOptionButton"
               onClick={zoomToCurrentLocation}
               disabled={locatingUser}
@@ -991,6 +1224,76 @@ function ExistingSiteStep({
             </button>
           </div>
         </div>
+
+        <div className="siteSearchBox">
+          <input
+            className="input"
+            value={mapSearchText}
+            onChange={(event) => setMapSearchText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void searchMapLocation();
+              }
+            }}
+            placeholder="Search road, town, county, park, or address…"
+            aria-label="Search Virginia map location"
+          />
+
+          <button
+            type="button"
+            className="clearSearchButton"
+            onClick={() => void searchMapLocation()}
+            disabled={mapSearching || !mapSearchText.trim() || !isOnline}
+          >
+            {mapSearching ? "Searching…" : "Search Map"}
+          </button>
+
+          {mapSearchText && (
+            <button
+              type="button"
+              className="clearSearchButton"
+              onClick={() => {
+                setMapSearchText("");
+                setMapSearchMessage("");
+                setMapSearchResults([]);
+                setSearchCountyBoundary(null);
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        <p className="thinText">
+          OpenStreetMap search is for map navigation only. Selecting a NAIADD
+          site still requires using the site controls below. Search is submitted
+          only when you press Search Map or Enter.
+        </p>
+
+        {mapSearchResults.length > 0 && (
+          <div className="siteResultList">
+            {mapSearchResults.map((result, index) => (
+              <button
+                key={`${result.latitude}-${result.longitude}-${index}`}
+                type="button"
+                className="siteResult"
+                onClick={() => chooseMapSearchResult(result)}
+              >
+                <strong>{result.label}</strong>
+                <small>{result.type.replace(/_/g, " ")}</small>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {mapSearchMessage && (
+          <p className="thinText">{mapSearchMessage}</p>
+        )}
+
+        <p className="thinText">
+          Search data © OpenStreetMap contributors, via Nominatim.
+        </p>
 
         <div className="leafletMap modernLeafletMap">
           <MapContainer
@@ -1010,11 +1313,28 @@ function ExistingSiteStep({
           >
             <MapSizeInvalidator basemap={basemap} siteCount={sites.length} />
 
+            <FitCountyBoundary feature={searchCountyBoundary} />
+
+            {searchCountyBoundary && (
+              <GeoJSON
+                key={JSON.stringify(searchCountyBoundary.properties || {})}
+                data={searchCountyBoundary}
+                style={{ weight: 4, opacity: 1, fillOpacity: 0.06 }}
+                interactive={false}
+              />
+            )}
+
             {basemap === "dark" ? (
               <TileLayer
                 key="dark-basemap"
                 attribution="&copy; OpenStreetMap contributors &copy; CARTO"
                 url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              />
+            ) : basemap === "street" ? (
+              <TileLayer
+                key="street-basemap"
+                attribution="&copy; OpenStreetMap contributors"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
             ) : (
               <TileLayer
@@ -1030,6 +1350,11 @@ function ExistingSiteStep({
               latitude={currentLocation.latitude}
               longitude={currentLocation.longitude}
               trigger={currentLocation.trigger}
+            />
+            <FlyToCurrentLocation
+              latitude={mapSearchLocation.latitude}
+              longitude={mapSearchLocation.longitude}
+              trigger={mapSearchLocation.trigger}
             />
 
             {currentLocation.latitude !== null &&

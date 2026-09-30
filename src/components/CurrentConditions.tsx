@@ -20,6 +20,181 @@ export type DashboardSite = {
   lng: number;
 };
 
+
+type NominatimLocationResult = {
+  latitude: number;
+  longitude: number;
+  label: string;
+  type: string;
+  addressType: string;
+  category: string;
+  county: string;
+};
+
+type CountyBoundaryFeature = {
+  type: "Feature";
+  geometry: { type: "Polygon" | "MultiPolygon"; coordinates: unknown };
+  properties?: Record<string, unknown> | null;
+};
+
+let lastNominatimRequestAt = 0;
+let countyBoundaryCache: { features?: CountyBoundaryFeature[] } | null = null;
+
+function normalizeCountyName(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\b(county|city of|city)\b/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+async function waitForNominatimRateLimit() {
+  const elapsed = Date.now() - lastNominatimRequestAt;
+  const remaining = 1100 - elapsed;
+
+  if (remaining > 0) {
+    await new Promise<void>((resolve) => window.setTimeout(resolve, remaining));
+  }
+
+  lastNominatimRequestAt = Date.now();
+}
+
+async function searchVirginiaWithNominatim(
+  rawQuery: string,
+): Promise<NominatimLocationResult[]> {
+  const query = rawQuery.trim();
+
+  if (!query) {
+    throw new Error(
+      "Enter an address, road, waterbody, county, park, forest, or place to search.",
+    );
+  }
+
+  if (!navigator.onLine) {
+    throw new Error("Map location search is unavailable while offline.");
+  }
+
+  await waitForNominatimRateLimit();
+
+  const searchQuery = /\b(virginia|va)\b/i.test(query)
+    ? query
+    : `${query}, Virginia`;
+
+  const params = new URLSearchParams({
+    format: "jsonv2",
+    q: searchQuery,
+    countrycodes: "us",
+    viewbox: "-83.8,39.6,-75.0,36.4",
+    bounded: "1",
+    limit: "6",
+    addressdetails: "1",
+    dedupe: "1",
+  });
+
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/search?${params.toString()}`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Location search is temporarily unavailable (${response.status}).`,
+    );
+  }
+
+  const rawResults = (await response.json()) as Array<{
+    lat?: string;
+    lon?: string;
+    display_name?: string;
+    type?: string;
+    class?: string;
+    addresstype?: string;
+    address?: { county?: string };
+  }>;
+
+  const results = rawResults
+    .map((result) => ({
+      latitude: Number(result.lat),
+      longitude: Number(result.lon),
+      label: String(result.display_name || query),
+      type: String(result.type || "location"),
+      addressType: String(result.addresstype || ""),
+      category: String(result.class || ""),
+      county: String(result.address?.county || ""),
+    }))
+    .filter(
+      (result) =>
+        Number.isFinite(result.latitude) &&
+        Number.isFinite(result.longitude) &&
+        result.latitude >= 36.4 &&
+        result.latitude <= 39.6 &&
+        result.longitude >= -83.8 &&
+        result.longitude <= -75.0,
+    );
+
+  if (results.length === 0) {
+    throw new Error(
+      "No matching Virginia location was found. Try an address, road, waterbody, county, state park, state forest, or place name.",
+    );
+  }
+
+  return results;
+}
+
+function isCountySearchResult(result: NominatimLocationResult) {
+  const addressType = result.addressType.toLowerCase();
+  const type = result.type.toLowerCase();
+  const firstLabelPart = result.label.split(",")[0]?.trim() || "";
+
+  return (
+    addressType === "county" ||
+    type === "county" ||
+    /\bcounty\b/i.test(firstLabelPart)
+  );
+}
+
+async function loadCountyBoundary(
+  countyName: string,
+): Promise<CountyBoundaryFeature | null> {
+  if (!countyName.trim()) return null;
+
+  if (!countyBoundaryCache) {
+    const response = await fetch("/spatial/counties.geojson", {
+      cache: "no-cache",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Could not load county boundaries (${response.status}).`);
+    }
+
+    countyBoundaryCache = (await response.json()) as {
+      features?: CountyBoundaryFeature[];
+    };
+  }
+
+  const target = normalizeCountyName(countyName);
+  const fields = ["County_Nam", "County", "COUNTY", "NAME", "Name", "NAMELSAD"];
+
+  const match = countyBoundaryCache.features?.find((feature) => {
+    const properties = feature.properties || {};
+    return fields.some(
+      (field) => normalizeCountyName(String(properties[field] || "")) === target,
+    );
+  });
+
+  if (
+    !match ||
+    (match.geometry?.type !== "Polygon" &&
+      match.geometry?.type !== "MultiPolygon")
+  ) {
+    return null;
+  }
+
+  return match;
+}
+
 function normalizeSiteSearch(value: string) {
   return value
     .toLowerCase()
@@ -261,8 +436,8 @@ function WindOverlay({
       context.clearRect(0, 0, width, height);
 
       const targetCount = compact
-        ? Math.max(560, Math.min(760, Math.round((width * height) / 180)))
-        : Math.max(900, Math.min(1200, Math.round((width * height) / 420)));
+        ? Math.max(180, Math.min(300, Math.round((width * height) / 700)))
+        : Math.max(320, Math.min(520, Math.round((width * height) / 1100)));
 
       if (particlesRef.current.length !== targetCount) {
         particlesRef.current = Array.from({ length: targetCount }, (_, index) => {
@@ -598,7 +773,7 @@ const TIDE_STATIONS: TideStation[] = [
   },
 ];
 
-const TIDE_STATION_CACHE_KEY = "vadma_noaa_tide_stations_v1";
+const TIDE_STATION_CACHE_KEY = "naiadd_noaa_tide_stations_v1";
 const TIDE_STATION_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 function coopsStationToTideStation(item: any): TideStation | null {
@@ -1810,7 +1985,7 @@ function createVadmaMapMarker(L: any, lat: number, lng: number) {
   return L.marker([lat, lng], { icon });
 }
 
-type BasemapMode = "dark" | "topo" | "satellite";
+type BasemapMode = "street" | "dark" | "topo" | "satellite";
 
 export default function CurrentConditions({
   sites,
@@ -1822,20 +1997,27 @@ export default function CurrentConditions({
   const radarLayerRef = useRef<any>(null);
   const basemapLayerRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
+  const countyBoundaryLayerRef = useRef<any>(null);
   const windRequestControllerRef = useRef<AbortController | null>(null);
   const windRequestIdRef = useRef(0);
   const windRefreshTimerRef = useRef<number | null>(null);
   const [mapStatus, setMapStatus] = useState("Radar hidden. Toggle radar to view precipitation.");
   const [siteSearch, setSiteSearch] = useState("");
   const [selectedSiteKey, setSelectedSiteKey] = useState("");
+  const [mapLocationSearch, setMapLocationSearch] = useState("");
+  const [mapLocationResults, setMapLocationResults] = useState<NominatimLocationResult[]>([]);
+  const [mapLocationSearching, setMapLocationSearching] = useState(false);
+  const [mapLocationMessage, setMapLocationMessage] = useState(
+    "Search a Virginia address, road, waterbody, county, state park, state forest, or place.",
+  );
   const [forecastTitle, setForecastTitle] = useState("Forecast");
   const [forecastText, setForecastText] = useState(
     "Click the map or choose a sampling site to pull today's nearest National Weather Service forecast.",
   );
   const [forecastLoading, setForecastLoading] = useState(false);
-  const [showWind, setShowWind] = useState(true);
+  const [showWind, setShowWind] = useState(false);
   const [mapReadyToken, setMapReadyToken] = useState(0);
-  const [basemapMode, setBasemapMode] = useState<BasemapMode>("dark");
+  const [basemapMode, setBasemapMode] = useState<BasemapMode>("street");
   const [showRadar, setShowRadar] = useState(false);
   const [windSpeedMph, setWindSpeedMph] = useState<number | null>(null);
   const [windDirectionDegrees, setWindDirectionDegrees] = useState(225);
@@ -1860,15 +2042,23 @@ export default function CurrentConditions({
   );
 
   const basemapLabel =
-    basemapMode === "dark"
-      ? "Carto dark"
-      : basemapMode === "topo"
-        ? "Topo"
-        : "Satellite";
+    basemapMode === "street"
+      ? "OpenStreetMap streets"
+      : basemapMode === "dark"
+        ? "Carto dark"
+        : basemapMode === "topo"
+          ? "Topo"
+          : "Satellite";
 
   const nextBasemapMode = () => {
     setBasemapMode((current) =>
-      current === "dark" ? "topo" : current === "topo" ? "satellite" : "dark",
+      current === "street"
+        ? "topo"
+        : current === "topo"
+          ? "satellite"
+          : current === "satellite"
+            ? "dark"
+            : "street",
     );
   };
   const [hourlyForecast, setHourlyForecast] = useState<HourlyForecastPoint[]>(
@@ -1891,6 +2081,21 @@ export default function CurrentConditions({
 
   const getBasemapLayer = useCallback(
     (L: any) => {
+      if (basemapMode === "street") {
+        return L.tileLayer(
+          "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+          {
+            subdomains: "abc",
+            maxNativeZoom: 19,
+            maxZoom: 20,
+            minZoom: 3,
+            attribution: "© OpenStreetMap contributors",
+            updateWhenZooming: false,
+            keepBuffer: 3,
+          },
+        );
+      }
+
       if (basemapMode === "topo") {
         return L.tileLayer(
           "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
@@ -1957,8 +2162,8 @@ export default function CurrentConditions({
 
       if (![south, north, west, east].every(Number.isFinite)) return;
 
-      const rows = 5;
-      const cols = 7;
+      const rows = 4;
+      const cols = 5;
       const samples: Array<{ lat: number; lng: number; x: number; y: number }> =
         [];
 
@@ -2140,7 +2345,7 @@ export default function CurrentConditions({
             "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter",
           );
           url.searchParams.set("product", "predictions");
-          url.searchParams.set("application", "VADMA");
+          url.searchParams.set("application", "NAIADD");
           url.searchParams.set("begin_date", formatNoaaDate(now));
           url.searchParams.set("end_date", formatNoaaDate(tomorrow));
           url.searchParams.set("station", candidate.station.id);
@@ -2504,6 +2709,14 @@ export default function CurrentConditions({
           map.on("click", (event: any) => {
             const { lat, lng } = event.latlng;
 
+            setSelectedSiteKey("");
+            setMapLocationResults([]);
+
+            if (countyBoundaryLayerRef.current) {
+              countyBoundaryLayerRef.current.remove();
+              countyBoundaryLayerRef.current = null;
+            }
+
             if (markerRef.current) {
               markerRef.current.remove();
             }
@@ -2654,8 +2867,8 @@ export default function CurrentConditions({
 
     if (!showWind || !map || mapReadyToken === 0) return undefined;
 
-    const refreshAfterInteraction = () => scheduleWindRefresh(200);
-    const refreshAfterResize = () => scheduleWindRefresh(260);
+    const refreshAfterInteraction = () => scheduleWindRefresh(450);
+    const refreshAfterResize = () => scheduleWindRefresh(500);
 
     scheduleWindRefresh(0);
 
@@ -2688,16 +2901,24 @@ export default function CurrentConditions({
     };
   }, [showWind, mapReadyToken, basemapMode, scheduleWindRefresh]);
 
-  function selectSite(site: DashboardSite) {
-    setSelectedSiteKey(site.key);
-    setSiteSearch(site.label);
+  function clearCountyBoundary() {
+    const map = mapInstanceRef.current;
+    const layer = countyBoundaryLayerRef.current;
 
+    if (map && layer && map.hasLayer(layer)) {
+      map.removeLayer(layer);
+    }
+
+    countyBoundaryLayerRef.current = null;
+  }
+
+  function focusConditionsPoint(lat: number, lng: number, label: string, zoom = 13) {
     const win = window as any;
     const L = win.L;
     const map = mapInstanceRef.current;
 
     if (L && map) {
-      map.setView([site.lat, site.lng], Math.max(map.getZoom(), 12), {
+      map.setView([lat, lng], Math.max(map.getZoom(), zoom), {
         animate: true,
       });
 
@@ -2705,12 +2926,124 @@ export default function CurrentConditions({
         markerRef.current.remove();
       }
 
-      markerRef.current = createVadmaMapMarker(L, site.lat, site.lng).addTo(
-        map,
-      );
+      markerRef.current = createVadmaMapMarker(L, lat, lng).addTo(map);
     }
 
-    void requestForecast(site.lat, site.lng, site.label);
+    void requestForecast(lat, lng, label);
+  }
+
+  async function searchMapLocation() {
+    if (mapLocationSearching) return;
+
+    setMapLocationResults([]);
+    setMapLocationSearching(true);
+    setMapLocationMessage("Searching OpenStreetMap...");
+
+    try {
+      const results = await searchVirginiaWithNominatim(mapLocationSearch);
+      setMapLocationResults(results);
+      setMapLocationMessage(
+        `${results.length} matching Virginia location${results.length === 1 ? "" : "s"} found. Choose one to load conditions.`,
+      );
+    } catch (error) {
+      setMapLocationMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to search for that location.",
+      );
+    } finally {
+      setMapLocationSearching(false);
+    }
+  }
+
+  async function chooseMapLocationResult(result: NominatimLocationResult) {
+    const win = window as any;
+    const L = win.L;
+    const map = mapInstanceRef.current;
+
+    setMapLocationResults([]);
+    setSelectedSiteKey("");
+    clearCountyBoundary();
+
+    const isCountyResult = isCountySearchResult(result);
+
+    const countyName =
+      result.county || (isCountyResult ? result.label.split(",")[0].trim() : "");
+
+    if (isCountyResult && countyName && L && map) {
+      try {
+        const boundary = await loadCountyBoundary(countyName);
+
+        if (boundary) {
+          const accent =
+            getComputedStyle(document.documentElement)
+              .getPropertyValue("--vadma-accent")
+              .trim() || "#ff9f43";
+
+          countyBoundaryLayerRef.current = L.geoJSON(boundary, {
+            style: {
+              color: accent,
+              weight: 4,
+              opacity: 0.95,
+              fillColor: accent,
+              fillOpacity: 0.08,
+              dashArray: "8 5",
+            },
+          }).addTo(map);
+
+          const bounds = countyBoundaryLayerRef.current.getBounds();
+          if (bounds?.isValid?.()) {
+            map.fitBounds(bounds, { padding: [28, 28], maxZoom: 12 });
+          }
+        }
+      } catch (error) {
+        console.warn("Unable to load county boundary:", error);
+      }
+    }
+
+    if (L && map) {
+      if (markerRef.current) markerRef.current.remove();
+      markerRef.current = createVadmaMapMarker(
+        L,
+        result.latitude,
+        result.longitude,
+      ).addTo(map);
+
+      if (!isCountyResult) {
+        map.setView(
+          [result.latitude, result.longitude],
+          Math.max(map.getZoom(), 13),
+          { animate: true },
+        );
+      }
+    }
+
+    setMapLocationSearch(result.label);
+    setMapLocationMessage(
+      isCountyResult && countyName
+        ? `Showing ${countyName}. Weather, tides, and nearest USGS gage are loading from the county search location.`
+        : `Conditions loading for ${result.label}.`,
+    );
+
+    void requestForecast(result.latitude, result.longitude, result.label);
+  }
+
+  function selectSite(site: DashboardSite) {
+    setSelectedSiteKey(site.key);
+    setSiteSearch(site.label);
+    setMapLocationResults([]);
+    clearCountyBoundary();
+    focusConditionsPoint(site.lat, site.lng, site.label, 12);
+  }
+
+  function exportToGoogleMaps() {
+    if (!lastPoint) return;
+
+    const destination = `${lastPoint.lat.toFixed(6)},${lastPoint.lng.toFixed(6)}`;
+    const googleMapsUrl =
+      `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+
+    window.open(googleMapsUrl, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -2760,6 +3093,69 @@ export default function CurrentConditions({
                 No matching sampling sites
               </div>
             )}
+          </div>
+        </div>
+
+        <div className="home-site-search-wrap home-map-location-search-wrap">
+          <label
+            className="home-site-search-label"
+            htmlFor="home-map-location-search"
+          >
+            Forecast by address, road, waterbody, county, park, forest, or place
+          </label>
+
+          <div className="home-map-location-search-row">
+            <input
+              id="home-map-location-search"
+              className="home-site-forecast-search"
+              value={mapLocationSearch}
+              onChange={(event) => {
+                setMapLocationSearch(event.target.value);
+                setMapLocationResults([]);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void searchMapLocation();
+                }
+              }}
+              placeholder="Search address, road, waterbody, county, park, forest, or place..."
+              aria-label="Search Virginia map locations for current conditions"
+            />
+            <button
+              type="button"
+              className="home-map-location-search-button"
+              onClick={() => void searchMapLocation()}
+              disabled={mapLocationSearching}
+            >
+              {mapLocationSearching ? "Searching…" : "Search map"}
+            </button>
+          </div>
+
+          {mapLocationResults.length > 0 ? (
+            <div className="home-site-search-results home-map-location-results">
+              {mapLocationResults.map((result, index) => (
+                <button
+                  type="button"
+                  className="home-site-search-result"
+                  key={`${result.latitude}-${result.longitude}-${index}`}
+                  onClick={() => void chooseMapLocationResult(result)}
+                >
+                  <span className="home-site-search-main">
+                    <strong>{result.label.split(",")[0]}</strong>
+                    <em>{result.label}</em>
+                  </span>
+                  <span className="home-site-search-id">{result.type}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
+
+          <div className="home-map-location-search-message" role="status">
+            {mapLocationMessage}
+          </div>
+          <div className="home-map-location-attribution">
+            Search data © OpenStreetMap contributors, via Nominatim.
           </div>
         </div>
 
@@ -2813,7 +3209,7 @@ export default function CurrentConditions({
             aria-label="Change baselayer"
           >
             {basemapLabel} baselayer
-            <span>Topo • Carto dark • Satellite</span>
+            <span>Streets • Topo • Satellite • Carto dark</span>
           </button>
         </div>
       </div>
@@ -2828,6 +3224,22 @@ export default function CurrentConditions({
         />
         <div className="home-current-map-status">{mapStatus}</div>
       </div>
+
+      {lastPoint ? (
+        <div className="home-google-maps-export">
+          <div className="home-google-maps-export-copy">
+            <strong>Navigate to selected location</strong>
+            <span>{lastPoint.label}</span>
+          </div>
+          <button
+            type="button"
+            className="home-google-maps-export-button"
+            onClick={exportToGoogleMaps}
+          >
+            Export to Google Maps
+          </button>
+        </div>
+      ) : null}
 
       <div className="home-forecast-panel">
         <div className="home-forecast-kicker">Today's nearest forecast</div>

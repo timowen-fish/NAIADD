@@ -331,7 +331,7 @@
   display: none;
 }
 
-/* Data Entry / Reports expandable navigation */
+/* Expandable sidebar navigation */
 .app-nav-group {
   display: grid;
   gap: 5px;
@@ -363,6 +363,31 @@
   color: white;
   background: rgba(255, 255, 255, 0.09);
   box-shadow: inset 3px 0 0 var(--vadma-accent, #ff9f43);
+}
+
+
+.app-nav-subgroup {
+  gap: 3px;
+}
+
+.app-sidebar .app-nav-subgroup > button {
+  min-height: 36px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  font-size: 0.78rem;
+  font-weight: 760;
+  gap: 9px;
+}
+
+.app-nav-children-level-two {
+  margin: 2px 0 4px 18px;
+  padding-left: 8px;
+}
+
+.app-sidebar .app-nav-children-level-two button {
+  min-height: 32px;
+  padding: 7px 9px;
+  font-size: 0.74rem;
 }
 
 @media (max-width: 850px) {

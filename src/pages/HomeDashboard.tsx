@@ -7,15 +7,18 @@ import {
   MapPin,
   RefreshCw,
   Ruler,
+  Search,
+  X,
 } from "lucide-react";
 import {
   CircleMarker,
   MapContainer,
+  Marker,
   Popup,
   TileLayer,
   useMap,
 } from "react-leaflet";
-import type { LatLngBoundsExpression } from "leaflet";
+import { divIcon, type LatLngBoundsExpression } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 import naiaddShield from "../assets/naiadd-shield.png";
@@ -32,6 +35,8 @@ import {
   readSnapshotRows,
 } from "../services/snapshotService";
 
+import { loadBrianReleaseRecords } from "../services/distributionService";
+
 import "../styles/HomeDashboard.css";
 
 type AnyRecord = Record<string, unknown>;
@@ -46,6 +51,22 @@ type DashboardSummary = {
   speciesEncountered: number;
   musselsProcessed: number;
   mostCommonSpecies: string;
+};
+
+type ReleaseDashboardSummary = {
+  releasesCompleted: number;
+  releaseLocations: number;
+  speciesPropagated: number;
+  musselsPropagated: number;
+  highestPropagatedSpecies: string;
+};
+
+const EMPTY_RELEASE_DASHBOARD_SUMMARY: ReleaseDashboardSummary = {
+  releasesCompleted: 0,
+  releaseLocations: 0,
+  speciesPropagated: 0,
+  musselsPropagated: 0,
+  highestPropagatedSpecies: "—",
 };
 
 type RecentSurvey = {
@@ -66,12 +87,24 @@ type ChartRow = {
 };
 
 type SiteMapPoint = {
+  coordinateKey: string;
+  collectionID: string;
+  collectionCount: number;
   siteID: string;
   siteName: string;
   waterbody: string;
   latitude: number;
   longitude: number;
 };
+
+type ReleaseMapPoint = {
+  coordinateKey: string;
+  recordCount: number;
+  species: string[];
+  latitude: number;
+  longitude: number;
+};
+
 
 type DashboardAnalytics = {
   summary: DashboardSummary;
@@ -239,10 +272,9 @@ function formatDate(value: unknown): string {
 
 function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
   const collectionIDs = new Set<string>();
-  const siteIDs = new Set<string>();
   const speciesNames = new Set<string>();
   const speciesTotals = new Map<string, number>();
-  const sitePointMap = new Map<string, SiteMapPoint>();
+  const locationPointMap = new Map<string, SiteMapPoint>();
   const surveyMap = new Map<
     string,
     RecentSurvey & {
@@ -267,10 +299,6 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
           "SiteID_Previous",
         ]),
       ) || "Unknown Site";
-
-    if (siteID !== "Unknown Site") {
-      siteIDs.add(siteID);
-    }
 
     const siteName =
       toText(getValue(row, ["SiteName", "LocDescription"])) || siteID;
@@ -328,22 +356,35 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
     );
 
     if (
-      siteID !== "Unknown Site" &&
+      collectionID !== "Unknown Collection" &&
       latitude >= -90 &&
       latitude <= 90 &&
       longitude >= -180 &&
       longitude <= 180 &&
       latitude !== 0 &&
-      longitude !== 0 &&
-      !sitePointMap.has(siteID)
+      longitude !== 0
     ) {
-      sitePointMap.set(siteID, {
-        siteID,
-        siteName,
-        waterbody,
-        latitude,
-        longitude,
-      });
+      const coordinateKey = `${latitude},${longitude}`;
+      const existingPoint = locationPointMap.get(coordinateKey);
+
+      if (!existingPoint) {
+        locationPointMap.set(coordinateKey, {
+          coordinateKey,
+          collectionID,
+          collectionCount: 1,
+          siteID,
+          siteName,
+          waterbody,
+          latitude,
+          longitude,
+        });
+      } else if (
+        existingPoint.collectionID !== collectionID &&
+        !existingPoint.collectionID.split("|").includes(collectionID)
+      ) {
+        existingPoint.collectionID += `|${collectionID}`;
+        existingPoint.collectionCount += 1;
+      }
     }
 
     const dateValue = getValue(row, [
@@ -412,7 +453,7 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
   return {
     summary: {
       surveysCompleted: collectionIDs.size,
-      sitesSampled: siteIDs.size,
+      sitesSampled: locationPointMap.size,
       speciesEncountered: speciesNames.size,
       musselsProcessed: [...speciesTotals.values()].reduce(
         (total, quantity) => total + quantity,
@@ -422,7 +463,7 @@ function buildDashboardAnalytics(rows: AnyRecord[]): DashboardAnalytics {
     },
     recentSurveys,
     topSpecies,
-    sitePoints: [...sitePointMap.values()],
+    sitePoints: [...locationPointMap.values()],
     totalRows: rows.length,
   };
 }
@@ -505,41 +546,65 @@ function SceneryHeader({
 type MetricCardProps = {
   title: string;
   value: string;
-  subtitle: string;
   icon: React.ReactNode;
   isLoading: boolean;
+  releaseTitle: string;
+  releaseValue: string;
+  isReleaseLoading: boolean;
   valueClassName?: string;
+  releaseValueClassName?: string;
 };
 
 function MetricCard({
   title,
   value,
-  subtitle,
   icon,
   isLoading,
+  releaseTitle,
+  releaseValue,
+  isReleaseLoading,
   valueClassName = "",
+  releaseValueClassName = "",
 }: MetricCardProps) {
   return (
-    <article className="home-metric-card">
-      <div className="home-metric-card-top">
-        <span>{title}</span>
-        <div className="home-metric-icon">{icon}</div>
-      </div>
+    <article className="home-dual-metric-card">
+      <section className="home-dual-metric-half home-dual-metric-survey">
+        <div className="home-dual-metric-heading">
+          <span>{title}</span>
+          <div className="home-dual-metric-icon">{icon}</div>
+        </div>
+        <strong
+          className={[
+            "home-dual-metric-value",
+            isLoading ? "loading" : "",
+            valueClassName,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          title={!isLoading ? value : undefined}
+        >
+          {isLoading ? "—" : value}
+        </strong>
+      </section>
 
-      <strong
-        className={[
-          "home-metric-value",
-          isLoading ? "loading" : "",
-          valueClassName,
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        title={!isLoading ? value : undefined}
-      >
-        {isLoading ? "—" : value}
-      </strong>
-
-      <small>{subtitle}</small>
+      <section className="home-dual-metric-half home-dual-metric-release">
+        <div className="home-dual-metric-heading">
+          <span>{releaseTitle}</span>
+        </div>
+        <strong
+          className={[
+            "home-dual-metric-value",
+            "home-dual-metric-release-value",
+            isReleaseLoading ? "loading" : "",
+            releaseValueClassName,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          title={!isReleaseLoading ? releaseValue : undefined}
+        >
+          {isReleaseLoading ? "—" : releaseValue}
+        </strong>
+      </section>
     </article>
   );
 }
@@ -591,7 +656,7 @@ function FitMapToVirginia() {
 
   useEffect(() => {
     map.fitBounds(VIRGINIA_BOUNDS, {
-      padding: [18, 18],
+      padding: [12, 12],
       animate: false,
     });
   }, [map]);
@@ -599,124 +664,342 @@ function FitMapToVirginia() {
   return null;
 }
 
-function useNaiaddAccentColor(): string {
-  const readAccentColor = () => {
-    const candidates = [
-      document.documentElement,
-      document.body,
-      document.querySelector<HTMLElement>("#root"),
-      document.querySelector<HTMLElement>(".app-shell"),
-    ].filter((element): element is HTMLElement => Boolean(element));
+type DashboardMapSearchResult = {
+  latitude: number;
+  longitude: number;
+  label: string;
+  type: string;
+};
 
-    for (const element of candidates) {
-      const value = getComputedStyle(element)
-        .getPropertyValue("--vadma-accent")
-        .trim();
+let lastDashboardNominatimRequestAt = 0;
 
-      if (value) return value;
-    }
+async function searchVirginiaDashboardMap(
+  rawQuery: string,
+): Promise<DashboardMapSearchResult[]> {
+  const query = rawQuery.trim();
 
-    return "#ff9f43";
-  };
+  if (!query) {
+    throw new Error(
+      "Enter an address, road, waterbody, county, park, forest, or place to search.",
+    );
+  }
 
-  const [accentColor, setAccentColor] = useState(readAccentColor);
+  if (!navigator.onLine) {
+    throw new Error("Map location search is unavailable while offline.");
+  }
 
-  useEffect(() => {
-    let animationFrame = 0;
+  const elapsed = Date.now() - lastDashboardNominatimRequestAt;
+  const remaining = 1100 - elapsed;
 
-    const refreshAccentColor = () => {
-      window.cancelAnimationFrame(animationFrame);
-      animationFrame = window.requestAnimationFrame(() => {
-        setAccentColor((current) => {
-          const next = readAccentColor();
-          return next === current ? current : next;
-        });
-      });
-    };
+  if (remaining > 0) {
+    await new Promise<void>((resolve) => window.setTimeout(resolve, remaining));
+  }
 
-    const observer = new MutationObserver(refreshAccentColor);
-    const observedElements = [
-      document.documentElement,
-      document.body,
-      document.querySelector<HTMLElement>("#root"),
-      document.querySelector<HTMLElement>(".app-shell"),
-    ].filter((element): element is HTMLElement => Boolean(element));
+  lastDashboardNominatimRequestAt = Date.now();
 
-    observedElements.forEach((element) => {
-      observer.observe(element, {
-        attributes: true,
-        attributeFilter: ["class", "style", "data-vadma-theme", "data-theme"],
-      });
-    });
+  const searchQuery = /\b(virginia|va)\b/i.test(query)
+    ? query
+    : `${query}, Virginia`;
 
-    window.addEventListener("storage", refreshAccentColor);
-    window.addEventListener("vadma-theme-change", refreshAccentColor);
+  const params = new URLSearchParams({
+    format: "jsonv2",
+    q: searchQuery,
+    countrycodes: "us",
+    viewbox: "-83.8,39.6,-75.0,36.4",
+    bounded: "1",
+    limit: "6",
+    addressdetails: "1",
+    dedupe: "1",
+  });
 
-    return () => {
-      observer.disconnect();
-      window.cancelAnimationFrame(animationFrame);
-      window.removeEventListener("storage", refreshAccentColor);
-      window.removeEventListener("vadma-theme-change", refreshAccentColor);
-    };
-  }, []);
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/search?${params.toString()}`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    },
+  );
 
-  return accentColor;
+  if (!response.ok) {
+    throw new Error(
+      `Location search is temporarily unavailable (${response.status}).`,
+    );
+  }
+
+  const rawResults = (await response.json()) as Array<{
+    lat?: string;
+    lon?: string;
+    display_name?: string;
+    type?: string;
+  }>;
+
+  const results = rawResults
+    .map((result) => ({
+      latitude: Number(result.lat),
+      longitude: Number(result.lon),
+      label: String(result.display_name || query),
+      type: String(result.type || "location"),
+    }))
+    .filter(
+      (result) =>
+        Number.isFinite(result.latitude) &&
+        Number.isFinite(result.longitude) &&
+        result.latitude >= 36.4 &&
+        result.latitude <= 39.6 &&
+        result.longitude >= -83.8 &&
+        result.longitude <= -75.0,
+    );
+
+  if (results.length === 0) {
+    throw new Error(
+      "No matching Virginia location was found. Try an address, road, waterbody, county, state park, state forest, or place name.",
+    );
+  }
+
+  return results;
 }
 
-function SiteDistributionMap({ points }: { points: SiteMapPoint[] }) {
-  const accentColor = useNaiaddAccentColor();
-  if (points.length === 0) {
+function FocusDashboardMapSearch({
+  result,
+  requestKey,
+}: {
+  result: DashboardMapSearchResult | null;
+  requestKey: number;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!result || requestKey <= 0) return;
+    map.setView([result.latitude, result.longitude], 13, { animate: true });
+  }, [map, requestKey, result]);
+
+  return null;
+}
+
+function dashboardReleaseStarIcon() {
+  return divIcon({
+    className: "home-release-star-marker",
+    iconSize: [10, 10],
+    iconAnchor: [5, 5],
+    popupAnchor: [0, -5],
+    html: `
+      <svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true">
+        <path
+          d="M12 1.9l2.95 5.98 6.6.96-4.78 4.66 1.13 6.58L12 16.98l-5.9 3.1 1.13-6.58-4.78-4.66 6.6-.96L12 1.9z"
+          fill="#d100a7"
+          stroke="#111111"
+          stroke-width="2.1"
+          stroke-linejoin="round"
+        />
+      </svg>
+    `,
+  });
+}
+
+function SiteDistributionMap({
+  points,
+  releasePoints,
+}: {
+  points: SiteMapPoint[];
+  releasePoints: ReleaseMapPoint[];
+}) {
+  const [searchText, setSearchText] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<DashboardMapSearchResult[]>([]);
+  const [searchMessage, setSearchMessage] = useState("");
+  const [searchResult, setSearchResult] = useState<DashboardMapSearchResult | null>(null);
+  const [searchFocusKey, setSearchFocusKey] = useState(0);
+
+  async function runSearch() {
+    if (searching) return;
+
+    setSearchResults([]);
+    setSearching(true);
+    setSearchMessage("Searching OpenStreetMap...");
+
+    try {
+      const results = await searchVirginiaDashboardMap(searchText);
+      setSearchResults(results);
+      setSearchMessage(
+        `${results.length} matching Virginia location${results.length === 1 ? "" : "s"} found.`,
+      );
+    } catch (error) {
+      setSearchMessage(
+        error instanceof Error ? error.message : "Unable to search for that location.",
+      );
+    } finally {
+      setSearching(false);
+    }
+  }
+
+  function chooseResult(result: DashboardMapSearchResult) {
+    setSearchText(result.label);
+    setSearchResults([]);
+    setSearchResult(result);
+    setSearchMessage(`Showing ${result.label}.`);
+    setSearchFocusKey((current) => current + 1);
+  }
+
+  function clearSearch() {
+    setSearchText("");
+    setSearchResults([]);
+    setSearchMessage("");
+    setSearchResult(null);
+  }
+
+  if (points.length === 0 && releasePoints.length === 0) {
     return (
       <div className="home-map-empty">
-        No site coordinates are available in the cached snapshot.
+        No survey or release coordinates are available.
       </div>
     );
   }
 
   return (
-    <div className="home-site-map-shell">
-      <MapContainer
-        className="home-site-map"
-        center={[37.7, -78.4]}
-        zoom={7}
-        scrollWheelZoom={false}
-        attributionControl
-      >
-        <TileLayer
-          attribution='&copy; OpenStreetMap contributors &copy; CARTO'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        />
-
-        <FitMapToVirginia />
-
-        {points.map((point) => (
-          <CircleMarker
-            key={point.siteID}
-            center={[point.latitude, point.longitude]}
-            radius={3.5}
-            pathOptions={{
-              color: "rgba(255, 255, 255, 0.92)",
-              weight: 1.25,
-              fillColor: accentColor,
-              fillOpacity: 0.95,
+    <>
+      <div className="home-map-location-search">
+        <div className="home-map-location-search-row">
+          <Search size={18} aria-hidden="true" />
+          <input
+            type="search"
+            value={searchText}
+            onChange={(event) => {
+              setSearchText(event.target.value);
+              setSearchResults([]);
             }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void runSearch();
+              }
+            }}
+            placeholder="Search address, road, waterbody, county, park, forest, or place…"
+            aria-label="Search Virginia map locations"
+          />
+          {searchText && (
+            <button
+              type="button"
+              className="home-map-location-clear"
+              onClick={clearSearch}
+              aria-label="Clear map location search"
+              title="Clear map location search"
+            >
+              <X size={16} />
+            </button>
+          )}
+          <button
+            type="button"
+            className="home-map-location-search-button"
+            onClick={() => void runSearch()}
+            disabled={searching}
           >
-            <Popup>
-              <div className="home-site-popup">
-                <strong>{point.siteName}</strong>
-                <span>{point.waterbody}</span>
-                <small>{point.siteID}</small>
-              </div>
-            </Popup>
-          </CircleMarker>
-        ))}
-      </MapContainer>
+            {searching ? "Searching…" : "Search Map"}
+          </button>
+        </div>
 
-      <div className="home-map-count">
-        <MapPin size={14} aria-hidden="true" />
-        {points.length.toLocaleString()} mapped sites
+        {searchResults.length > 0 && (
+          <div className="home-map-location-results">
+            {searchResults.map((result, index) => (
+              <button
+                type="button"
+                key={`${result.latitude}-${result.longitude}-${index}`}
+                onClick={() => chooseResult(result)}
+              >
+                <strong>{result.label.split(",")[0]}</strong>
+                <span>{result.label}</span>
+                <small>{result.type}</small>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="home-map-location-meta">
+          <span role="status">{searchMessage}</span>
+          <small>Search data © OpenStreetMap contributors, via Nominatim.</small>
+        </div>
       </div>
-    </div>
+
+      <div className="home-site-map-shell">
+        <MapContainer
+          className="home-site-map"
+          center={[37.55, -78.5]}
+          zoom={7}
+          scrollWheelZoom
+          attributionControl
+          preferCanvas
+        >
+          <TileLayer
+            attribution="&copy; OpenStreetMap contributors"
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            maxZoom={19}
+          />
+
+          <FitMapToVirginia />
+          <FocusDashboardMapSearch
+            result={searchResult}
+            requestKey={searchFocusKey}
+          />
+
+          {points.map((point) => (
+            <CircleMarker
+              key={point.coordinateKey}
+              center={[point.latitude, point.longitude]}
+              radius={2.8}
+              pathOptions={{
+                color: "rgba(255, 255, 255, 0.92)",
+                weight: 0.9,
+                fillColor: "#4daf4a",
+                fillOpacity: 0.82,
+              }}
+            >
+              <Popup>
+                <div className="home-site-popup">
+                  <strong>{point.siteName}</strong>
+                  <span>{point.waterbody}</span>
+                  <span>{point.siteID}</span>
+                  <small>
+                    {point.collectionCount.toLocaleString()} survey
+                    {point.collectionCount === 1 ? "" : "s"} at this location
+                  </small>
+                </div>
+              </Popup>
+            </CircleMarker>
+          ))}
+
+          {releasePoints.map((point) => (
+            <Marker
+              key={`release:${point.coordinateKey}`}
+              position={[point.latitude, point.longitude]}
+              icon={dashboardReleaseStarIcon()}
+              zIndexOffset={250}
+            >
+              <Popup>
+                <div className="home-site-popup">
+                  <strong>Release Database</strong>
+                  <span>
+                    {point.species.length === 1
+                      ? point.species[0]
+                      : `${point.species.length.toLocaleString()} species`}
+                  </span>
+                  <small>
+                    {point.recordCount.toLocaleString()} release record
+                    {point.recordCount === 1 ? "" : "s"} at this location
+                  </small>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+
+        <div className="home-map-count">
+          <MapPin size={14} aria-hidden="true" />
+          {points.length.toLocaleString()} survey locations
+          {releasePoints.length > 0
+            ? ` • ${releasePoints.length.toLocaleString()} release locations`
+            : ""}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -734,12 +1017,14 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
       ? "Cached production snapshot loaded."
       : "Loading cached NAIADD production snapshot...",
   );
-  const [snapshotVersion, setSnapshotVersion] = useState<string | null>(
-    () => getCachedSnapshotMetadata()?.version ?? null,
-  );
   const [isSyncing, setIsSyncing] = useState(false);
   const [isRecentActivityOpen, setIsRecentActivityOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(() => navigator.onLine);
+  const [releaseMapPoints, setReleaseMapPoints] = useState<ReleaseMapPoint[]>([]);
+  const [releaseSummary, setReleaseSummary] = useState<ReleaseDashboardSummary>(
+    EMPTY_RELEASE_DASHBOARD_SUMMARY,
+  );
+  const [isReleaseSummaryLoading, setIsReleaseSummaryLoading] = useState(true);
 
   const analytics = useMemo(
     () =>
@@ -754,6 +1039,108 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
           },
     [snapshotRows],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadReleaseMapPoints() {
+      try {
+        const records = await loadBrianReleaseRecords();
+        if (cancelled) return;
+
+        const grouped = new Map<string, ReleaseMapPoint>();
+        const propagatedSpecies = new Set<string>();
+        const propagatedTotals = new Map<string, number>();
+        let musselsPropagated = 0;
+
+        for (const record of records) {
+          const species = String(record.scientificName || "").trim();
+          const rawReleaseCount = getValue(record.raw, [
+            "Release Count",
+            "ReleaseCount",
+            "Release_Count",
+            "Quantity",
+            "Count",
+          ]);
+          const releaseCount = toMusselCount(rawReleaseCount);
+
+          if (species) {
+            propagatedSpecies.add(species);
+            propagatedTotals.set(
+              species,
+              (propagatedTotals.get(species) ?? 0) + releaseCount,
+            );
+          }
+
+          musselsPropagated += releaseCount;
+          const latitude = Number(record.latitude);
+          const longitude = Number(record.longitude);
+
+          if (
+            !Number.isFinite(latitude) ||
+            !Number.isFinite(longitude) ||
+            latitude < -90 ||
+            latitude > 90 ||
+            longitude < -180 ||
+            longitude > 180 ||
+            latitude === 0 ||
+            longitude === 0
+          ) {
+            continue;
+          }
+
+          const coordinateKey = `${latitude},${longitude}`;
+          const existing = grouped.get(coordinateKey);
+
+          if (!existing) {
+            grouped.set(coordinateKey, {
+              coordinateKey,
+              recordCount: 1,
+              species: species ? [species] : [],
+              latitude,
+              longitude,
+            });
+            continue;
+          }
+
+          existing.recordCount += 1;
+          if (species && !existing.species.includes(species)) {
+            existing.species.push(species);
+          }
+        }
+
+        for (const point of grouped.values()) {
+          point.species.sort((left, right) => left.localeCompare(right));
+        }
+
+        const highestPropagatedSpecies = [...propagatedTotals.entries()]
+          .sort((left, right) => right[1] - left[1])[0]?.[0] ?? "—";
+
+        setReleaseSummary({
+          releasesCompleted: records.length,
+          releaseLocations: grouped.size,
+          speciesPropagated: propagatedSpecies.size,
+          musselsPropagated,
+          highestPropagatedSpecies,
+        });
+        setReleaseMapPoints([...grouped.values()]);
+        setIsReleaseSummaryLoading(false);
+      } catch (error) {
+        console.warn("Unable to load Release Database dashboard metrics.", error);
+        if (!cancelled) {
+          setReleaseMapPoints([]);
+          setReleaseSummary(EMPTY_RELEASE_DASHBOARD_SUMMARY);
+          setIsReleaseSummaryLoading(false);
+        }
+      }
+    }
+
+    void loadReleaseMapPoints();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -810,7 +1197,6 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
           const meta = getCachedSnapshotMetadata();
 
           setSnapshotRows(dashboardSnapshotRowsCache);
-          setSnapshotVersion(meta?.version ?? null);
           setSnapshotState(
             dashboardSnapshotRowsCache.length > 0 ? "ready" : "empty",
           );
@@ -833,14 +1219,13 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
         const meta = getCachedSnapshotMetadata();
 
         setSnapshotRows(rows);
-        setSnapshotVersion(meta?.version ?? null);
         setSnapshotState(rows.length > 0 ? "ready" : "empty");
         setSnapshotStatus(
           rows.length > 0
             ? `Production snapshot${meta?.version ? ` ${meta.version}` : ""} loaded.`
             : cachedMeta
               ? "The cached production snapshot contained no dashboard records."
-              : 'No cached production snapshot is available. Click "Refresh Snapshot" to download one.',
+              : 'No cached production database is available. Click "Sync Database" to download one.',
         );
       } catch (error) {
         if (loadState.cancelled) return;
@@ -868,17 +1253,15 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
     try {
       setIsSyncing(true);
       setSnapshotState("loading");
-      setSnapshotStatus("Syncing NAIADD production snapshot...");
+      setSnapshotStatus("Syncing NAIADD production database...");
 
       const result = await forceSyncSnapshot();
       const rows = await readSnapshotRows({
         columns: [...DASHBOARD_SNAPSHOT_COLUMNS],
       });
-      const meta = getCachedSnapshotMetadata();
 
       setDashboardSnapshotRowsCache(rows);
       setSnapshotRows(rows);
-      setSnapshotVersion(result.version ?? meta?.version ?? null);
       setSnapshotState(rows.length > 0 ? "ready" : "empty");
       setSnapshotStatus(result.message);
     } catch (error) {
@@ -897,14 +1280,6 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
 
   const isSnapshotLoading = snapshotState === "loading";
 
-  const snapshotSubtitle =
-    snapshotState === "ready"
-      ? snapshotVersion
-        ? `Production snapshot ${snapshotVersion}`
-        : "Production snapshot"
-      : snapshotState === "loading"
-        ? "Loading production snapshot"
-        : "Snapshot data unavailable";
 
   return (
     <div className="home-dashboard-page">
@@ -953,7 +1328,7 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
             aria-hidden="true"
             className={isSyncing ? "spinning" : ""}
           />
-          {isSyncing ? "Syncing" : "Refresh Snapshot"}
+          {isSyncing ? "Syncing" : "Sync Database"}
         </button>
       </section>
 
@@ -961,42 +1336,53 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
         <MetricCard
           title="Surveys Completed"
           value={analytics.summary.surveysCompleted.toLocaleString()}
-          subtitle={snapshotSubtitle}
           icon={<ClipboardList size={30} />}
           isLoading={isSnapshotLoading}
+          releaseTitle="Releases Completed"
+          releaseValue={releaseSummary.releasesCompleted.toLocaleString()}
+          isReleaseLoading={isReleaseSummaryLoading}
         />
 
         <MetricCard
-          title="Sites Sampled"
+          title="Sampled Locations"
           value={analytics.summary.sitesSampled.toLocaleString()}
-          subtitle="Unique SiteID values"
           icon={<MapPin size={30} />}
           isLoading={isSnapshotLoading}
+          releaseTitle="Release Locations"
+          releaseValue={releaseSummary.releaseLocations.toLocaleString()}
+          isReleaseLoading={isReleaseSummaryLoading}
         />
 
         <MetricCard
           title="Species Encountered"
           value={analytics.summary.speciesEncountered.toLocaleString()}
-          subtitle="Unique scientific names"
           icon={<Shell size={30} />}
           isLoading={isSnapshotLoading}
+          releaseTitle="Species Propagated"
+          releaseValue={releaseSummary.speciesPropagated.toLocaleString()}
+          isReleaseLoading={isReleaseSummaryLoading}
         />
 
         <MetricCard
           title="Mussels Processed"
           value={formatWholeNumber(analytics.summary.musselsProcessed)}
-          subtitle="Summed mussel quantity"
           icon={<Ruler size={30} />}
           isLoading={isSnapshotLoading}
+          releaseTitle="Mussels Propagated"
+          releaseValue={formatWholeNumber(releaseSummary.musselsPropagated)}
+          isReleaseLoading={isReleaseSummaryLoading}
         />
 
         <MetricCard
           title="Most Common Species"
           value={analytics.summary.mostCommonSpecies}
-          subtitle="By total quantity"
           icon={<BarChart3 size={30} />}
           isLoading={isSnapshotLoading}
+          releaseTitle="Highest Propagated Species"
+          releaseValue={releaseSummary.highestPropagatedSpecies}
+          isReleaseLoading={isReleaseSummaryLoading}
           valueClassName="home-metric-value-species"
+          releaseValueClassName="home-metric-value-species"
         />
       </section>
 
@@ -1084,11 +1470,11 @@ export default function HomeDashboard({ profile }: HomeDashboardProps) {
           <div className="home-panel-heading">
             <div>
               <p>SURVEY COVERAGE</p>
-              <h3>Sampled Sites</h3>
+              <h3>Sampled Locations</h3>
             </div>
           </div>
 
-          <SiteDistributionMap points={analytics.sitePoints} />
+          <SiteDistributionMap points={analytics.sitePoints} releasePoints={releaseMapPoints} />
         </article>
       </section>
     </div>

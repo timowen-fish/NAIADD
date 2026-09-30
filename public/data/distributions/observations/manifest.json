@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "datasets": [
     {
       "dataset": "Ortmann Historic Dataset",
@@ -23,8 +23,8 @@
       ]
     },
     {
-      "dataset": "Brian Release Database",
-      "sourceFile": "ReleaseOutput.rds",
+      "dataset": "BrianReleaseDatabase",
+      "sourceFile": "MusselReleaseDatabase_9.24.2026.accdb",
       "files": [
         "release-output/part-0001.json"
       ]

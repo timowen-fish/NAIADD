@@ -1,7 +1,7 @@
 {
   "format": "NAIADD_OFFLINE_APP_MANIFEST_V1",
-  "version": "local-1787321459048",
-  "builtAt": "2026-08-21T14:10:59.048Z",
+  "version": "local-1790798121496",
+  "builtAt": "2026-09-30T19:55:21.496Z",
   "files": [
     {
       "path": "apple-touch-icon.png",
@@ -14,14 +14,14 @@
       "sha256": "e05667d150d6ce655ed1d95441813bd45a791bd337c963395def50eafb568c7c"
     },
     {
-      "path": "assets/index-B4RmvRkY.css",
-      "size": 385718,
-      "sha256": "542cfd32b6e3480b7aac8a0223d855bb4fd5c4f26084c031664c2cf43833e169"
+      "path": "assets/index-Cez4P-3S.js",
+      "size": 1424730,
+      "sha256": "071b0a85b87c70d82943f9acda19d9351fd12f01c03c6d554df0497ca26de8ec"
     },
     {
-      "path": "assets/index-hlfwTAHB.js",
-      "size": 1383165,
-      "sha256": "173f9a409a02cbb27e1eee4933d1f7668ec47b06056ee9b1f6ae5fbe494d800d"
+      "path": "assets/index-DD5jFzL6.css",
+      "size": 408506,
+      "sha256": "555ccf5a41ac2717bb0fee747a39f66bcaf6329a8d38b5b732715ba40dc6ca95"
     },
     {
       "path": "assets/naiadd-shield-COzVrkkD.png",
@@ -122,6 +122,56 @@
       "path": "icons.svg",
       "size": 5055,
       "sha256": "7ca2d67c9c3aebf50cdc8709ee8aacf8cdb8cc7ea6325ea94939caef5da1c53d"
+    },
+    {
+      "path": "images/dashboard/Card1Bottom.jpg",
+      "size": 38694,
+      "sha256": "64bfcfa841318cb3af03901095bb9863b7dc766eb6b900fb976a9d2083c7ce42"
+    },
+    {
+      "path": "images/dashboard/Card1Top.jpg",
+      "size": 88211,
+      "sha256": "77bf9cd544158afa444bf92424a086e0c128320ed094715aeb08e03b01b8986c"
+    },
+    {
+      "path": "images/dashboard/Card2Bottom.jpg",
+      "size": 55655,
+      "sha256": "589d1efc856841729f75c582fc6894892f1980b748fecca6d80b22aa77651667"
+    },
+    {
+      "path": "images/dashboard/Card2Top.jpg",
+      "size": 48003,
+      "sha256": "41f4b81bdc1a55e6911471d83c95c7e72b98132d05039beaef18e86c7ef5f3de"
+    },
+    {
+      "path": "images/dashboard/Card3Bottom.jpg",
+      "size": 52159,
+      "sha256": "abda812e6bc9a5445b57b7ae92b50142e2b57572b784b1d32fc67294fef7d02f"
+    },
+    {
+      "path": "images/dashboard/Card3Top.jpg",
+      "size": 63005,
+      "sha256": "9e7f01705df26048eba1c9c2b7cdb3f17376496797c1c08ba714ac0eb17d9b07"
+    },
+    {
+      "path": "images/dashboard/Card4Bottom.jpg",
+      "size": 30158,
+      "sha256": "0004f10300f2091535407b92307cd6a7aa8675cf4db7f28f5a35a61f692cc17c"
+    },
+    {
+      "path": "images/dashboard/Card4Top.jpg",
+      "size": 82169,
+      "sha256": "31de6e5261f3bc6272ca3edc8d1807cc7163912a0171b6070347e2f1e3ec9a10"
+    },
+    {
+      "path": "images/dashboard/Card5Bottom.jpg",
+      "size": 43936,
+      "sha256": "0f47783f4f8cf8cfea8b0abca073da94f9ac52a0282fd12ca9917172555f8968"
+    },
+    {
+      "path": "images/dashboard/Card5Top.jpg",
+      "size": 75548,
+      "sha256": "7218b2b9c3ab4cf045bb4aabe55ce3cb14e657f524022b2547588f9d2f65fce4"
     },
     {
       "path": "images/login-backgrounds/CreateNewSite.jpg",
@@ -251,7 +301,7 @@
     {
       "path": "index.html",
       "size": 982,
-      "sha256": "33d16a3c89615a4ef7cee443efd5bbdccc0c8b7444c932235f88d801ffd3a976"
+      "sha256": "5344268627c5a736fb5c11f328dddf2acf34b2c07fd5a0a783104ca6c0f51145"
     },
     {
       "path": "manifest.webmanifest",
@@ -286,7 +336,7 @@
     {
       "path": "sw.js",
       "size": 6499,
-      "sha256": "40fc4e91d332a7c712464f1d159d93c40ff03e86de0732255fdf7d6dd99597e9"
+      "sha256": "7ba0351bc027101fb60bf81bd58a9cd94fbe553cbf2c0b4b126287ae303ef911"
     },
     {
       "path": "vadma_shield.png",

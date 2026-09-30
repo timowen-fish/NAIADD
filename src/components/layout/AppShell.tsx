@@ -49,6 +49,14 @@ export default function AppShell({
   const pendingSectionRef = useRef<AppRouteId | null>(null);
   const navigationTimersRef = useRef<number[]>([]);
   const navigationFramesRef = useRef<number[]>([]);
+  const [toolsOpen, setToolsOpen] = useState(
+    activeSection === "distributions" || activeSection === "site-conditions",
+  );
+  const [workingDataOpen, setWorkingDataOpen] = useState(
+    activeSection === "data-entry" ||
+      activeSection === "drafts" ||
+      activeSection === "submissions",
+  );
   const [dataEntryOpen, setDataEntryOpen] = useState(
     activeSection === "data-entry",
   );
@@ -71,6 +79,22 @@ export default function AppShell({
   }, [profile.uid]);
 
   useEffect(() => {
+    if (activeSection === "distributions" || activeSection === "site-conditions") {
+      setToolsOpen(true);
+    }
+
+    if (
+      activeSection === "data-entry" ||
+      activeSection === "drafts" ||
+      activeSection === "submissions"
+    ) {
+      setWorkingDataOpen(true);
+    }
+
+    if (activeSection === "data-entry") {
+      setDataEntryOpen(true);
+    }
+
     if (
       activeSection === "reports" ||
       activeSection === "query-data" ||
@@ -318,115 +342,214 @@ export default function AppShell({
         <aside className={mobileMenuOpen ? "app-sidebar open" : "app-sidebar"}>
           <div className="app-sidebar-scroll">
             <nav aria-label="Main navigation">
-            {visibleNavigation.map((item) => {
-              if (item.id === "data-entry") {
-                return (
-                  <div className="app-nav-group" key={item.id}>
-                    <button
-                      type="button"
-                      className={activeSection === item.id ? "active" : ""}
-                      aria-expanded={dataEntryOpen}
-                      onClick={() => {
-                        setDataEntryOpen((current) => !current);
-                      }}
-                    >
-                      <span className="app-nav-icon">{item.icon}</span>
-                      <span>{item.label}</span>
-                      <span className="app-nav-expand">
-                        {dataEntryOpen ? "⌃" : "⌄"}
-                      </span>
-                    </button>
-
-                    {dataEntryOpen && (
-                      <div className="app-nav-children">
-                        {workflowItems.map((step) => (
-                          <button
-                            type="button"
-                            key={step.id}
-                            className={
-                              activeSection === "data-entry" &&
-                              surveySession.currentStep === step.id
-                                ? "active-child"
-                                : ""
-                            }
-                            onClick={() => navigateWorkflow(step.id)}
-                          >
-                            <span>{step.complete ? "✓" : "○"}</span>
-                            <span>{step.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              if (item.id === "reports") {
-                const reportsActive =
-                  activeSection === "reports" ||
-                  activeSection === "query-data" ||
-                  activeSection === "raw-data";
-
-                return (
-                  <div className="app-nav-group" key={item.id}>
-                    <button
-                      type="button"
-                      className={reportsActive ? "active" : ""}
-                      aria-expanded={reportsOpen}
-                      onClick={() => setReportsOpen((current) => !current)}
-                    >
-                      <span className="app-nav-icon">{item.icon}</span>
-                      <span>{item.label}</span>
-                      <span className="app-nav-expand">
-                        {reportsOpen ? "⌃" : "⌄"}
-                      </span>
-                    </button>
-
-                    {reportsOpen && (
-                      <div className="app-nav-children">
-                        <button
-                          type="button"
-                          className={
-                            activeSection === "query-data" ||
-                            activeSection === "reports"
-                              ? "active-child"
-                              : ""
-                          }
-                          onClick={() => navigate("query-data")}
-                        >
-                          <span>⌕</span>
-                          <span>Query Data</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className={
-                            activeSection === "raw-data" ? "active-child" : ""
-                          }
-                          onClick={() => navigate("raw-data")}
-                        >
-                          <span>▦</span>
-                          <span>Raw Data</span>
-                        </button>
-
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
-              return (
+              {visibleNavigation.some((item) => item.id === "dashboard") && (
                 <button
                   type="button"
-                  key={item.id}
-                  className={activeSection === item.id ? "active" : ""}
-                  onClick={() => navigate(item.id)}
+                  className={activeSection === "dashboard" ? "active" : ""}
+                  onClick={() => navigate("dashboard")}
                 >
-                  <span className="app-nav-icon">{item.icon}</span>
-                  <span>{item.label}</span>
+                  <span className="app-nav-icon">⌂</span>
+                  <span>Dashboard</span>
                 </button>
-              );
-            })}
+              )}
+
+              {(visibleNavigation.some((item) => item.id === "distributions") ||
+                visibleNavigation.some((item) => item.id === "site-conditions")) && (
+                <div className="app-nav-group">
+                  <button
+                    type="button"
+                    className={
+                      activeSection === "distributions" || activeSection === "site-conditions"
+                        ? "active"
+                        : ""
+                    }
+                    aria-expanded={toolsOpen}
+                    onClick={() => setToolsOpen((current) => !current)}
+                  >
+                    <span className="app-nav-icon">⌘</span>
+                    <span>Tools</span>
+                    <span className="app-nav-expand">{toolsOpen ? "⌃" : "⌄"}</span>
+                  </button>
+
+                  {toolsOpen && (
+                    <div className="app-nav-children">
+                      {visibleNavigation.some((item) => item.id === "distributions") && (
+                        <button
+                          type="button"
+                          className={activeSection === "distributions" ? "active-child" : ""}
+                          onClick={() => navigate("distributions")}
+                        >
+                          <span>◉</span>
+                          <span>Distributions</span>
+                        </button>
+                      )}
+                      {visibleNavigation.some((item) => item.id === "site-conditions") && (
+                        <button
+                          type="button"
+                          className={activeSection === "site-conditions" ? "active-child" : ""}
+                          onClick={() => navigate("site-conditions")}
+                        >
+                          <span>☁</span>
+                          <span>Site Conditions</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {(visibleNavigation.some((item) => item.id === "data-entry") ||
+                visibleNavigation.some((item) => item.id === "drafts") ||
+                visibleNavigation.some((item) => item.id === "submissions")) && (
+                <div className="app-nav-group">
+                  <button
+                    type="button"
+                    className={
+                      activeSection === "data-entry" ||
+                      activeSection === "drafts" ||
+                      activeSection === "submissions"
+                        ? "active"
+                        : ""
+                    }
+                    aria-expanded={workingDataOpen}
+                    onClick={() => setWorkingDataOpen((current) => !current)}
+                  >
+                    <span className="app-nav-icon">▤</span>
+                    <span>My Working Data</span>
+                    <span className="app-nav-expand">{workingDataOpen ? "⌃" : "⌄"}</span>
+                  </button>
+
+                  {workingDataOpen && (
+                    <div className="app-nav-children app-nav-children-level-one">
+                      {visibleNavigation.some((item) => item.id === "data-entry") && (
+                        <div className="app-nav-group app-nav-subgroup">
+                          <button
+                            type="button"
+                            className={activeSection === "data-entry" ? "active-child" : ""}
+                            aria-expanded={dataEntryOpen}
+                            onClick={() => setDataEntryOpen((current) => !current)}
+                          >
+                            <span>✎</span>
+                            <span>Data Entry</span>
+                            <span className="app-nav-expand">{dataEntryOpen ? "⌃" : "⌄"}</span>
+                          </button>
+
+                          {dataEntryOpen && (
+                            <div className="app-nav-children app-nav-children-level-two">
+                              {workflowItems.map((step) => (
+                                <button
+                                  type="button"
+                                  key={step.id}
+                                  className={
+                                    activeSection === "data-entry" &&
+                                    surveySession.currentStep === step.id
+                                      ? "active-child"
+                                      : ""
+                                  }
+                                  onClick={() => navigateWorkflow(step.id)}
+                                >
+                                  <span>{step.complete ? "✓" : "○"}</span>
+                                  <span>{step.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {visibleNavigation.some((item) => item.id === "drafts") && (
+                        <button
+                          type="button"
+                          className={activeSection === "drafts" ? "active-child" : ""}
+                          onClick={() => navigate("drafts")}
+                        >
+                          <span>▤</span>
+                          <span>Drafts</span>
+                        </button>
+                      )}
+
+                      {visibleNavigation.some((item) => item.id === "submissions") && (
+                        <button
+                          type="button"
+                          className={activeSection === "submissions" ? "active-child" : ""}
+                          onClick={() => navigate("submissions")}
+                        >
+                          <span>✓</span>
+                          <span>Submissions</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {visibleNavigation.some((item) => item.id === "reports") && (
+                <div className="app-nav-group">
+                  <button
+                    type="button"
+                    className={
+                      activeSection === "reports" ||
+                      activeSection === "query-data" ||
+                      activeSection === "raw-data"
+                        ? "active"
+                        : ""
+                    }
+                    aria-expanded={reportsOpen}
+                    onClick={() => setReportsOpen((current) => !current)}
+                  >
+                    <span className="app-nav-icon">⌕</span>
+                    <span>Reports</span>
+                    <span className="app-nav-expand">{reportsOpen ? "⌃" : "⌄"}</span>
+                  </button>
+
+                  {reportsOpen && (
+                    <div className="app-nav-children">
+                      <button
+                        type="button"
+                        className={
+                          activeSection === "query-data" || activeSection === "reports"
+                            ? "active-child"
+                            : ""
+                        }
+                        onClick={() => navigate("query-data")}
+                      >
+                        <span>⌕</span>
+                        <span>Query Data</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={activeSection === "raw-data" ? "active-child" : ""}
+                        onClick={() => navigate("raw-data")}
+                      >
+                        <span>▦</span>
+                        <span>Raw Data</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {visibleNavigation.some((item) => item.id === "admin") && (
+                <button
+                  type="button"
+                  className={activeSection === "admin" ? "active" : ""}
+                  onClick={() => navigate("admin")}
+                >
+                  <span className="app-nav-icon">⚙</span>
+                  <span>Administration</span>
+                </button>
+              )}
+
+              {visibleNavigation.some((item) => item.id === "settings") && (
+                <button
+                  type="button"
+                  className={activeSection === "settings" ? "active" : ""}
+                  onClick={() => navigate("settings")}
+                >
+                  <span className="app-nav-icon">◉</span>
+                  <span>Preferences</span>
+                </button>
+              )}
             </nav>
 
             <div className="app-sidebar-footer">

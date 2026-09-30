@@ -62,20 +62,30 @@ import {
   type QueryDataCustomFilters,
   type QueryDataSession,
   type SavedQueryData,
+  type QueryDataSource,
 } from "../services/queryDataSessionService";
+import {
+  loadBrianReleaseRecords,
+  type DistributionRecord,
+} from "../services/distributionService";
 import "../styles/QueryDataPage.css";
 
 type SnapshotRow = Record<string, unknown>;
 
 type CollectionMapPoint = {
+  source: QueryDataSource;
+  releaseRecordId?: string;
   collectionID: string;
   collectionIDs: string[];
   surveyDate: string;
+  surveyDates: string[];
   timestamp: number;
   latitude: number;
   longitude: number;
   siteName: string;
   waterbody: string;
+  locationDescription: string;
+  taxa: string[];
   species: string[];
   surveyors: string[];
   projects: string[];
@@ -96,8 +106,161 @@ type QueryMapView = {
   zoom: number;
 };
 
-type QueryBasemap = "satellite" | "street";
+type QueryBasemap = "street" | "topo" | "satellite" | "dark";
 type AreaDrawingMode = "polygon" | "rectangle" | "circle" | null;
+
+const TAXA_OPTIONS: ReadonlyArray<{ value: string; label: string }> = [
+  { value: "Amphibians", label: "Amphibians" },
+  { value: "Aquatic Insect", label: "Aquatic Insect" },
+  { value: "Aquatic Snail", label: "Aquatic Snail" },
+  { value: "Bird", label: "Bird" },
+  { value: "Clam", label: "Clam" },
+  { value: "Crayfish", label: "Crayfish" },
+  { value: "Fish", label: "Fish" },
+  { value: "Land Snail", label: "Land Snail" },
+  { value: "Limpet", label: "Limpet" },
+  { value: "Mammal", label: "Mammal" },
+  { value: "Mussel", label: "Mussels" },
+  { value: "Reptiles", label: "Reptiles" },
+  { value: "Terrestrial Insect", label: "Terrestrial Insect" },
+];
+
+function normalizeTaxaValue(value: unknown): string {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function pointMatchesTaxa(point: CollectionMapPoint, selectedTaxa: string[]): boolean {
+  if (selectedTaxa.length === 0) return false;
+  const selected = new Set(selectedTaxa.map(normalizeTaxaValue));
+  return (point.taxa ?? ["Aquatic Snail", "Clam", "Limpet", "Mussel"]).some((value) => selected.has(normalizeTaxaValue(value)));
+}
+
+type NominatimLocationResult = {
+  latitude: number;
+  longitude: number;
+  label: string;
+  type: string;
+  addressType: string;
+  category: string;
+  county: string;
+};
+
+let lastNominatimRequestAt = 0;
+
+function normalizeMapSearchCountyName(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\b(county|city of|city)\b/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+async function waitForNominatimRateLimit(): Promise<void> {
+  const elapsed = Date.now() - lastNominatimRequestAt;
+  const remaining = 1100 - elapsed;
+
+  if (remaining > 0) {
+    await new Promise<void>((resolve) => window.setTimeout(resolve, remaining));
+  }
+
+  lastNominatimRequestAt = Date.now();
+}
+
+async function searchVirginiaWithNominatim(
+  rawQuery: string,
+): Promise<NominatimLocationResult[]> {
+  const query = rawQuery.trim();
+
+  if (!query) {
+    throw new Error(
+      "Enter an address, road, waterbody, county, park, forest, or place to search.",
+    );
+  }
+
+  if (!navigator.onLine) {
+    throw new Error("Map location search is unavailable while offline.");
+  }
+
+  await waitForNominatimRateLimit();
+
+  const searchQuery = /\b(virginia|va)\b/i.test(query)
+    ? query
+    : `${query}, Virginia`;
+
+  const params = new URLSearchParams({
+    format: "jsonv2",
+    q: searchQuery,
+    countrycodes: "us",
+    viewbox: "-83.8,39.6,-75.0,36.4",
+    bounded: "1",
+    limit: "6",
+    addressdetails: "1",
+    dedupe: "1",
+  });
+
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/search?${params.toString()}`,
+    {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Location search is temporarily unavailable (${response.status}).`,
+    );
+  }
+
+  const rawResults = (await response.json()) as Array<{
+    lat?: string;
+    lon?: string;
+    display_name?: string;
+    type?: string;
+    class?: string;
+    addresstype?: string;
+    address?: { county?: string };
+  }>;
+
+  const results = rawResults
+    .map((result) => ({
+      latitude: Number(result.lat),
+      longitude: Number(result.lon),
+      label: String(result.display_name || query),
+      type: String(result.type || "location"),
+      addressType: String(result.addresstype || ""),
+      category: String(result.class || ""),
+      county: String(result.address?.county || ""),
+    }))
+    .filter(
+      (result) =>
+        Number.isFinite(result.latitude) &&
+        Number.isFinite(result.longitude) &&
+        result.latitude >= 36.4 &&
+        result.latitude <= 39.6 &&
+        result.longitude >= -83.8 &&
+        result.longitude <= -75.0,
+    );
+
+  if (results.length === 0) {
+    throw new Error(
+      "No matching Virginia location was found. Try an address, road, waterbody, county, state park, state forest, or place name.",
+    );
+  }
+
+  return results;
+}
+
+function isCountySearchResult(result: NominatimLocationResult) {
+  const addressType = result.addressType.toLowerCase();
+  const type = result.type.toLowerCase();
+  const firstLabelPart = result.label.split(",")[0]?.trim() || "";
+
+  return (
+    addressType === "county" ||
+    type === "county" ||
+    /\bcounty\b/i.test(firstLabelPart)
+  );
+}
 
 type BoundaryFeature = {
   id: string;
@@ -379,6 +542,30 @@ const MAP_SNAPSHOT_COLUMNS = [
   "DownstreamLong",
   "Collectors",
   "Project",
+  "ProjectName",
+  "TargetSpeciesNew",
+  "TargetSpecies_New",
+  "Target Species New",
+  "TargetSpecies",
+  "Target_Species",
+  "Target Species",
+  "TargetSpeciesName",
+  "Target_Species_Name",
+  "TargetSpeciesCommonName",
+  "TargetSpeciesScientificName",
+  "Target_CommonName",
+  "TargetSpeciesCode",
+  "TargetSpecies_Code",
+  "Target",
+  "Equip",
+  "Equipment",
+  "EquipmentUsed",
+  "Equipment_Used",
+  "SamplingEquipment",
+  "Sampling_Equipment",
+  "Gear",
+  "GearType",
+  "Gear_Type",
 ] as const;
 
 function formatMegabytes(bytes: number): string {
@@ -536,14 +723,20 @@ function buildInitialSitePoints(
       point = {
         siteKey,
         collectionCount: 0,
+        source: "survey",
         collectionID: "",
         collectionIDs: [],
         surveyDate: "",
+        surveyDates: [],
         timestamp: 0,
         latitude,
         longitude,
         siteName,
         waterbody,
+        locationDescription: toText(
+          getValue(row, ["LocDescription", "LocationDescription", "Location Description"]),
+        ),
+        taxa: [],
         species: [],
         surveyors: [],
         projects: [],
@@ -567,6 +760,58 @@ function buildInitialSitePoints(
         point.collectionID = collectionID;
       }
     }
+
+    const surveyDate = parseSurveyDate(getValue(row, ["SurveyDate"]));
+    if (surveyDate) {
+      const formattedDate = toDateInputValue(surveyDate);
+      addUniqueValue(point.surveyDates, formattedDate);
+      if (!point.surveyDate || formattedDate > point.surveyDate) {
+        point.surveyDate = formattedDate;
+        point.timestamp = surveyDate.getTime();
+      }
+    }
+
+    addUniqueValue(point.taxa, toText(getValue(row, ["Taxa"])));
+
+    addUniqueValue(point.taxa, toText(getValue(row, ["Taxa"])));
+
+    addUniqueValue(
+      point.species,
+      toText(getValue(row, ["ScientificName", "Taxa"])),
+    );
+
+    for (const collector of splitValues(getValue(row, ["Collectors"]))) {
+      addUniqueValue(point.surveyors, collector);
+    }
+
+    addUniqueValue(point.projects, toText(getValue(row, ["Project", "ProjectName"])));
+    addUniqueValue(
+      point.surveyTypes,
+      toText(getValue(row, ["SamplingMethod"])),
+    );
+
+    for (const target of splitValues(
+      getValue(row, getCustomFilterConfig("targetSpecies").aliases),
+    )) {
+      addUniqueValue(point.targetSpecies, target);
+    }
+
+    for (const item of splitValues(
+      getValue(row, getCustomFilterConfig("equipment").aliases),
+    )) {
+      addUniqueValue(point.equipment, item);
+    }
+  }
+
+  for (const point of sites.values()) {
+    point.surveyDates.sort((left, right) => right.localeCompare(left));
+    point.collectionIDs.sort((left, right) => left.localeCompare(right));
+    point.species.sort((left, right) => left.localeCompare(right));
+    point.surveyors.sort((left, right) => left.localeCompare(right));
+    point.projects.sort((left, right) => left.localeCompare(right));
+    point.targetSpecies.sort((left, right) => left.localeCompare(right));
+    point.surveyTypes.sort((left, right) => left.localeCompare(right));
+    point.equipment.sort((left, right) => left.localeCompare(right));
   }
 
   return [...sites.values()];
@@ -612,9 +857,11 @@ function buildCollectionPoints(rows: SnapshotRow[]): CollectionMapPoint[] {
       );
 
       point = {
+        source: "survey",
         collectionID,
         collectionIDs: [collectionID],
         surveyDate: surveyDate ? toDateInputValue(surveyDate) : "",
+        surveyDates: surveyDate ? [toDateInputValue(surveyDate)] : [],
         timestamp: surveyDate?.getTime() ?? 0,
         latitude,
         longitude,
@@ -636,6 +883,10 @@ function buildCollectionPoints(rows: SnapshotRow[]): CollectionMapPoint[] {
               "LocDescription",
             ]),
           ) || "Unknown waterbody",
+        locationDescription: toText(
+          getValue(row, ["LocDescription", "LocationDescription", "Location Description"]),
+        ),
+        taxa: [],
         species: [],
         surveyors: [],
         projects: [],
@@ -646,6 +897,8 @@ function buildCollectionPoints(rows: SnapshotRow[]): CollectionMapPoint[] {
 
       pointsByCollection.set(collectionID, point);
     }
+
+    addUniqueValue(point.taxa, toText(getValue(row, ["Taxa"])));
 
     addUniqueValue(
       point.species,
@@ -660,16 +913,182 @@ function buildCollectionPoints(rows: SnapshotRow[]): CollectionMapPoint[] {
 
     addUniqueValue(
       point.projects,
-      toText(getValue(row, ["Project"])),
+      toText(getValue(row, ["Project", "ProjectName"])),
     );
 
     addUniqueValue(
       point.surveyTypes,
       toText(getValue(row, ["SamplingMethod"])),
     );
+
+    for (const target of splitValues(
+      getValue(row, getCustomFilterConfig("targetSpecies").aliases),
+    )) {
+      addUniqueValue(point.targetSpecies, target);
+    }
+
+    for (const item of splitValues(
+      getValue(row, getCustomFilterConfig("equipment").aliases),
+    )) {
+      addUniqueValue(point.equipment, item);
+    }
+  }
+
+  for (const point of pointsByCollection.values()) {
+    point.species.sort((left, right) => left.localeCompare(right));
+    point.surveyors.sort((left, right) => left.localeCompare(right));
+    point.projects.sort((left, right) => left.localeCompare(right));
+    point.targetSpecies.sort((left, right) => left.localeCompare(right));
+    point.surveyTypes.sort((left, right) => left.localeCompare(right));
+    point.equipment.sort((left, right) => left.localeCompare(right));
   }
 
   return [...pointsByCollection.values()];
+}
+
+function buildReleaseCollectionPoints(records: DistributionRecord[]): CollectionMapPoint[] {
+  return records.map((record) => {
+    const raw = record.raw ?? {};
+    const date = record.surveyDateValue ? new Date(record.surveyDateValue) : null;
+    const surveyDate = date && !Number.isNaN(date.getTime()) ? toDateInputValue(date) : "";
+    const releaseId = `release:${record.id}`;
+    const siteName =
+      toText(getValue(raw, ["SiteName", "ReleaseSite", "ReleaseLocation", "Location", "LocDescription", "Site"])) ||
+      toText(getValue(raw, ["Waterbody", "Stream", "River"])) ||
+      "Release location";
+    const waterbody =
+      toText(getValue(raw, ["Waterbody", "ReleaseWaterbody", "Stream", "River", "SiteName", "Location"])) ||
+      siteName;
+    const surveyors = splitValues(
+      getValue(raw, ["Collectors", "Collector", "ReleasedBy", "ReleaseBy", "Personnel", "Surveyor"]),
+    );
+    const surveyTypes = splitValues(
+      getValue(raw, ["SamplingMethod", "SurveyType", "ReleaseType", "Method"]),
+    );
+    const equipment = splitValues(
+      getValue(raw, ["Equip", "Equipment", "Gear", "GearType"]),
+    );
+    const targetSpecies = splitValues(
+      getValue(raw, ["TargetSpecies", "Target Species", "Target", "Species"]),
+    );
+
+    return {
+      source: "release",
+      releaseRecordId: record.id,
+      collectionID: releaseId,
+      collectionIDs: [releaseId],
+      surveyDate,
+      surveyDates: surveyDate ? [surveyDate] : [],
+      timestamp: record.surveyDateValue ?? 0,
+      latitude: record.latitude,
+      longitude: record.longitude,
+      siteName,
+      waterbody,
+      locationDescription: toText(
+        getValue(raw, ["LocationDescription", "Location Description", "LocDescription"]),
+      ),
+      taxa: splitValues(getValue(raw, ["Taxa", "Taxon", "TaxaSurveyed"])).length > 0
+        ? splitValues(getValue(raw, ["Taxa", "Taxon", "TaxaSurveyed"]))
+        : ["Aquatic Snail", "Clam", "Limpet", "Mussel"],
+      species: record.scientificName ? [record.scientificName] : [],
+      surveyors,
+      projects: record.project && record.project !== "Unknown" ? [record.project] : [],
+      targetSpecies,
+      surveyTypes,
+      equipment,
+    };
+  });
+}
+
+function aggregateReleasePointsForMap(
+  points: CollectionMapPoint[],
+): InitialSiteMapPoint[] {
+  const grouped = new Map<string, InitialSiteMapPoint>();
+
+  for (const point of points) {
+    const coordinateKey = `${point.latitude.toFixed(6)}:${point.longitude.toFixed(6)}`;
+    const existing = grouped.get(coordinateKey);
+
+    if (!existing) {
+      grouped.set(coordinateKey, {
+        ...point,
+        siteKey: `release-location:${coordinateKey}`,
+        collectionCount: 1,
+        collectionIDs: [...point.collectionIDs],
+        surveyDates: [...point.surveyDates],
+        taxa: [...point.taxa],
+        species: [...point.species],
+        surveyors: [...point.surveyors],
+        projects: [...point.projects],
+        targetSpecies: [...point.targetSpecies],
+        surveyTypes: [...point.surveyTypes],
+        equipment: [...point.equipment],
+      });
+      continue;
+    }
+
+    existing.collectionCount += 1;
+
+    for (const value of point.collectionIDs) addUniqueValue(existing.collectionIDs, value);
+    for (const value of point.surveyDates) addUniqueValue(existing.surveyDates, value);
+    for (const value of point.taxa) addUniqueValue(existing.taxa, value);
+    for (const value of point.species) addUniqueValue(existing.species, value);
+    for (const value of point.surveyors) addUniqueValue(existing.surveyors, value);
+    for (const value of point.projects) addUniqueValue(existing.projects, value);
+    for (const value of point.targetSpecies) addUniqueValue(existing.targetSpecies, value);
+    for (const value of point.surveyTypes) addUniqueValue(existing.surveyTypes, value);
+    for (const value of point.equipment) addUniqueValue(existing.equipment, value);
+
+    if (!existing.locationDescription && point.locationDescription) {
+      existing.locationDescription = point.locationDescription;
+    }
+    if ((!existing.siteName || existing.siteName === "Release location") && point.siteName) {
+      existing.siteName = point.siteName;
+    }
+    if ((!existing.waterbody || existing.waterbody === "Release location") && point.waterbody) {
+      existing.waterbody = point.waterbody;
+    }
+  }
+
+  for (const point of grouped.values()) {
+    point.collectionIDs.sort((left, right) => left.localeCompare(right));
+    point.surveyDates.sort((left, right) => left.localeCompare(right));
+    point.taxa.sort((left, right) => left.localeCompare(right));
+    point.species.sort((left, right) => left.localeCompare(right));
+    point.surveyors.sort((left, right) => left.localeCompare(right));
+    point.projects.sort((left, right) => left.localeCompare(right));
+    point.targetSpecies.sort((left, right) => left.localeCompare(right));
+    point.surveyTypes.sort((left, right) => left.localeCompare(right));
+    point.equipment.sort((left, right) => left.localeCompare(right));
+  }
+
+  return [...grouped.values()];
+}
+
+function formatPopupDate(value: string): string {
+  if (!value) return "";
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return match ? `${match[2]}/${match[3]}/${match[1]}` : value;
+}
+
+function popupValueList(values: string[], limit = 4): string {
+  const visible = values.slice(0, limit);
+  const remaining = values.length - visible.length;
+  return `${visible.join(", ")}${remaining > 0 ? ` +${remaining} more` : ""}`;
+}
+
+function popupDateSummary(point: CollectionMapPoint): string {
+  const dates = point.surveyDates.length > 0
+    ? point.surveyDates
+    : point.surveyDate
+      ? [point.surveyDate]
+      : [];
+
+  if (dates.length === 0) return "";
+  if (dates.length === 1) return formatPopupDate(dates[0]);
+
+  const sorted = [...dates].sort((left, right) => left.localeCompare(right));
+  return `${formatPopupDate(sorted[0])} – ${formatPopupDate(sorted[sorted.length - 1])}`;
 }
 
 function isPointInsidePolygon(
@@ -1154,6 +1573,33 @@ function areaVertexIcon(index: number) {
 }
 
 
+function releaseDatabaseStarIcon() {
+  return divIcon({
+    className: "query-data-release-star-marker",
+    iconSize: [10, 10],
+    iconAnchor: [5, 5],
+    popupAnchor: [0, -5],
+    html: `
+      <svg
+        viewBox="0 0 24 24"
+        width="10"
+        height="10"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <path
+          d="M12 1.9l2.95 5.98 6.6.96-4.78 4.66 1.13 6.58L12 16.98l-5.9 3.1 1.13-6.58-4.78-4.66 6.6-.96L12 1.9z"
+          fill="#d100a7"
+          stroke="#111111"
+          stroke-width="2.1"
+          stroke-linejoin="round"
+        />
+      </svg>
+    `,
+  });
+}
+
+
 function isInitialSitePoint(
   point: CollectionMapPoint | InitialSiteMapPoint,
 ): point is InitialSiteMapPoint {
@@ -1322,6 +1768,36 @@ function AreaDrawingController({
   return null;
 }
 
+function FocusMapSearchResult({
+  result,
+  boundary,
+  requestKey,
+}: {
+  result: NominatimLocationResult | null;
+  boundary: QueryDataCoordinate[];
+  requestKey: number;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!result || requestKey <= 0) return;
+
+    if (boundary.length >= 3) {
+      const bounds = boundary.map(
+        (coordinate) =>
+          [coordinate.latitude, coordinate.longitude] as [number, number],
+      ) as LatLngBoundsExpression;
+
+      map.fitBounds(bounds, { padding: [34, 34], maxZoom: 12 });
+      return;
+    }
+
+    map.setView([result.latitude, result.longitude], 13, { animate: true });
+  }, [boundary, map, requestKey, result]);
+
+  return null;
+}
+
 function FitMapToBoundary({
   polygon,
   enabled,
@@ -1404,6 +1880,13 @@ export default function QueryDataPage() {
     cachedCollectionPoints !== null &&
     cachedCollectionPointsKey === snapshotCacheKey;
 
+  const [dataSources, setDataSources] = useState<QueryDataSource[]>(initialSession.dataSources);
+  const initialTaxaOptions =
+    Array.isArray((initialSession as QueryDataSession & { taxaOptions?: string[] }).taxaOptions) &&
+    (initialSession as QueryDataSession & { taxaOptions?: string[] }).taxaOptions!.length > 0
+      ? (initialSession as QueryDataSession & { taxaOptions?: string[] }).taxaOptions!
+      : ["Aquatic Snail", "Clam", "Limpet", "Mussel"];
+  const [taxaOptions, setTaxaOptions] = useState<string[]>(initialTaxaOptions);
   const [startDate, setStartDate] = useState(initialSession.startDate);
   const [endDate, setEndDate] = useState(initialSession.endDate);
   const [currentLocation, setCurrentLocation] =
@@ -1445,6 +1928,8 @@ export default function QueryDataPage() {
   const [waterbodySearchText, setWaterbodySearchText] = useState("");
   const [isAreaFilterCollapsed, setIsAreaFilterCollapsed] =
     useState(true);
+  const [isDateFilterCollapsed, setIsDateFilterCollapsed] =
+    useState(true);
   const [isSiteFilterCollapsed, setIsSiteFilterCollapsed] =
     useState(true);
   const [isWaterbodyFilterCollapsed, setIsWaterbodyFilterCollapsed] =
@@ -1481,14 +1966,24 @@ export default function QueryDataPage() {
     useState<QueryDataSession>(initialSession);
   const [shouldFitAppliedPoints, setShouldFitAppliedPoints] =
     useState(false);
-  const [basemap, setBasemap] = useState<QueryBasemap>("satellite");
+  const [basemap, setBasemap] = useState<QueryBasemap>("street");
   const [mapRefreshKey, setMapRefreshKey] = useState(0);
+  const [mapLocationSearch, setMapLocationSearch] = useState("");
+  const [mapLocationResults, setMapLocationResults] = useState<NominatimLocationResult[]>([]);
+  const [mapLocationSearching, setMapLocationSearching] = useState(false);
+  const [mapLocationMessage, setMapLocationMessage] = useState("");
+  const [mapSearchResult, setMapSearchResult] = useState<NominatimLocationResult | null>(null);
+  const [mapSearchBoundary, setMapSearchBoundary] = useState<QueryDataCoordinate[]>([]);
+  const [mapSearchFocusKey, setMapSearchFocusKey] = useState(0);
   const [areaDrawingMode, setAreaDrawingMode] =
     useState<AreaDrawingMode>(null);
   const [areaDragStart, setAreaDragStart] =
     useState<QueryDataCoordinate | null>(null);
   const [areaDragCurrent, setAreaDragCurrent] =
     useState<QueryDataCoordinate | null>(null);
+  const [surveyCollectionPoints, setSurveyCollectionPoints] = useState<CollectionMapPoint[]>([]);
+  const [releaseCollectionPoints, setReleaseCollectionPoints] = useState<CollectionMapPoint[]>([]);
+  const [releaseRecords, setReleaseRecords] = useState<DistributionRecord[]>([]);
   const [collectionPoints, setCollectionPoints] = useState<
     CollectionMapPoint[]
   >(() =>
@@ -1629,6 +2124,8 @@ export default function QueryDataPage() {
 
   useEffect(() => {
     saveQueryDataSession({
+      dataSources,
+      taxaOptions,
       startDate,
       endDate,
       areaPolygon,
@@ -1642,6 +2139,8 @@ export default function QueryDataPage() {
     });
   }, [
     activeCustomFilterFields,
+    dataSources,
+    taxaOptions,
     areaBoundaryId,
     areaBoundaryLabel,
     areaBoundaryType,
@@ -1700,7 +2199,7 @@ export default function QueryDataPage() {
           cachedCollectionPoints !== null &&
           cachedCollectionPointsKey === snapshotCacheKey
         ) {
-          setCollectionPoints(cachedCollectionPoints);
+          setSurveyCollectionPoints(cachedCollectionPoints);
           setQueryIndexReady(true);
           return;
         }
@@ -1711,14 +2210,14 @@ export default function QueryDataPage() {
 
         cachedCollectionPoints = points;
         cachedCollectionPointsKey = snapshotCacheKey;
-        setCollectionPoints(points);
+        setSurveyCollectionPoints(points);
         setQueryIndexReady(true);
       } catch (error) {
         if (cancelled) return;
 
         console.error("Unable to load Query Data map points.", error);
         setInitialSitePoints([]);
-        setCollectionPoints([]);
+        setSurveyCollectionPoints([]);
         setQueryIndexReady(false);
         setMapLoadState("error");
         setMapStatus(
@@ -1735,6 +2234,27 @@ export default function QueryDataPage() {
       cancelled = true;
     };
   }, [snapshotAvailable, snapshotCacheKey]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadBrianReleaseRecords()
+      .then((records) => {
+        if (cancelled) return;
+        setReleaseRecords(records);
+        setReleaseCollectionPoints(buildReleaseCollectionPoints(records));
+      })
+      .catch((error) => {
+        if (!cancelled) console.error("Unable to load Brian Release Database for Query Data.", error);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    const next: CollectionMapPoint[] = [];
+    if (dataSources.includes("survey")) next.push(...surveyCollectionPoints);
+    if (dataSources.includes("release")) next.push(...releaseCollectionPoints);
+    setCollectionPoints(next.filter((point) => pointMatchesTaxa(point, taxaOptions)));
+  }, [dataSources, releaseCollectionPoints, surveyCollectionPoints, taxaOptions]);
 
   const areaAndDateFilteredPoints = useMemo(() => {
     if (invalidDateRange) return [];
@@ -1999,8 +2519,24 @@ export default function QueryDataPage() {
   const appliedFilteredPoints = appliedMapPoints;
 
   const displayedMapPoints = hasAppliedMapQuery
-    ? appliedFilteredPoints
-    : initialSitePoints;
+    ? [
+        ...appliedFilteredPoints.filter((point) => point.source === "survey"),
+        ...aggregateReleasePointsForMap(
+          appliedFilteredPoints.filter((point) => point.source === "release"),
+        ),
+      ]
+    : [
+        ...(dataSources.includes("survey")
+          ? initialSitePoints.filter((point) => pointMatchesTaxa(point, taxaOptions))
+          : []),
+        ...(dataSources.includes("release")
+          ? aggregateReleasePointsForMap(
+              releaseCollectionPoints.filter((point) =>
+                pointMatchesTaxa(point, taxaOptions),
+              ),
+            )
+          : []),
+      ];
 
   const shouldFitDisplayedPoints =
     hasAppliedMapQuery ? shouldFitAppliedPoints : false;
@@ -2008,15 +2544,26 @@ export default function QueryDataPage() {
   useEffect(() => {
     if (mapLoadState !== "ready" || !hasAppliedMapQuery) return;
 
+    const surveyIDs = appliedFilteredPoints
+      .filter((point) => point.source === "survey")
+      .map((point) => point.collectionID);
+    const releaseIDs = new Set(
+      appliedFilteredPoints
+        .filter((point) => point.source === "release")
+        .map((point) => point.releaseRecordId)
+        .filter((value): value is string => Boolean(value)),
+    );
     saveAppliedQueryData(
       appliedQuerySession,
-      appliedFilteredPoints.map((point) => point.collectionID),
+      surveyIDs,
+      releaseRecords.filter((record) => releaseIDs.has(record.id)),
     );
   }, [
     appliedFilteredPoints,
     appliedQuerySession,
     hasAppliedMapQuery,
     mapLoadState,
+    releaseRecords,
   ]);
 
   const currentQuerySession = getCurrentQuerySession();
@@ -2031,6 +2578,8 @@ export default function QueryDataPage() {
 
   function getCurrentQuerySession(): QueryDataSession {
     return {
+      dataSources,
+      taxaOptions,
       startDate,
       endDate,
       areaPolygon,
@@ -2045,6 +2594,13 @@ export default function QueryDataPage() {
   }
 
   function applyQuerySession(session: QueryDataSession) {
+    setDataSources(session.dataSources);
+    setTaxaOptions(
+      Array.isArray((session as QueryDataSession & { taxaOptions?: string[] }).taxaOptions) &&
+      (session as QueryDataSession & { taxaOptions?: string[] }).taxaOptions!.length > 0
+        ? (session as QueryDataSession & { taxaOptions?: string[] }).taxaOptions!
+        : ["Aquatic Snail", "Clam", "Limpet", "Mussel"],
+    );
     setStartDate(session.startDate);
     setEndDate(session.endDate);
     setAreaPolygon(session.areaPolygon);
@@ -2125,8 +2681,8 @@ export default function QueryDataPage() {
   function applyQueryToMap() {
     if (
       invalidDateRange ||
-      !snapshotAvailable ||
-      !queryIndexReady
+      (dataSources.includes("survey") && (!snapshotAvailable || !queryIndexReady)) ||
+      dataSources.length === 0
     ) {
       return;
     }
@@ -2141,7 +2697,7 @@ export default function QueryDataPage() {
   }
 
   function refineQueryToSite(point: CollectionMapPoint): void {
-    if (!snapshotAvailable || !queryIndexReady) {
+    if (dataSources.includes("survey") && (!snapshotAvailable || !queryIndexReady)) {
       return;
     }
 
@@ -2404,12 +2960,86 @@ export default function QueryDataPage() {
     setSelectedWaterbodies([]);
   }
 
+  async function searchMapLocation() {
+    if (mapLocationSearching) return;
+
+    setMapLocationResults([]);
+    setMapLocationSearching(true);
+    setMapLocationMessage("Searching OpenStreetMap...");
+
+    try {
+      const results = await searchVirginiaWithNominatim(mapLocationSearch);
+      setMapLocationResults(results);
+      setMapLocationMessage(
+        results.length > 0
+          ? `${results.length} matching Virginia location${results.length === 1 ? "" : "s"} found.`
+          : "No matching Virginia locations were found.",
+      );
+    } catch (error) {
+      setMapLocationMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to search for that location.",
+      );
+    } finally {
+      setMapLocationSearching(false);
+    }
+  }
+
+  async function chooseMapLocationResult(result: NominatimLocationResult) {
+    setMapLocationResults([]);
+    setMapLocationSearch(result.label);
+    setMapSearchResult(result);
+    setMapSearchBoundary([]);
+
+    const firstLabel = result.label.split(",")[0]?.trim() ?? "";
+    const isCountyResult = isCountySearchResult(result);
+
+    if (isCountyResult) {
+      try {
+        const counties = await loadBoundaryFeatures("county");
+        const candidateNames = [result.county, firstLabel]
+          .map(normalizeMapSearchCountyName)
+          .filter(Boolean);
+        const county = counties.find((feature) => {
+          const normalizedFeature = normalizeMapSearchCountyName(feature.label);
+          return candidateNames.includes(normalizedFeature);
+        });
+
+        if (county) {
+          const polygon = simplifyBoundaryRing(featureOuterRing(county.feature));
+          setMapSearchBoundary(polygon);
+          setMapLocationMessage(`Showing ${county.label}. This map search does not change any query filters.`);
+        } else {
+          setMapLocationMessage(`Showing ${result.label}. County outline was not found in the local NAIADD county layer.`);
+        }
+      } catch (error) {
+        console.warn("Unable to load map-search county boundary.", error);
+        setMapLocationMessage(`Showing ${result.label}. County outline is temporarily unavailable.`);
+      }
+    } else {
+      setMapLocationMessage(`Showing ${result.label}. This map search does not change any query filters.`);
+    }
+
+    setMapSearchFocusKey((current) => current + 1);
+  }
+
+  function clearMapLocationSearch() {
+    setMapLocationSearch("");
+    setMapLocationResults([]);
+    setMapLocationMessage("");
+    setMapSearchResult(null);
+    setMapSearchBoundary([]);
+  }
+
   function hardRefreshMap() {
     setMapRefreshKey((current) => current + 1);
   }
 
   function clearAllFilters() {
     const resetSession: QueryDataSession = {
+      dataSources: ["survey", "release"],
+      taxaOptions: ["Aquatic Snail", "Clam", "Limpet", "Mussel"],
       startDate: "",
       endDate: "",
       areaPolygon: [],
@@ -2422,6 +3052,8 @@ export default function QueryDataPage() {
       customFilters: {},
     };
 
+    setDataSources(["survey", "release"]);
+    setTaxaOptions(["Aquatic Snail", "Clam", "Limpet", "Mussel"]);
     setStartDate("");
     setEndDate("");
     setCurrentLocation(null);
@@ -2447,6 +3079,7 @@ export default function QueryDataPage() {
     setCollapsedCustomFilters({});
     setShowAddFilterMenu(false);
     setIsAreaFilterCollapsed(true);
+    setIsDateFilterCollapsed(true);
     setIsSiteFilterCollapsed(true);
     setIsWaterbodyFilterCollapsed(true);
 
@@ -2725,65 +3358,6 @@ export default function QueryDataPage() {
                 ? "Filter changes are staged. The current map has not changed."
                 : "Filter changes are staged. The map changes only after Apply Query to Map is selected."}
             </span>
-          </section>
-
-          <section className="query-data-filter-card">
-            <div className="query-data-filter-heading">
-              <div className="query-data-filter-title">
-                <span
-                  className="query-data-filter-icon"
-                  aria-hidden="true"
-                >
-                  <CalendarDays size={20} />
-                </span>
-                <div>
-                  <span>Query filter</span>
-                  <h2>Survey Date</h2>
-                </div>
-              </div>
-
-              {hasDateFilter && (
-                <button
-                  type="button"
-                  className="query-data-clear-filter"
-                  onClick={clearDateFilter}
-                >
-                  <X size={16} />
-                  Clear
-                </button>
-              )}
-            </div>
-
-            <div className="query-data-date-fields">
-              <QueryDateInput
-                label="Start date"
-                value={startDate}
-                max={endDate || undefined}
-                disabled={!snapshotAvailable}
-                onChange={setStartDate}
-              />
-
-              <QueryDateInput
-                label="End date"
-                value={endDate}
-                min={startDate || undefined}
-                disabled={!snapshotAvailable}
-                onChange={setEndDate}
-              />
-            </div>
-
-            {invalidDateRange && (
-              <p className="query-data-filter-error">
-                End date must be on or after the start date.
-              </p>
-            )}
-
-            {!snapshotAvailable && (
-              <p className="query-data-filter-note">
-                Refresh the production snapshot from the Home Dashboard
-                before building a query.
-              </p>
-            )}
           </section>
 
           <section className="query-data-filter-card">
@@ -3159,6 +3733,85 @@ export default function QueryDataPage() {
                     )}
                 </div>
               </div>
+            )}
+          </section>
+
+          <section className="query-data-filter-card">
+            <div className="query-data-filter-heading">
+              <div className="query-data-filter-title">
+                <span className="query-data-filter-icon" aria-hidden="true">
+                  <CalendarDays size={20} />
+                </span>
+                <div>
+                  <span>Query filter</span>
+                  <h2>Survey Date</h2>
+                </div>
+              </div>
+
+              <div className="query-data-filter-actions">
+                {hasDateFilter && (
+                  <button
+                    type="button"
+                    className="query-data-clear-filter"
+                    onClick={clearDateFilter}
+                  >
+                    <X size={16} />
+                    Clear
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  className="query-data-collapse-button"
+                  onClick={() => setIsDateFilterCollapsed((current) => !current)}
+                  aria-expanded={!isDateFilterCollapsed}
+                  aria-label={
+                    isDateFilterCollapsed
+                      ? "Expand survey date filter"
+                      : "Collapse survey date filter"
+                  }
+                >
+                  {isDateFilterCollapsed ? (
+                    <ChevronDown size={17} />
+                  ) : (
+                    <ChevronUp size={17} />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {!isDateFilterCollapsed && (
+              <>
+                <div className="query-data-date-fields">
+                  <QueryDateInput
+                    label="Start date"
+                    value={startDate}
+                    max={endDate || undefined}
+                    disabled={!snapshotAvailable && !dataSources.includes("release")}
+                    onChange={setStartDate}
+                  />
+
+                  <QueryDateInput
+                    label="End date"
+                    value={endDate}
+                    min={startDate || undefined}
+                    disabled={!snapshotAvailable && !dataSources.includes("release")}
+                    onChange={setEndDate}
+                  />
+                </div>
+
+                {invalidDateRange && (
+                  <p className="query-data-filter-error">
+                    End date must be on or after the start date.
+                  </p>
+                )}
+
+                {!snapshotAvailable && dataSources.includes("survey") && (
+                  <p className="query-data-filter-note">
+                    Refresh the production snapshot from the Home Dashboard before querying Survey Database records.
+                  </p>
+                )}
+              </>
             )}
           </section>
 
@@ -3641,36 +4294,158 @@ export default function QueryDataPage() {
               >
                 <MapIcon size={16} aria-hidden="true" />
 
-                <button
-                  type="button"
-                  className={basemap === "satellite" ? "active" : ""}
-                  onClick={() => setBasemap("satellite")}
-                >
-                  Satellite
-                </button>
-
-                <button
-                  type="button"
-                  className={basemap === "street" ? "active" : ""}
-                  onClick={() => setBasemap("street")}
-                >
-                  Street Map
-                </button>
+                {([
+                  ["street", "Streets"],
+                  ["topo", "Topo"],
+                  ["satellite", "Satellite"],
+                  ["dark", "Dark"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={basemap === value ? "active" : ""}
+                    onClick={() => setBasemap(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
-
-              <div className="query-data-map-count">
+<div className="query-data-map-count">
               <MapPin size={16} aria-hidden="true" />
               <strong>{displayedMapPoints.length.toLocaleString()}</strong>
               <span>
-                {hasAppliedMapQuery
-                  ? displayedMapPoints.length === 1
-                    ? "collection"
-                    : "collections"
-                  : displayedMapPoints.length === 1
-                    ? "site"
-                    : "sites"}
+                {dataSources.includes("release")
+                  ? displayedMapPoints.length === 1 ? "record" : "records"
+                  : hasAppliedMapQuery
+                    ? displayedMapPoints.length === 1 ? "collection" : "collections"
+                    : displayedMapPoints.length === 1 ? "site" : "sites"}
               </span>
               </div>
+            </div>
+          </div>
+
+          <div className="query-data-source-selector" aria-label="Query data sources">
+            <span>Data Sources</span>
+            <label>
+              <input
+                type="checkbox"
+                checked={dataSources.includes("survey")}
+                onChange={(event) => {
+                  const checked = event.target.checked;
+                  setDataSources((current) => {
+                    const next = checked
+                      ? [...new Set([...current, "survey" as QueryDataSource])]
+                      : current.filter((source) => source !== "survey");
+                    return next.length > 0 ? next : current;
+                  });
+                  setHasAppliedMapQuery(false);
+                }}
+              />
+              <i className="query-data-source-symbol query-data-source-symbol-survey" aria-hidden="true" />
+              <span>Survey Database</span>
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                checked={dataSources.includes("release")}
+                onChange={(event) => {
+                  const checked = event.target.checked;
+                  setDataSources((current) => {
+                    const next = checked
+                      ? [...new Set([...current, "release" as QueryDataSource])]
+                      : current.filter((source) => source !== "release");
+                    return next.length > 0 ? next : current;
+                  });
+                  setHasAppliedMapQuery(false);
+                }}
+              />
+              <i className="query-data-source-symbol query-data-source-symbol-release" aria-hidden="true">★</i>
+              <span>Release Database</span>
+            </label>
+          </div>
+
+          <div className="query-data-taxa-selector" aria-label="Taxa options">
+            <span>Taxa Options</span>
+            {TAXA_OPTIONS.map((option) => (
+              <label key={option.value}>
+                <input
+                  type="checkbox"
+                  checked={taxaOptions.includes(option.value)}
+                  onChange={(event) => {
+                    const checked = event.target.checked;
+                    setTaxaOptions((current) => {
+                      const next = checked
+                        ? [...new Set([...current, option.value])]
+                        : current.filter((value) => value !== option.value);
+                      return next.length > 0 ? next : current;
+                    });
+                    setHasAppliedMapQuery(false);
+                  }}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+
+          <div className="query-data-map-location-search">
+            <div className="query-data-map-location-search-row">
+              <Search size={18} aria-hidden="true" />
+              <input
+                type="search"
+                value={mapLocationSearch}
+                onChange={(event) => {
+                  setMapLocationSearch(event.target.value);
+                  setMapLocationResults([]);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void searchMapLocation();
+                  }
+                }}
+                placeholder="Search address, road, waterbody, county, park, forest, or place…"
+                aria-label="Search Virginia map locations"
+              />
+              {mapLocationSearch && (
+                <button
+                  type="button"
+                  className="query-data-map-location-clear"
+                  onClick={clearMapLocationSearch}
+                  aria-label="Clear map location search"
+                  title="Clear map location search"
+                >
+                  <X size={16} />
+                </button>
+              )}
+              <button
+                type="button"
+                className="query-data-map-location-search-button"
+                onClick={() => void searchMapLocation()}
+                disabled={mapLocationSearching}
+              >
+                {mapLocationSearching ? "Searching…" : "Search Map"}
+              </button>
+            </div>
+
+            {mapLocationResults.length > 0 && (
+              <div className="query-data-map-location-results">
+                {mapLocationResults.map((result, index) => (
+                  <button
+                    type="button"
+                    key={`${result.latitude}-${result.longitude}-${index}`}
+                    onClick={() => void chooseMapLocationResult(result)}
+                  >
+                    <strong>{result.label.split(",")[0]}</strong>
+                    <span>{result.label}</span>
+                    <small>{result.type}</small>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="query-data-map-location-meta">
+              <span role="status">{mapLocationMessage}</span>
+              <small>Search data © OpenStreetMap contributors, via Nominatim.</small>
             </div>
           </div>
 
@@ -3708,22 +4483,42 @@ export default function QueryDataPage() {
               >
                 {basemap === "street" ? (
                   <TileLayer
-                    key="carto-street"
-                    attribution="&copy; OpenStreetMap contributors &copy; CARTO"
-                    url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                    subdomains={["a", "b", "c", "d"]}
+                    key="osm-street"
+                    attribution="&copy; OpenStreetMap contributors"
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    maxZoom={19}
+                  />
+                ) : basemap === "topo" ? (
+                  <TileLayer
+                    key="esri-topo"
+                    attribution="Tiles &copy; Esri"
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
                     maxZoom={20}
                   />
-                ) : (
+                ) : basemap === "satellite" ? (
                   <TileLayer
                     key="esri-satellite"
                     attribution="Tiles &copy; Esri"
                     url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
                     maxZoom={20}
                   />
+                ) : (
+                  <TileLayer
+                    key="carto-dark"
+                    attribution="&copy; OpenStreetMap contributors &copy; CARTO"
+                    url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    subdomains={["a", "b", "c", "d"]}
+                    maxZoom={20}
+                  />
                 )}
 
                 <QueryMapViewTracker />
+
+                <FocusMapSearchResult
+                  result={mapSearchResult}
+                  boundary={mapSearchBoundary}
+                  requestKey={mapSearchFocusKey}
+                />
 
                 <FocusCurrentLocation
                   coordinate={currentLocation}
@@ -3805,6 +4600,45 @@ export default function QueryDataPage() {
                       interactive={false}
                     />
                   )}
+
+                {mapSearchBoundary.length >= 3 && (
+                  <Polygon
+                    positions={mapSearchBoundary.map((coordinate) => [
+                      coordinate.latitude,
+                      coordinate.longitude,
+                    ])}
+                    pathOptions={{
+                      color: "var(--vadma-accent, #ff9f43)",
+                      weight: 4,
+                      opacity: 0.95,
+                      fillColor: "var(--vadma-accent, #ff9f43)",
+                      fillOpacity: 0.06,
+                      dashArray: "8 5",
+                    }}
+                    interactive={false}
+                  />
+                )}
+
+                {mapSearchResult && (
+                  <CircleMarker
+                    center={[mapSearchResult.latitude, mapSearchResult.longitude]}
+                    radius={6}
+                    pathOptions={{
+                      color: "rgba(255, 255, 255, 0.96)",
+                      weight: 2,
+                      fillColor: "var(--vadma-accent, #ff9f43)",
+                      fillOpacity: 1,
+                    }}
+                  >
+                    <Popup>
+                      <div className="query-data-map-popup">
+                        <strong>{mapSearchResult.label.split(",")[0]}</strong>
+                        <span>{mapSearchResult.label}</span>
+                        <small>Map search only — query filters unchanged</small>
+                      </div>
+                    </Popup>
+                  </CircleMarker>
+                )}
 
                 {currentLocation && (
                   <>
@@ -3897,44 +4731,100 @@ export default function QueryDataPage() {
                     </>
                   )}
 
-                {displayedMapPoints.map((point) => (
-                  <CircleMarker
-                    key={
-                      isInitialSitePoint(point)
-                        ? point.siteKey
-                        : point.collectionID
-                    }
-                    center={[point.latitude, point.longitude]}
-                    radius={4}
-                    pathOptions={{
-                      color: "rgba(255, 255, 255, 0.94)",
-                      weight: 1.25,
-                      fillColor: "var(--vadma-accent, #ff9f43)",
-                      fillOpacity: 0.95,
-                    }}
-                  >
+                {displayedMapPoints.map((point) =>
+                  point.source === "release" ? (
+                    <Marker
+                      key={
+                        isInitialSitePoint(point)
+                          ? point.siteKey
+                          : point.collectionID
+                      }
+                      position={[point.latitude, point.longitude]}
+                      icon={releaseDatabaseStarIcon()}
+                      zIndexOffset={250}
+                    >
                     <Popup>
-                      <div className="query-data-map-popup">
-                        <strong>{point.siteName}</strong>
-                        <span>{point.waterbody}</span>
-                        {hasAppliedMapQuery ? (
-                          <>
-                            {point.surveyDate && (
-                              <span>{point.surveyDate}</span>
-                            )}
-                            <small>{point.collectionID}</small>
-                          </>
-                        ) : (
-                          <small>
-                            {isInitialSitePoint(point)
-                              ? `${point.collectionCount.toLocaleString()} ${
-                                  point.collectionCount === 1
-                                    ? "collection"
-                                    : "collections"
-                                }`
-                              : "Mapped site"}
-                          </small>
-                        )}
+                      <div className="query-data-map-popup query-data-map-popup-rich">
+                        <div className="query-data-popup-heading">
+                          <strong>{point.siteName}</strong>
+                          <span>{point.waterbody}</span>
+                        </div>
+
+                        <div className="query-data-popup-grid">
+                          <div>
+                            <small>Data source</small>
+                            <span>Survey Database</span>
+                          </div>
+                          <div>
+                            <small>Collections</small>
+                            <span>
+                              {isInitialSitePoint(point)
+                                ? point.collectionCount.toLocaleString()
+                                : "1"}
+                            </span>
+                          </div>
+
+                          {popupDateSummary(point) && (
+                            <div>
+                              <small>{point.surveyDates.length > 1 ? "Survey dates" : "Survey date"}</small>
+                              <span>{popupDateSummary(point)}</span>
+                            </div>
+                          )}
+
+                          <div className="query-data-popup-wide">
+                            <small>
+                              {`Collection ID${point.collectionIDs.length === 1 ? "" : "s"}`}
+                            </small>
+                            <span>{popupValueList(point.collectionIDs, 3) || "—"}</span>
+                          </div>
+
+                          {point.surveyTypes.length > 0 && (
+                            <div className="query-data-popup-wide">
+                              <small>Survey type</small>
+                              <span>{popupValueList(point.surveyTypes)}</span>
+                            </div>
+                          )}
+
+                          {point.targetSpecies.length > 0 && (
+                            <div className="query-data-popup-wide">
+                              <small>Target species</small>
+                              <span>{popupValueList(point.targetSpecies)}</span>
+                            </div>
+                          )}
+
+                          {point.species.length > 0 && (
+                            <div className="query-data-popup-wide">
+                              <small>Species encountered ({point.species.length.toLocaleString()})</small>
+                              <span>{popupValueList(point.species, 5)}</span>
+                            </div>
+                          )}
+
+                          {point.surveyors.length > 0 && (
+                            <div className="query-data-popup-wide">
+                              <small>Collectors</small>
+                              <span>{popupValueList(point.surveyors)}</span>
+                            </div>
+                          )}
+
+                          {point.equipment.length > 0 && (
+                            <div className="query-data-popup-wide">
+                              <small>Equipment</small>
+                              <span>{popupValueList(point.equipment)}</span>
+                            </div>
+                          )}
+
+                          {point.projects.length > 0 && (
+                            <div className="query-data-popup-wide">
+                              <small>Project</small>
+                              <span>{popupValueList(point.projects)}</span>
+                            </div>
+                          )}
+
+                          <div className="query-data-popup-wide query-data-popup-coordinates">
+                            <small>Coordinates</small>
+                            <span>{point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}</span>
+                          </div>
+                        </div>
 
                         <button
                           type="button"
@@ -3947,8 +4837,120 @@ export default function QueryDataPage() {
                         </button>
                       </div>
                     </Popup>
-                  </CircleMarker>
-                ))}
+                    </Marker>
+                  ) : (
+                    <CircleMarker
+                      key={
+                        isInitialSitePoint(point)
+                          ? point.siteKey
+                          : point.collectionID
+                      }
+                      center={[point.latitude, point.longitude]}
+                      radius={3}
+                      pathOptions={{
+                        color: "rgba(255, 255, 255, 0.96)",
+                        weight: 1,
+                        fillColor: "#dc2626",
+                        fillOpacity: 0.96,
+                      }}
+                    >
+                    <Popup>
+                      <div className="query-data-map-popup query-data-map-popup-rich">
+                        <div className="query-data-popup-heading">
+                          <strong>{point.siteName}</strong>
+                          <span>{point.waterbody}</span>
+                        </div>
+
+                        <div className="query-data-popup-grid">
+                          <div>
+                            <small>Data source</small>
+                            <span>Survey Database</span>
+                          </div>
+                          <div>
+                            <small>Collections</small>
+                            <span>
+                              {isInitialSitePoint(point)
+                                ? point.collectionCount.toLocaleString()
+                                : "1"}
+                            </span>
+                          </div>
+
+                          {popupDateSummary(point) && (
+                            <div>
+                              <small>{point.surveyDates.length > 1 ? "Survey dates" : "Survey date"}</small>
+                              <span>{popupDateSummary(point)}</span>
+                            </div>
+                          )}
+
+                          <div className="query-data-popup-wide">
+                            <small>
+                              {`Collection ID${point.collectionIDs.length === 1 ? "" : "s"}`}
+                            </small>
+                            <span>{popupValueList(point.collectionIDs, 3) || "—"}</span>
+                          </div>
+
+                          {point.surveyTypes.length > 0 && (
+                            <div className="query-data-popup-wide">
+                              <small>Survey type</small>
+                              <span>{popupValueList(point.surveyTypes)}</span>
+                            </div>
+                          )}
+
+                          {point.targetSpecies.length > 0 && (
+                            <div className="query-data-popup-wide">
+                              <small>Target species</small>
+                              <span>{popupValueList(point.targetSpecies)}</span>
+                            </div>
+                          )}
+
+                          {point.species.length > 0 && (
+                            <div className="query-data-popup-wide">
+                              <small>Species encountered ({point.species.length.toLocaleString()})</small>
+                              <span>{popupValueList(point.species, 5)}</span>
+                            </div>
+                          )}
+
+                          {point.surveyors.length > 0 && (
+                            <div className="query-data-popup-wide">
+                              <small>Collectors</small>
+                              <span>{popupValueList(point.surveyors)}</span>
+                            </div>
+                          )}
+
+                          {point.equipment.length > 0 && (
+                            <div className="query-data-popup-wide">
+                              <small>Equipment</small>
+                              <span>{popupValueList(point.equipment)}</span>
+                            </div>
+                          )}
+
+                          {point.projects.length > 0 && (
+                            <div className="query-data-popup-wide">
+                              <small>Project</small>
+                              <span>{popupValueList(point.projects)}</span>
+                            </div>
+                          )}
+
+                          <div className="query-data-popup-wide query-data-popup-coordinates">
+                            <small>Coordinates</small>
+                            <span>{point.latitude.toFixed(5)}, {point.longitude.toFixed(5)}</span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="query-data-popup-refine-button"
+                          disabled={!queryIndexReady}
+                          onClick={() => refineQueryToSite(point)}
+                        >
+                          <Target size={14} aria-hidden="true" />
+                          Refine Query to this Site
+                        </button>
+                      </div>
+                    </Popup>
+                    </CircleMarker>
+                  ),
+                )}
               </MapContainer>
             )}
 

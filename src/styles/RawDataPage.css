@@ -538,3 +538,26 @@
     padding: 18px;
   }
 }
+
+/* Release Database results */
+.raw-data-release-card { margin-top: 18px; }
+.raw-data-release-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--ui-border);
+}
+.raw-data-release-heading > div { display: grid; gap: 3px; }
+.raw-data-release-heading span {
+  color: var(--ui-muted);
+  font-size: .68rem;
+  font-weight: 850;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+.raw-data-release-heading strong { color: var(--ui-text); }
+@media (max-width: 700px) {
+  .raw-data-release-heading { align-items: stretch; flex-direction: column; }
+}

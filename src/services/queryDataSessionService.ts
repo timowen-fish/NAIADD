@@ -1,4 +1,5 @@
 import { auth } from "../firebase";
+
 export type QueryDataCoordinate = {
   latitude: number;
   longitude: number;
@@ -19,7 +20,13 @@ export type QueryDataCustomFilters = Partial<
 
 export type QueryDataBoundaryType = "county" | "huc8" | "";
 
+export type QueryDataSource = "survey" | "release";
+
+export type QueryDataTaxa = string;
+
 export type QueryDataSession = {
+  dataSources: QueryDataSource[];
+  taxaOptions: QueryDataTaxa[];
   startDate: string;
   endDate: string;
   areaPolygon: QueryDataCoordinate[];
@@ -33,9 +40,27 @@ export type QueryDataSession = {
 };
 
 
+export type AppliedReleaseRecord = {
+  id: string;
+  sourceRow: number;
+  sourceFile: string;
+  dataset: string;
+  datasetGroup: string;
+  bova: string;
+  scientificName: string;
+  surveyDate: string;
+  surveyDateValue: number | null;
+  latitude: number;
+  longitude: number;
+  condition: string;
+  project: string;
+  raw: Record<string, unknown>;
+};
+
 export type AppliedQueryData = {
   session: QueryDataSession;
   collectionIDs: string[];
+  releaseRecords: AppliedReleaseRecord[];
   appliedAt: string;
 };
 
@@ -63,7 +88,10 @@ type HelperSavedQueriesPackage = {
   data: SavedQueryData[];
 };
 
+
 const DEFAULT_QUERY_DATA_SESSION: QueryDataSession = {
+  dataSources: ["survey", "release"],
+  taxaOptions: ["Aquatic Snail", "Clam", "Limpet", "Mussel"],
   startDate: "",
   endDate: "",
   areaPolygon: [],
@@ -172,6 +200,17 @@ function normalizeSession(value: unknown): QueryDataSession {
   const candidate = value as Partial<QueryDataSession>;
 
   return {
+    dataSources: normalizeStringArray(candidate.dataSources).filter(
+      (source): source is QueryDataSource => source === "survey" || source === "release",
+    ).length > 0
+      ? normalizeStringArray(candidate.dataSources).filter(
+          (source): source is QueryDataSource => source === "survey" || source === "release",
+        )
+      : ["survey", "release"],
+    taxaOptions:
+      normalizeStringArray(candidate.taxaOptions).length > 0
+        ? normalizeStringArray(candidate.taxaOptions)
+        : ["Aquatic Snail", "Clam", "Limpet", "Mussel"],
     startDate: isValidDateInput(candidate.startDate)
       ? candidate.startDate
       : "",
@@ -307,7 +346,6 @@ function getSavedQueryStorageKey(identity?: string): string {
   return `${SAVED_QUERY_DATA_KEY_PREFIX}:${resolved || "local-user"}`;
 }
 
-
 async function writeSavedQueriesToHelper(
   uid: string,
   queries: SavedQueryData[],
@@ -442,13 +480,13 @@ function persistSavedQueryData(queries: SavedQueryData[]): SavedQueryData[] {
         detail: normalized,
       }),
     );
-
-    const uid = auth.currentUser?.uid;
-    if (uid) {
-      void writeSavedQueriesToHelper(uid, normalized);
-    }
   } catch (error) {
     console.warn("Unable to save Query Data queries.", error);
+  }
+
+  const uid = auth.currentUser?.uid;
+  if (uid) {
+    void writeSavedQueriesToHelper(uid, normalized);
   }
 
   return normalized;
@@ -499,10 +537,12 @@ export function deleteSavedQueryData(id: string): SavedQueryData[] {
 export function saveAppliedQueryData(
   session: QueryDataSession,
   collectionIDs: string[],
+  releaseRecords: AppliedReleaseRecord[] = [],
 ): AppliedQueryData {
   const applied: AppliedQueryData = {
     session: normalizeSession(session),
     collectionIDs: [...new Set(collectionIDs.map((value) => value.trim()).filter(Boolean))],
+    releaseRecords,
     appliedAt: new Date().toISOString(),
   };
 
@@ -531,6 +571,12 @@ export function loadAppliedQueryData(): AppliedQueryData | null {
     return {
       session: normalizeSession(candidate.session),
       collectionIDs: normalizeStringArray(candidate.collectionIDs),
+      releaseRecords: Array.isArray(candidate.releaseRecords)
+        ? candidate.releaseRecords.filter(
+            (record): record is AppliedReleaseRecord =>
+              Boolean(record && typeof record === "object" && typeof record.id === "string"),
+          )
+        : [],
       appliedAt:
         typeof candidate.appliedAt === "string"
           ? candidate.appliedAt

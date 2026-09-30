@@ -446,6 +446,26 @@ async function loadSpeciesReference(): Promise<
   return reference;
 }
 
+
+export async function loadBrianReleaseRecords(): Promise<DistributionRecord[]> {
+  const [historical, speciesReference] = await Promise.all([
+    loadStaticRecords(),
+    loadSpeciesReference(),
+  ]);
+
+  return historical
+    .filter((record) => record.datasetGroup === "Brian Release Database")
+    .map((record) => {
+      const referenceSpecies = speciesReference.get(bovaMatchKey(record.bova));
+      if (!referenceSpecies) return record;
+      return {
+        ...record,
+        bova: referenceSpecies.bova,
+        scientificName: referenceSpecies.scientificName,
+      };
+    });
+}
+
 export async function loadDistributionRecords(): Promise<DistributionRecord[]> {
   const [snapshot, historical, speciesReference] = await Promise.all([
     loadSnapshotRecords(),

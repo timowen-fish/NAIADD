@@ -7,7 +7,6 @@ import {
 import {
   FeatureGroup,
   GeoJSON,
-  LayersControl,
   MapContainer,
   Marker,
   Popup,
@@ -587,6 +586,7 @@ export default function DistributionsPage() {
   const [endDate, setEndDate] = useState(todayInputValue());
   const [pointSize, setPointSize] = useState(4);
   const [showPoints, setShowPoints] = useState(true);
+  const [basemap, setBasemap] = useState<"streets" | "topographic" | "satellite">("streets");
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showCounties, setShowCounties] = useState(true);
   const [counties, setCounties] = useState<CountyFeatureCollection | null>(null);
@@ -1600,19 +1600,38 @@ export default function DistributionsPage() {
                 </p>
               </div>
 
-              <button
-                type="button"
-                className="ui-button ui-button-secondary"
-                disabled={filteredRecords.length === 0}
-                onClick={() =>
-                  exportDistributionRecords(
-                    filteredRecords,
-                    `NAIADD_Distribution_${selectedBova || "Records"}.csv`,
-                  )
-                }
-              >
-                Export Records
-              </button>
+              <div className="distribution-map-actions">
+                <label className="distribution-basemap-control">
+                  <span>Basemap</span>
+                  <select
+                    value={basemap}
+                    onChange={(event) =>
+                      setBasemap(
+                        event.target.value as "streets" | "topographic" | "satellite",
+                      )
+                    }
+                    aria-label="Basemap"
+                  >
+                    <option value="streets">Streets</option>
+                    <option value="topographic">Topographic</option>
+                    <option value="satellite">Satellite</option>
+                  </select>
+                </label>
+
+                <button
+                  type="button"
+                  className="ui-button ui-button-secondary"
+                  disabled={filteredRecords.length === 0}
+                  onClick={() =>
+                    exportDistributionRecords(
+                      filteredRecords,
+                      `NAIADD_Distribution_${selectedBova || "Records"}.csv`,
+                    )
+                  }
+                >
+                  Export Records
+                </button>
+              </div>
             </div>
 
             <div className="distribution-map-wrap">
@@ -1621,26 +1640,30 @@ export default function DistributionsPage() {
                 boundsOptions={{ padding: [12, 12] }}
                 scrollWheelZoom
               >
-                <LayersControl position="bottomright">
-                  <LayersControl.BaseLayer checked name="Light">
-                    <TileLayer
-                      attribution="&copy; OpenStreetMap contributors &copy; CARTO"
-                      url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                    />
-                  </LayersControl.BaseLayer>
-                  <LayersControl.BaseLayer name="Topographic">
-                    <TileLayer
-                      attribution="Tiles &copy; Esri"
-                      url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
-                    />
-                  </LayersControl.BaseLayer>
-                  <LayersControl.BaseLayer name="Satellite">
-                    <TileLayer
-                      attribution="Tiles &copy; Esri"
-                      url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                    />
-                  </LayersControl.BaseLayer>
-                </LayersControl>
+                {basemap === "streets" && (
+                  <TileLayer
+                    key="osm-street"
+                    attribution="&copy; OpenStreetMap contributors"
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    maxZoom={19}
+                  />
+                )}
+                {basemap === "topographic" && (
+                  <TileLayer
+                    key="esri-topo"
+                    attribution="Tiles &copy; Esri"
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}"
+                    maxZoom={20}
+                  />
+                )}
+                {basemap === "satellite" && (
+                  <TileLayer
+                    key="esri-satellite"
+                    attribution="Tiles &copy; Esri"
+                    url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                    maxZoom={20}
+                  />
+                )}
 
                 {showHuc12Known &&
                   huc12KnownFeatureCollection &&
